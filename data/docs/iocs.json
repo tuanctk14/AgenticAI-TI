@@ -1,0 +1,146 @@
+[
+  {
+    "id": "IOC-APT41-001",
+    "description": "APT41 C2 server IP used in APAC financial sector campaign Q4 2024 via HTTPS port 443",
+    "cvss_score": 9.5,
+    "type": "ip",
+    "value": "203.0.113.45",
+    "threat_actor": "APT41",
+    "tags": [
+      "C2",
+      "APT41",
+      "financial"
+    ]
+  },
+  {
+    "id": "IOC-APT41-002",
+    "description": "APT41 typosquatting domain impersonating Microsoft Update used as command and control server",
+    "cvss_score": 9.0,
+    "type": "domain",
+    "value": "update-service.microsofft.com",
+    "threat_actor": "APT41",
+    "tags": [
+      "C2",
+      "typosquat",
+      "APT41"
+    ]
+  },
+  {
+    "id": "IOC-APT41-003",
+    "description": "ShadowPad dropper disguised as Windows Update Helper with stolen digital signature used by APT41",
+    "cvss_score": 9.7,
+    "type": "sha256",
+    "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "malware_family": "ShadowPad",
+    "threat_actor": "APT41",
+    "tags": [
+      "dropper",
+      "signed",
+      "APT41"
+    ]
+  },
+  {
+    "id": "IOC-APT41-004",
+    "description": "APT41 spear phishing email sender targeting Vietnamese bank employees with malicious Excel attachment",
+    "cvss_score": 8.5,
+    "type": "email",
+    "value": "hr-payroll@hanoi-corp-internal.net",
+    "threat_actor": "APT41",
+    "tags": [
+      "phishing",
+      "spear-phishing",
+      "financial"
+    ]
+  },
+  {
+    "id": "IOC-APT41-005",
+    "description": "DEADEYE backdoor DLL injected into legitimate Windows processes for persistent access by APT41",
+    "cvss_score": 9.4,
+    "type": "sha256",
+    "value": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "malware_family": "DEADEYE",
+    "threat_actor": "APT41",
+    "tags": [
+      "backdoor",
+      "persistence",
+      "DLL-injection"
+    ]
+  },
+  {
+    "id": "IOC-APT41-006",
+    "description": "APT41 data exfiltration server receiving stolen data via HTTPS port 8443 located in Singapore",
+    "cvss_score": 9.0,
+    "type": "ip",
+    "value": "192.0.2.187",
+    "threat_actor": "APT41",
+    "tags": [
+      "exfiltration",
+      "data-theft"
+    ]
+  },
+  {
+    "id": "MAL-001",
+    "description": "ShadowPad modular backdoor used exclusively by Chinese APT groups allowing remote access and plugin-based capability expansion",
+    "cvss_score": 9.7,
+    "malware_family": "ShadowPad",
+    "type": "backdoor",
+    "threat_actor": "APT41",
+    "affected_software": [
+      "Windows",
+      "log4j",
+      "Apache"
+    ]
+  },
+  {
+    "id": "MAL-003",
+    "description": "Cobalt Strike beacon used as post-exploitation framework for lateral movement credential dumping and C2 communication",
+    "cvss_score": 9.5,
+    "malware_family": "CobaltStrike",
+    "type": "post_exploitation",
+    "threat_actor": "Multiple",
+    "affected_software": [
+      "Windows",
+      "Windows Server",
+      "Active Directory"
+    ]
+  },
+  {
+    "id": "MAL-005",
+    "description": "Mimikatz credential dumping tool extracting plaintext passwords NTLM hashes and Kerberos tickets from Windows memory",
+    "cvss_score": 9.0,
+    "malware_family": "Mimikatz",
+    "type": "credential_dumper",
+    "threat_actor": "Multiple",
+    "affected_software": [
+      "Windows",
+      "Windows Server",
+      "Active Directory"
+    ]
+  },
+  {
+    "id": "MAL-007",
+    "description": "PlugX remote access trojan with DLL sideloading persistence used by multiple Chinese APT groups for long-term espionage",
+    "cvss_score": 8.8,
+    "malware_family": "PlugX",
+    "type": "rat",
+    "threat_actor": "APT41",
+    "affected_software": [
+      "Windows",
+      "Windows Server"
+    ]
+  },
+  {
+    "id": "MAL-008",
+    "description": "StealC infostealer targeting browser credentials cryptocurrency wallets and email client data via fake software installer",
+    "cvss_score": 8.5,
+    "malware_family": "StealC",
+    "type": "infostealer",
+    "threat_actor": "Various",
+    "affected_software": [
+      "Windows",
+      "Chrome",
+      "Firefox",
+      "Outlook"
+    ]
+  }
+]

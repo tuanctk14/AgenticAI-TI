@@ -89,9 +89,9 @@ def _build_report_from_state(
 
     lines += [
         f"# {t}",
-        f"\n**Ngay tao:** {ts.strftime('%d/%m/%Y %H:%M')}",
-        f"**Loai bao cao:** {report_type}",
-        f"**He thong:** ATI-AgenticThreatIntelligence (Ollama Local)",
+        f"\n**Ngày tạo:** {ts.strftime('%d/%m/%Y %H:%M')}",
+        f"**Loại báo cáo:** {report_type}",
+        f"**Hệ thống:** ATI-AgenticThreatIntelligence (Ollama Local)",
         "\n---",
     ]
 
