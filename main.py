@@ -48,8 +48,7 @@ MENU = """
 |  1. Quet CVE va tim thiet bi bi anh huong                    |
 |  2. Tao bao cao                                              |
 |  3. Upload / xu ly tai lieu noi bo                           |
-|  4. Liet ke thiet bi trong CMDB                              |
-|  5. Cau hoi tu do (hoi bat ky)                               |
+|  4. Cau hoi tu do (hoi bat ky)                               |
 |  0. Thoat                                                    |
 +--------------------------------------------------------------+
 """
@@ -64,8 +63,7 @@ PRESET_QUERIES = {
         "so khop voi he thong noi bo, tao bao cao executive_summary."
     ),
     "3": None,   # Upload document
-    "4": "Liet ke toan bo thiet bi trong CMDB.",
-    "5": None,   # Free query
+    "4": None,   # Free query
 }
 
 TEST_CASES = [
@@ -562,12 +560,7 @@ def interactive_mode():
             run_query(query)
 
         elif choice == "4":
-            # Menu 4: CMDB list
-            query = PRESET_QUERIES["4"]
-            run_query(query)
-
-        elif choice == "5":
-            # Menu 5: Free query (IOC/Malware/APT/CVE/Device/Report)
+            # Menu 4: Free query (IOC/Malware/APT/CVE/Device/Report)
             query = input("\nNhap cau hoi (CVE, IOC, Malware, APT, device, ...): ").strip()
             if query:
                 run_query(query)
