@@ -322,15 +322,23 @@ def _build_report_from_state(
         # Chi tiết từng thiết bị
         lines += ["\n### Chi Tiết Khắc Phục Từng Thiết Bị", ""]
 
-        # Render each device in sorted order (without "Lý do bị ảnh hưởng" section)
+        # Render each device in sorted order
         for dev_id, dev_info in sorted_devices:
             risk_level = device_risk[dev_id]
             lines.append(f"\n#### {dev_info['hostname']} ({dev_info['ip']}) - **{risk_level}**")
             lines.append(f"- **OS**: {dev_info['os']}")
             lines.append(f"- **Criticality**: {dev_info['criticality']}")
-            lines.append(f"- **CVEs Ảnh Hưởng**: {len(dev_info['cves'])}")
             lines.append("")
 
+            # Danh sách CVEs ảnh hưởng
+            lines.append("**CVEs Ảnh Hưởng:**")
+            for cve_match in dev_info["cves"]:
+                cve_id = cve_match["cve_id"]
+                cvss = cve_match.get("cvss_score", "N/A")
+                software = cve_match.get("affected_software", "N/A")
+                lines.append(f"- **{cve_id}** (CVSS: {cvss}, Phần Mềm: {software})")
+
+            lines.append("")
             lines.append("**Hướng khắc phục:**")
 
             # Add remediation steps for highest risk CVE
