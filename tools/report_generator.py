@@ -147,7 +147,7 @@ def _build_report_from_state(
     # CVEs - hiển thị cho tất cả loại báo cáo
     cves: list = state.get("collected_cves") or []
     if cves:
-        lines += [f"\n## DANH SACH CVE ({len(cves)} CVEs)", ""]
+        lines += [f"\n## DANH SÁCH CVE ({len(cves)} CVEs)", ""]
         lines.append("| # | CVE ID | CVSS | Mức Độ | Ngày Công Bố |")
         lines.append("|---|--------|------|--------|--------------|")
         for i, c in enumerate(cves, 1):
@@ -229,7 +229,7 @@ def _build_report_from_state(
     devices: list = state.get("matched_devices") or []
     if devices:
         unique_device_ids = {d['device_id'] for d in devices}
-        lines += [f"\n## THIET BI BI ANH HUONG ({len(unique_device_ids)} Thiết Bị)", ""]
+        lines += [f"\n## THIẾT BỊ ẢNH HƯỞNG ({len(unique_device_ids)} Thiết Bị)", ""]
 
         # Build CVE info lookup
         cves_dict = {c["id"]: c for c in cves}
@@ -294,25 +294,38 @@ def _build_report_from_state(
             lines.append("")
             lines.append("**Hướng khắc phục:**")
 
-            # Add remediation steps for highest risk CVE
-            highest_risk_cve = max(dev_info["cves"], key=lambda x: float(x.get("cvss_score", 0)) if isinstance(x.get("cvss_score"), (int, float, str)) and str(x.get("cvss_score")).replace('.', '', 1).isdigit() else 0)
-            cve_id = highest_risk_cve["cve_id"]
-            cve_info = cves_dict.get(cve_id, {})
-            cvss = highest_risk_cve.get("cvss_score", 0)
-            software = highest_risk_cve.get("affected_software", "unknown")
-            desc = cve_info.get("description", "")
+            # Collect all affected software
+            all_software = set()
+            for cve_match in dev_info["cves"]:
+                software = cve_match.get("affected_software", "")
+                if software and software != "N/A":
+                    all_software.add(software)
 
+            # Add priority based on highest risk CVE
+            highest_risk_cve = max(dev_info["cves"], key=lambda x: float(x.get("cvss_score", 0)) if isinstance(x.get("cvss_score"), (int, float, str)) and str(x.get("cvss_score")).replace('.', '', 1).isdigit() else 0)
+            cvss = highest_risk_cve.get("cvss_score", 0)
             try:
                 cvss_float = float(cvss) if cvss and cvss != "N/A" else 0
             except (ValueError, TypeError):
                 cvss_float = 0
-            remediation = _get_remediation(cvss_float, software, desc)
-            for step in remediation:
-                # step đã có dấu - ở đầu nên không cần thêm
-                if step.startswith("- "):
-                    lines.append(step)
-                else:
-                    lines.append(f"- {step}")
+
+            # Timeline priority
+            if cvss_float >= 9.0:
+                lines.append("- ⚡ **Ưu tiên CRITICAL**: Xử lý ngay trong 24 giờ")
+            elif cvss_float >= 7.0:
+                lines.append("- 🔴 **Ưu tiên HIGH**: Xử lý trong 72 giờ")
+            else:
+                lines.append("- 🟡 **Ưu tiên MEDIUM**: Lên lịch xử lý trong 2 tuần")
+
+            # Update all affected software
+            for software in sorted(all_software):
+                lines.append(f"- **Cập nhật phần mềm**: Nâng cấp {software} lên phiên bản mới nhất")
+
+            # Additional security measures
+            lines.append("- **Kiểm tra logs**: Tìm kiếm dấu hiệu bị khai thác (suspicious activities, error patterns)")
+            lines.append("- **Network segmentation**: Giới hạn truy cập từ bên ngoài nếu chưa có")
+            lines.append("- **Credential reset**: Reset tất cả passwords, invalidate sessions nếu cần")
+            lines.append("- **MFA enforcement**: Enable Multi-Factor Authentication nếu chưa có")
             lines.append("")
 
     # MITRE ATT&CK
