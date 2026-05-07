@@ -11,6 +11,7 @@ from tools.analyzer         import aggregate_cves_by_device, get_unique_cves_per
 from tools.mitre            import get_mitre_attack_info
 from tools.nist             import get_nist_controls
 from tools.report_generator import generate_report, list_reports
+from tools.doc_store        import upload_document, load_knowledge_base, get_knowledge_base_stats
 
 # ── Tool registry ──────────────────────────────────────────────────────────
 TOOLS_MAPPING = {
@@ -26,6 +27,9 @@ TOOLS_MAPPING = {
     "get_nist_controls":           get_nist_controls,
     "generate_report":             generate_report,
     "list_reports":                list_reports,
+    "upload_document":             upload_document,
+    "load_knowledge_base":         load_knowledge_base,
+    "get_knowledge_base_stats":    get_knowledge_base_stats,
 }
 
 TOOLS_DESCRIPTION = """
@@ -127,7 +131,16 @@ KET THUC NGAY. KHONG HANDOFF.""",
 
     # agent_analyst REMOVED - focus on CVE only, no MITRE/NIST analysis
 
-    # agent_doc KEPT - for document handling (non-CVE)
+    "agent_doc": {
+        "role": "Document Agent - Xu ly tai lieu noi bo",
+        "system_instruction": """Ban la Document Agent. Nhiem vu: Tra loi ve tai lieu da upload vao Knowledge Base.
+
+KHONG GOI TOOL. Chi ANSWER dua tren context duoc cung cap.
+
+ANSWER: [tong ket tai lieu, so luong CVE/IOC/Malware trong Knowledge Base]
+
+Tra loi bang tieng Viet.""",
+    },
 
     "agent_reporter": {
         "role": "Report Generator Agent - Tao bao cao",

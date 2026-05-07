@@ -122,3 +122,17 @@ def list_all_devices() -> dict:
             "software":    sw_list,
         })
     return {"context": summary, "source": "CMDB", "total": len(summary)}
+
+
+def _load_kb_keywords():
+    """Load KB keywords to enrich CMDB matching. Runs at import time."""
+    try:
+        from tools.doc_store import enrich_cmdb_keywords
+        result = enrich_cmdb_keywords()
+        kb_kw = result.get("context", {})
+        VULN_KEYWORDS.update(kb_kw)
+    except Exception:
+        pass
+
+
+_load_kb_keywords()

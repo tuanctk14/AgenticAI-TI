@@ -543,21 +543,21 @@ def interactive_mode():
             _ask_and_export(state, start_date, end_date)
 
         elif choice == "3":
-            # Menu 3: Upload document flow
-            print("\nNhap noi dung tai lieu (ket thuc bang dong chi co 'END'):")
-            lines = []
-            while True:
-                line = input()
-                if line.strip() == "END":
-                    break
-                lines.append(line)
-            doc_content = "\n".join(lines)
-            doc_name = input("Ten tai lieu: ").strip() or "Tai lieu noi bo"
-            query = (
-                f"Upload tai lieu '{doc_name}' vao he thong va tom tat noi dung:\n"
-                f"{doc_content}"
-            )
-            run_query(query)
+            # Menu 3: Upload document
+            print("\n📄 UPLOAD DOCUMENT (CVE/IOC/Malware)")
+            print("Hỗ trợ: .json, .txt (chứa CVE IDs), .csv")
+            file_path = input("Nhập đường dẫn file: ").strip().strip('"')
+            if file_path:
+                from tools.doc_store import upload_document, get_knowledge_base_stats
+                result = upload_document(file_path)
+                if "error" in result:
+                    print(f"❌ {result['error']}")
+                else:
+                    saved = result.get("context", {})
+                    print(f"✅ Đã lưu: CVEs={saved.get('cves',0)}, IOCs={saved.get('iocs',0)}, Malwares={saved.get('malwares',0)}")
+                stats = get_knowledge_base_stats()
+                s = stats.get("context", {})
+                print(f"📊 KB hiện tại: CVEs={s.get('cves',0)}, IOCs={s.get('iocs',0)}, Malwares={s.get('malwares',0)}")
 
         elif choice == "4":
             # Menu 4: Free query (IOC/Malware/APT/CVE/Device/Report)

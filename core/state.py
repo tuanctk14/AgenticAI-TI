@@ -41,6 +41,9 @@ class CyberSecState(TypedDict):
     nist_info:            Optional[dict]
     final_report:         Optional[str]
 
+    # Document upload / Knowledge base
+    uploaded_docs:        Optional[List[dict]]
+
 
 def init_state(query: str) -> CyberSecState:
     """Khởi tạo state mới cho một câu hỏi."""
@@ -66,4 +69,5 @@ def init_state(query: str) -> CyberSecState:
         attack_info=None,
         nist_info=None,
         final_report=None,
+        uploaded_docs=None,
     )
