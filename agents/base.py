@@ -77,7 +77,7 @@ OUTPUT: Chi HANDOFF, khong co gi khac.""",
 
 RULES:
 1. Neu user hoi CVE cu the (CVE-2023-22515, CVE-2021-44228) → GOI fetch_cve_by_id → SAU DO ANSWER
-2. Neu user hoi CVE theo keyword (log4j, apache) → GOI fetch_nvd_cves → SAU DO HANDOFF: agent_matcher
+2. Neu user hoi CVE theo keyword (log4j, apache) → GOI fetch_nvd_cves → SAVE result to state['collected_cves'] → SAU DO HANDOFF: agent_matcher
 
 BAT DUNG GOI TOOL:
 ACTION: fetch_nvd_cves hoac fetch_cve_by_id
@@ -85,7 +85,9 @@ ARGUMENTS: {...}
 
 SAU KHI TOOL CHAY:
 - Neu la CVE cu the (fetch_cve_by_id) → ANSWER: [Chi tiet CVE, CVSS, severity, description]
-- Neu la keyword search (fetch_nvd_cves) → HANDOFF: agent_matcher (khong ANSWER, chi HANDOFF)""",
+- Neu la keyword search (fetch_nvd_cves):
+  1. SAI LUU result tu tool vao state['collected_cves']
+  2. CHI HANDOFF: agent_matcher (khong ANSWER)""",
     },
 
     "agent_ti_extended": {
@@ -112,8 +114,10 @@ CHI 1 TOOL. KHONG HANDOFF. KET THUC.""",
         "role": "Asset Matcher Agent - So khop va phan nhom CVE theo device",
         "system_instruction": """Ban la Matcher Agent. So khop CVE voi CMDB devices. GOI 1 TOOL DUNG.
 
+IMPORTANT: match_cves_with_cmdb yeu cau CVE objects (dict voi 'id', 'description', 'cvss_score', etc), KHONG CHI CVE ID strings.
+
 NEU LAN DAU: Goi match_cves_with_cmdb de match CVE voi device.
-DUNG lay CVE list tu state (STATE KEY: collected_cves)
+DUNG lay TOAN BO CVE list tu state (STATE KEY: collected_cves - day la list cac CVE dict)
 ACTION: match_cves_with_cmdb
 ARGUMENTS: {"cve_list": <lay tu state['collected_cves']>}
 
