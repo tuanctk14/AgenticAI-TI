@@ -30,15 +30,15 @@ from datetime import datetime, timedelta, timezone
 
 # ── Banner ─────────────────────────────────────────────────────────────────
 BANNER = """
-  _____ _     _     _ _     _    _      _ _
- / ____| |   | |   | | |   | |  | |    | | |
-| |    | |__ | |_  | | |__ | |  | | |  | | |
-| |    | '_ \| __| | | '_ \| |  | | |__| | |
-| |____| | | | |__ | | |_) | |__| |  __  |_|
- \_____|_| |_|\__| | |_.__/ \____/|_|  |_(_)
-                _/ |
-               |__/
-      ATI-AgenticThreatIntelligence System - Ollama Local Edition
+   _   _____ ___
+  / \ |_   _|_ _|
+ / _ \  | |  | |
+/ ___ \ | |  | |
+/_/   \_|_|  |___|
+
+    🔍 AgenticThreatIntelligence 🔍
+    Intelligent Threat Analysis System
+      Ollama Local Edition | Offline Mode
 """
 
 MENU = """
