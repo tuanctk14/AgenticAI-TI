@@ -211,9 +211,15 @@ def _build_report_from_state(
                 cve_id = c.get("id", "N/A")
                 cvss = c.get("cvss_score", "N/A")
                 severity = c.get("severity", "N/A")
-                desc = c.get("description", "N/A")[:200]
+                desc = c.get("description", "")
+                # Cắt ngắn description nhưng đảm bảo không bị cắt giữa câu
                 if desc and desc != "N/A":
-                    lines.append(f"- **{cve_id}** (CVSS: {cvss}, {severity}): {desc}")
+                    # Chỉ lấy phần trước newline (loại bỏ "This issue affects..." part)
+                    desc = desc.split('\n')[0]
+                    # Cắt để tối đa 150 ký tự, tại whitespace cuối cùng
+                    if len(desc) > 150:
+                        desc = desc[:150].rsplit(" ", 1)[0]
+                    lines.append(f"- **{cve_id}** (CVSS: {cvss}, {severity}): {desc}...")
                 else:
                     lines.append(f"- **{cve_id}** (CVSS: {cvss}, {severity})")
             lines.append("")
@@ -314,10 +320,16 @@ def _build_report_from_state(
             for cve_match in dev_info["cves"]:
                 cve_id = cve_match["cve_id"]
                 cve_info = cves_dict.get(cve_id, {})
-                desc = cve_info.get("description", "N/A")[:100]
+                desc = cve_info.get("description", "")
                 cvss = cve_match.get("cvss_score", "N/A")
+                # Cắt ngắn description nhưng đảm bảo không bị cắt giữa câu
                 if desc and desc != "N/A":
-                    lines.append(f"- **{cve_id}** (CVSS: {cvss}): {desc}")
+                    # Chỉ lấy phần trước newline (loại bỏ "This issue affects..." part)
+                    desc = desc.split('\n')[0]
+                    # Cắt để tối đa 80 ký tự, tại whitespace cuối cùng
+                    if len(desc) > 80:
+                        desc = desc[:80].rsplit(" ", 1)[0]
+                    lines.append(f"- **{cve_id}** (CVSS: {cvss}): {desc}...")
                 else:
                     lines.append(f"- **{cve_id}** (CVSS: {cvss})")
 
