@@ -304,6 +304,9 @@ def _build_report_from_state(
             # Add priority based on highest risk CVE
             highest_risk_cve = max(dev_info["cves"], key=lambda x: float(x.get("cvss_score", 0)) if isinstance(x.get("cvss_score"), (int, float, str)) and str(x.get("cvss_score")).replace('.', '', 1).isdigit() else 0)
             cvss = highest_risk_cve.get("cvss_score", 0)
+            cve_info = cves_dict.get(highest_risk_cve["cve_id"], {})
+            desc = cve_info.get("description", "").lower()
+
             try:
                 cvss_float = float(cvss) if cvss and cvss != "N/A" else 0
             except (ValueError, TypeError):
@@ -321,11 +324,32 @@ def _build_report_from_state(
             for software in sorted(all_software):
                 lines.append(f"- **Cập nhật phần mềm**: Nâng cấp {software} lên phiên bản mới nhất")
 
-            # Additional security measures
-            lines.append("- **Kiểm tra logs**: Tìm kiếm dấu hiệu bị khai thác (suspicious activities, error patterns)")
-            lines.append("- **Network segmentation**: Giới hạn truy cập từ bên ngoài nếu chưa có")
-            lines.append("- **Credential reset**: Reset tất cả passwords, invalidate sessions nếu cần")
-            lines.append("- **MFA enforcement**: Enable Multi-Factor Authentication nếu chưa có")
+            # Specific remediation based on vulnerability type
+            if "rce" in desc or "remote code execution" in desc:
+                lines.append("- **RCE Detection**: Scan hệ thống bằng antivirus/EDR để phát hiện backdoor, shell scripts")
+                lines.append("- **Firewall rules**: Kiểm tra và tightening inbound connections từ internet")
+                lines.append("- **Kiểm tra logs**: Tìm kiếm dấu hiệu bị khai thác (suspicious activities, error patterns)")
+            elif "sql" in desc:
+                lines.append("- **SQL Injection mitigation**: Review và sanitize tất cả SQL queries, dùng parameterized statements")
+                lines.append("- **Database audit**: Kiểm tra access logs của database, xóa suspicious accounts")
+            elif "auth" in desc or "bypass" in desc:
+                lines.append("- **Credential reset**: Reset tất cả passwords, invalidate sessions nếu cần")
+                lines.append("- **MFA enforcement**: Enable Multi-Factor Authentication nếu chưa có")
+                lines.append("- **Kiểm tra logs**: Tìm kiếm dấu hiệu truy cập bất hợp pháp (unauthorized access attempts)")
+            elif "path traversal" in desc or "directory traversal" in desc:
+                lines.append("- **File access audit**: Kiểm tra web server logs cho directory traversal attempts")
+                lines.append("- **Access control**: Đảm bảo proper file permissions và không expose sensitive directories")
+            elif "xss" in desc or "cross-site" in desc:
+                lines.append("- **Input validation**: Implement proper input sanitization và output encoding")
+                lines.append("- **CSP headers**: Thiết lập Content Security Policy headers")
+            elif "csrf" in desc or "cross-site request" in desc:
+                lines.append("- **CSRF tokens**: Implement CSRF protection tokens trên tất cả state-changing operations")
+                lines.append("- **SameSite cookies**: Thiết lập SameSite attribute trên cookies")
+            else:
+                # Default remediation for unknown vulnerability types
+                lines.append("- **Kiểm tra logs**: Tìm kiếm dấu hiệu bị khai thác (suspicious activities)")
+                lines.append("- **Network segmentation**: Giới hạn truy cập từ bên ngoài nếu chưa có")
+
             lines.append("")
 
     # MITRE ATT&CK
