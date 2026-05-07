@@ -1,5 +1,5 @@
 """
-core/graph.py - Xây dựng LangGraph workflow cho CyberSec Multi-Agent
+core/graph.py - Xây dựng LangGraph workflow cho ATI-AgenticThreatIntelligence
 """
 from langgraph.graph import StateGraph, END
 from core.state      import CyberSecState
@@ -137,5 +137,5 @@ def get_graph():
     global _graph
     if _graph is None:
         _graph = build_graph()
-        print("✅ CyberSec Multi-Agent Graph đã biên dịch")
+        print("✅ ATI-AgenticThreatIntelligence Graph đã biên dịch")
     return _graph

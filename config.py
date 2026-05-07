@@ -1,5 +1,5 @@
 """
-config.py - Cấu hình toàn cục cho CyberSec Multi-Agent System
+config.py - Cấu hình toàn cục cho ATI-AgenticThreatIntelligence System
 """
 import os
 from dotenv import load_dotenv

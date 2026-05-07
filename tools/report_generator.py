@@ -48,7 +48,7 @@ def generate_report(
     # Thêm footer
     footer = (
         f"\n\n---\n"
-        f"*Tạo bởi CyberSec Multi-Agent System | {ts.strftime('%d/%m/%Y %H:%M:%S')}*\n"
+        f"*Tạo bởi ATI-AgenticThreatIntelligence System | {ts.strftime('%d/%m/%Y %H:%M:%S')}*\n"
         f"*Model: Ollama Local | Report ID: {rid}*\n"
     )
     full_content = content + footer
@@ -91,7 +91,7 @@ def _build_report_from_state(
         f"# {t}",
         f"\n**Ngay tao:** {ts.strftime('%d/%m/%Y %H:%M')}",
         f"**Loai bao cao:** {report_type}",
-        f"**He thong:** CyberSec Multi-Agent (Ollama Local)",
+        f"**He thong:** ATI-AgenticThreatIntelligence (Ollama Local)",
         "\n---",
     ]
 
@@ -603,7 +603,7 @@ def _markdown_to_html(markdown_text: str, title: str = "Report") -> str:
     html_lines += [
         '</div>',
         '<footer>',
-        '<p>CyberSec Multi-Agent System | Ollama Local Edition</p>',
+        '<p>ATI-AgenticThreatIntelligence System | Ollama Local Edition</p>',
         '</footer>',
         '</body>',
         '</html>',

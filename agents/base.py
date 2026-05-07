@@ -1,5 +1,5 @@
 """
-agents/base.py - Base agent và các agent chuyên biệt sử dụng Ollama local
+agents/base.py - Base agent và các agent chuyên biệt cho ATI-AgenticThreatIntelligence
 """
 import json
 import re

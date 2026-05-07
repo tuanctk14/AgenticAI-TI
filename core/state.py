@@ -1,5 +1,5 @@
 """
-core/state.py - LangGraph State Schema cho CyberSec Multi-Agent
+core/state.py - LangGraph State Schema cho ATI-AgenticThreatIntelligence
 """
 from typing import TypedDict, List, Optional
 

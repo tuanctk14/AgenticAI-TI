@@ -1,5 +1,5 @@
 """
-main.py - Entry point cho CyberSec Multi-Agent System (Ollama Local Edition)
+main.py - Entry point cho ATI-AgenticThreatIntelligence System (Ollama Local Edition)
 """
 import sys
 import io
@@ -38,7 +38,7 @@ BANNER = """
  \_____|_| |_|\__| | |_.__/ \____/|_|  |_(_)
                 _/ |
                |__/
-      CyberSec Multi-Agent System - Ollama Local Edition
+      ATI-AgenticThreatIntelligence System - Ollama Local Edition
 """
 
 MENU = """
@@ -576,7 +576,7 @@ def interactive_mode():
 # ── CLI ────────────────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(
-        description="CyberSec Multi-Agent System — Ollama Local Edition"
+        description="ATI-AgenticThreatIntelligence System — Ollama Local Edition"
     )
     parser.add_argument("--query", "-q", type=str, help="Chạy câu hỏi trực tiếp")
     parser.add_argument("--test",  "-t", action="store_true", help="Chạy test cases")

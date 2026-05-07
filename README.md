@@ -1,4 +1,4 @@
-# 🛡️ CyberSec Multi-Agent System — Ollama Local Edition
+# 🛡️ ATI-AgenticThreatIntelligence System — Ollama Local Edition
 
 Hệ thống Multi-Agent bảo mật chạy **hoàn toàn offline** với Ollama trên máy tính cá nhân.
 
