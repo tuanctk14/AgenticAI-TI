@@ -45,7 +45,12 @@ def match_cves_with_cmdb(cve_list: list) -> dict:
     for cve in cve_list:
         cve_id   = str(cve.get("id",          "")).lower()
         cve_desc = str(cve.get("description", "")).lower()
-        cve_score = float(cve.get("cvss_score", 0) or 0)
+        # Handle N/A or None cvss_score
+        cvss_raw = cve.get("cvss_score", 0)
+        try:
+            cve_score = float(cvss_raw) if cvss_raw and cvss_raw != "N/A" else 0.0
+        except (ValueError, TypeError):
+            cve_score = 0.0
 
         # Thu thập keywords liên quan đến CVE này
         relevant: set[str] = set()

@@ -22,6 +22,11 @@ from config import OLLAMA_MODEL, OLLAMA_BASE_URL, REPORTS_DIR
 from core.ollama_llm import check_ollama_connection
 from core.state      import init_state
 from core.graph      import get_graph
+from tools.nvd_client import fetch_nvd_cves
+from tools.opencti_client import fetch_opencti_indicators
+from tools.cmdb import match_cves_with_cmdb
+from tools.report_generator import generate_report
+from datetime import datetime, timedelta, timezone
 
 # ── Banner ─────────────────────────────────────────────────────────────────
 BANNER = """
@@ -254,6 +259,152 @@ def _print_summary(result: dict):
     print("=" * 70)
 
 
+# ── Menu 2: Report pipeline helper functions ───────────────────────────────
+def _ask_time_range() -> tuple[str, str, int]:
+    """
+    Hỏi người dùng khoảng thời gian cho báo cáo.
+    Returns: (start_date_iso, end_date_iso, days_back)
+    """
+    print("\n=== CHỌN KHOẢNG THỜI GIAN ===")
+    print("  [Enter]            = 7 ngày gần đây (mặc định)")
+    print("  Số ngày (VD: 30)   = 30 ngày gần đây")
+    print("  Ngày cụ thể        = 2026-04-01 to 2026-05-07")
+
+    user_input = input("\nNhập (để trống = 7 ngày): ").strip()
+
+    end_dt = datetime.now(timezone.utc)
+    start_dt = None
+    days_back = 7
+
+    if not user_input:
+        # Default: 7 days
+        start_dt = end_dt - timedelta(days=7)
+        days_back = 7
+    elif user_input.isdigit():
+        # Input is number of days
+        days_back = int(user_input)
+        start_dt = end_dt - timedelta(days=days_back)
+    else:
+        # Try to parse date range: "YYYY-MM-DD to YYYY-MM-DD"
+        try:
+            if " to " in user_input:
+                date_parts = user_input.split(" to ")
+                start_dt = datetime.fromisoformat(date_parts[0].strip())
+                end_dt = datetime.fromisoformat(date_parts[1].strip())
+                days_back = (end_dt.date() - start_dt.date()).days
+            else:
+                # Try single date
+                start_dt = datetime.fromisoformat(user_input.strip())
+                end_dt = datetime.now(timezone.utc)
+                days_back = (end_dt.date() - start_dt.date()).days
+        except ValueError:
+            print("❌ Format không hợp lệ, dùng 7 ngày mặc định")
+            start_dt = end_dt - timedelta(days=7)
+            days_back = 7
+
+    # Convert to NVD API format: ISO 8601 with milliseconds
+    start_date = start_dt.strftime("%Y-%m-%dT%H:%M:%S.000")
+    end_date = end_dt.strftime("%Y-%m-%dT%H:%M:%S.000")
+
+    print(f"\n✅ Khoảng thời gian: {start_dt.date()} → {end_dt.date()} ({days_back} ngày)")
+    return start_date, end_date, days_back
+
+
+def _run_report_pipeline(start_date: str, end_date: str, days_back: int) -> dict:
+    """
+    Chạy pipeline thu thập dữ liệu cho báo cáo (không qua LLM agent).
+    Returns: state dict với dữ liệu thu thập
+    """
+    print("\n" + "="*55)
+    print("📡 TRY THẬP DỮ LIỆU CHO BÁO CÁO")
+    print("="*55)
+
+    state = {
+        "collected_cves": [],
+        "collected_indicators": [],
+        "matched_devices": [],
+        "device_cve_map": {},
+        "tool_observations": [],
+    }
+
+    # Bước 1: Lấy CVE từ NVD
+    print(f"\n1️⃣  Lấy CVE từ NVD ({days_back} ngày)...")
+    cve_result = fetch_nvd_cves(
+        keyword="",
+        severity="",
+        days_back=days_back,
+        start_date=start_date,
+        end_date=end_date
+    )
+    state["collected_cves"] = cve_result.get("context", [])
+    print(f"   ✅ Tìm được {len(state['collected_cves'])} CVEs")
+
+    # Bước 2: Lấy IOC/Malware từ OpenCTI
+    print(f"\n2️⃣  Lấy IOC/Malware từ OpenCTI...")
+    ioc_result = fetch_opencti_indicators(search_term="recent threats")
+    state["collected_indicators"] = ioc_result.get("context", [])
+    print(f"   ✅ Tìm được {len(state['collected_indicators'])} IOC/Malware")
+
+    # Bước 3: So khớp CVE với thiết bị nội bộ
+    if state["collected_cves"]:
+        print(f"\n3️⃣  So khớp CVE với thiết bị nội bộ...")
+        match_result = match_cves_with_cmdb(cve_list=state["collected_cves"])
+        state["matched_devices"] = match_result.get("context", [])
+        print(f"   ✅ Tìm được {len(state['matched_devices'])} device-CVE matches")
+    else:
+        print(f"\n3️⃣  Bỏ qua: không có CVE để match")
+
+    # Tóm tắt
+    print("\n" + "="*55)
+    print("📊 TÓM TẮT DỮ LIỆU")
+    print("="*55)
+    print(f"CVEs:              {len(state['collected_cves'])}")
+    print(f"IOCs/Malware:      {len(state['collected_indicators'])}")
+    print(f"Device matches:    {len(state['matched_devices'])}")
+    if state["matched_devices"]:
+        affected_devices = len({d.get("device_id") for d in state["matched_devices"]})
+        print(f"Devices affected:  {affected_devices}")
+
+    return state
+
+
+def _ask_and_export(state: dict, start_date: str, end_date: str):
+    """
+    Hỏi người dùng muốn xuất định dạng nào và tạo báo cáo.
+    """
+    print("\n" + "="*55)
+    print("📄 XUẤT BÁO CÁO")
+    print("="*55)
+    print("Chọn định dạng xuất:")
+    print("  1. HTML (.html) - Mở bằng browser, đẹp nhất")
+    print("  2. Markdown (.md) - Văn bản thuần, dễ đọc")
+
+    fmt_choice = input("\nChọn (1/2, mặc định 1): ").strip() or "1"
+    export_format = "markdown" if fmt_choice == "2" else "html"
+
+    # Tạo báo cáo
+    date_range = f"{start_date[:10]} to {end_date[:10]}"
+    title = f"Security Report - {date_range}"
+
+    result = generate_report(
+        report_type="executive_summary",
+        title=title,
+        content="",
+        state=state,
+        export_format=export_format
+    )
+
+    file_path = result.get("file_path", "")
+    if file_path:
+        print(f"\n✅ Báo cáo đã được lưu tại:")
+        print(f"   {file_path}")
+        print(f"\n📂 Bạn có thể mở file này bằng:")
+        if export_format == "html":
+            print(f"   - Browser (double-click file)")
+        else:
+            print(f"   - Text editor hoặc Markdown viewer")
+
+
 # ── Interactive menu ───────────────────────────────────────────────────────
 def interactive_mode():
     print(BANNER)
@@ -283,9 +434,10 @@ def interactive_mode():
             run_query(query)
 
         elif choice == "2":
-            # Menu 2: Report generation
-            query = PRESET_QUERIES["2"]
-            run_query(query)
+            # Menu 2: Interactive report generation with date range
+            start_date, end_date, days_back = _ask_time_range()
+            state = _run_report_pipeline(start_date, end_date, days_back)
+            _ask_and_export(state, start_date, end_date)
 
         elif choice == "3":
             # Menu 3: Upload document flow

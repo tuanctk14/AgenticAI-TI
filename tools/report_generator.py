@@ -15,18 +15,21 @@ def generate_report(
     title:       str = "",
     content:     str = "",
     state:       dict | None = None,
+    export_format: str = "markdown",
 ) -> dict:
     """
-    Tạo báo cáo bảo mật và lưu ra file .md.
+    Tạo báo cáo bảo mật và lưu ra file.
 
     report_type: vulnerability_assessment | executive_summary | patch_advisory |
                  threat_intel | incident_report
+    export_format: markdown (.md) | html (.html)
     """
-    print(f"  [Report] Tạo: type='{report_type}', title='{title}'")
+    print(f"  [Report] Tạo: type='{report_type}', title='{title}', format='{export_format}'")
 
     ts    = datetime.now()
     rid   = ts.strftime("%Y%m%d_%H%M%S")
-    fname = f"{report_type}_{rid}.md"
+    ext   = ".html" if export_format == "html" else ".md"
+    fname = f"{report_type}_{rid}{ext}"
     fpath = os.path.join(REPORTS_DIR, fname)
 
     # ── Xây dựng nội dung báo cáo từ state nếu có ──────────────────────
@@ -48,6 +51,10 @@ def generate_report(
     )
     full_content = content + footer
 
+    # Convert sang HTML nếu cần
+    if export_format == "html":
+        full_content = _markdown_to_html(full_content, title or report_type)
+
     # Lưu file
     os.makedirs(REPORTS_DIR, exist_ok=True)
     with open(fpath, "w", encoding="utf-8") as f:
@@ -60,6 +67,7 @@ def generate_report(
         "content": full_content,
         "file":    fpath,
         "created": ts.isoformat(),
+        "format":  export_format,
     }
 
     print(f"  [Report] ✅ Lưu tại: {fpath}")
@@ -222,6 +230,172 @@ def _build_report_from_state(
         lines += ["\n## PHAN TICH & KHUYEN NGHI", "", answer]
 
     return "\n".join(lines)
+
+
+def _markdown_to_html(markdown_text: str, title: str = "Report") -> str:
+    """Convert Markdown sang HTML với dark security theme, không dùng thư viện ngoài."""
+    import re
+
+    html_lines = [
+        '<!DOCTYPE html>',
+        '<html lang="vi">',
+        '<head>',
+        '  <meta charset="UTF-8">',
+        f'  <title>{title}</title>',
+        '  <style>',
+        '    body { background: #1a1a2e; color: #e0e0e0; font-family: "Courier New", monospace; margin: 20px; }',
+        '    .container { max-width: 1000px; margin: 0 auto; }',
+        '    h1 { color: #00d4ff; border-bottom: 2px solid #00d4ff; padding-bottom: 10px; }',
+        '    h2 { color: #00d4ff; margin-top: 30px; }',
+        '    h3 { color: #00a8cc; }',
+        '    table { border-collapse: collapse; width: 100%; margin: 15px 0; }',
+        '    th { background: #16213e; color: #00d4ff; padding: 10px; text-align: left; border: 1px solid #0f3460; }',
+        '    td { padding: 8px; border: 1px solid #0f3460; }',
+        '    tr:nth-child(even) { background: #0f3460; }',
+        '    tr:hover { background: #1a4d6d; }',
+        '    .critical { color: #ff4444; font-weight: bold; }',
+        '    .high { color: #ff8800; font-weight: bold; }',
+        '    .medium { color: #ffcc00; }',
+        '    .low { color: #00cc00; }',
+        '    code { background: #0f3460; padding: 2px 6px; border-radius: 3px; color: #00d4ff; }',
+        '    pre { background: #0f3460; padding: 10px; border-radius: 5px; overflow-x: auto; }',
+        '    a { color: #00d4ff; text-decoration: none; }',
+        '    a:hover { text-decoration: underline; }',
+        '    hr { border: none; border-top: 1px solid #0f3460; }',
+        '    footer { margin-top: 40px; text-align: center; color: #666; border-top: 1px solid #0f3460; padding-top: 10px; }',
+        '  </style>',
+        '</head>',
+        '<body>',
+        '<div class="container">',
+    ]
+
+    lines = markdown_text.split('\n')
+    in_table = False
+    in_table_header = False
+    in_code_block = False
+    is_header_row = False
+
+    for i, line in enumerate(lines):
+        line = line.rstrip()
+
+        # Code blocks
+        if line.startswith('```'):
+            if in_code_block:
+                html_lines.append('</pre>')
+                in_code_block = False
+            else:
+                html_lines.append('<pre>')
+                in_code_block = True
+            continue
+
+        if in_code_block:
+            html_lines.append(line)
+            continue
+
+        # Tables
+        if line.startswith('|'):
+            if not in_table:
+                html_lines.append('<table>')
+                in_table = True
+                is_header_row = True  # First row of table is header
+
+            # Parse table row
+            cells = [c.strip() for c in line.split('|')[1:-1]]
+
+            # Check if separator row (dashes)
+            if all(c.replace('-', '').replace(':', '') == '' for c in cells):
+                # This is separator - start tbody after this
+                html_lines.append('</thead>')
+                html_lines.append('<tbody>')
+                in_table_header = True
+            else:
+                # Regular data row
+                if is_header_row and not in_table_header:
+                    # First row before separator = header
+                    html_lines.append('<thead>')
+                    row_html = '<tr>'
+                    for cell in cells:
+                        row_html += f'<th>{cell}</th>'
+                    row_html += '</tr>'
+                    html_lines.append(row_html)
+                    is_header_row = False
+                else:
+                    # Data row
+                    row_html = '<tr>'
+                    for cell in cells:
+                        # Color-code severity levels
+                        if cell.upper() == 'CRITICAL':
+                            row_html += '<td class="critical">CRITICAL</td>'
+                        elif cell.upper() == 'HIGH':
+                            row_html += '<td class="high">HIGH</td>'
+                        elif cell.upper() == 'MEDIUM':
+                            row_html += '<td class="medium">MEDIUM</td>'
+                        elif cell.upper() == 'LOW':
+                            row_html += '<td class="low">LOW</td>'
+                        else:
+                            row_html += f'<td>{cell}</td>'
+                    row_html += '</tr>'
+                    html_lines.append(row_html)
+        else:
+            if in_table:
+                html_lines.append('</tbody>')
+                html_lines.append('</table>')
+                in_table = False
+
+            # Headers
+            if line.startswith('#### '):
+                html_lines.append(f'<h4>{line[5:].strip()}</h4>')
+            elif line.startswith('### '):
+                html_lines.append(f'<h3>{line[4:].strip()}</h3>')
+            elif line.startswith('## '):
+                html_lines.append(f'<h2>{line[3:].strip()}</h2>')
+            elif line.startswith('# '):
+                html_lines.append(f'<h1>{line[2:].strip()}</h1>')
+            # Lists
+            elif line.startswith('- '):
+                if not html_lines[-1].startswith('<ul>'):
+                    html_lines.append('<ul>')
+                html_lines.append(f'<li>{line[2:].strip()}</li>')
+            elif line.startswith('* '):
+                if not html_lines[-1].startswith('<ul>'):
+                    html_lines.append('<ul>')
+                html_lines.append(f'<li>{line[2:].strip()}</li>')
+            # Horizontal rule
+            elif line.strip() in ('---', '***', '___'):
+                html_lines.append('<hr/>')
+            # Bold and italic
+            elif line.strip():
+                text = line
+                # Bold **text**
+                text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
+                # Italic *text*
+                text = re.sub(r'\*(.+?)\*', r'<em>\1</em>', text)
+                # Inline code `text`
+                text = re.sub(r'`(.+?)`', r'<code>\1</code>', text)
+                # Links [text](url)
+                text = re.sub(r'\[(.+?)\]\((.+?)\)', r'<a href="\2">\1</a>', text)
+
+                if text.strip():
+                    html_lines.append(f'<p>{text}</p>')
+
+    # Close any open tags
+    if in_table:
+        if in_table_header:
+            html_lines.append('</tbody>')
+        html_lines.append('</table>')
+    if in_code_block:
+        html_lines.append('</pre>')
+
+    html_lines += [
+        '</div>',
+        '<footer>',
+        '<p>CyberSec Multi-Agent System | Ollama Local Edition</p>',
+        '</footer>',
+        '</body>',
+        '</html>',
+    ]
+
+    return '\n'.join(html_lines)
 
 
 def list_reports() -> dict:

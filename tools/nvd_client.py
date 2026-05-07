@@ -116,16 +116,32 @@ def fetch_cve_by_id(cve_id: str) -> dict:
     return {"context": [], "source": "NVD-MOCK", "total": 0}
 
 
-def fetch_nvd_cves(keyword: str = "", severity: str = "HIGH", days_back: int = 30) -> dict:
+def fetch_nvd_cves(keyword: str = "", severity: str = "HIGH", days_back: int = 30, start_date: str = None, end_date: str = None) -> dict:
     """
     Truy vấn NVD API để lấy CVE mới nhất.
     Tự động fallback sang mock data nếu không có internet hoặc API key.
+
+    Args:
+        keyword: Từ khóa tìm kiếm CVE
+        severity: Mức độ nghiêm trọng tối thiểu (CRITICAL/HIGH/MEDIUM/LOW)
+        days_back: Số ngày quay lại (nếu start_date/end_date không được cung cấp)
+        start_date: ISO format "YYYY-MM-DDTHH:MM:SS.000" (nếu None, tính từ days_back)
+        end_date: ISO format "YYYY-MM-DDTHH:MM:SS.000" (nếu None, dùng ngày hiện tại)
     """
-    print(f"  [NVD] Tìm kiếm: keyword='{keyword}', severity='{severity}'")
+    from datetime import datetime, timedelta, timezone
+
+    # Tính toán date range nếu không được cung cấp
+    if start_date is None:
+        end_dt = datetime.now(timezone.utc)
+        start_dt = end_dt - timedelta(days=days_back)
+        start_date = start_dt.strftime("%Y-%m-%dT%H:%M:%S.000")
+        end_date = end_dt.strftime("%Y-%m-%dT%H:%M:%S.000")
+
+    print(f"  [NVD] Tìm kiếm: keyword='{keyword}', severity='{severity}', date_range='{start_date}' to '{end_date}'")
 
     base_url = "https://services.nvd.nist.gov/rest/json/cves/2.0"
     headers  = {"apiKey": NVD_API_KEY} if NVD_API_KEY else {}
-    params   = {"resultsPerPage": 10, "startIndex": 0}
+    params   = {"resultsPerPage": 20, "startIndex": 0, "pubStartDate": start_date, "pubEndDate": end_date}
     if keyword:
         params["keywordSearch"] = keyword
     if severity in ("CRITICAL", "HIGH", "MEDIUM", "LOW"):
@@ -164,12 +180,28 @@ def fetch_nvd_cves(keyword: str = "", severity: str = "HIGH", days_back: int = 3
         print(f"  [NVD] ⚠️  API lỗi ({e}) → dùng mock data")
 
     # ── Fallback: lọc mock data ────────────────────────────────────────────
+    from datetime import datetime
+
     filtered = MOCK_CVES
+
+    # Lọc theo date range
+    if start_date and end_date:
+        try:
+            start_dt = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+            end_dt = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+            filtered = [c for c in filtered if
+                       start_dt.date() <= datetime.fromisoformat(c["published"]).date() <= end_dt.date()]
+        except:
+            pass
+
+    # Lọc theo keyword
     if keyword:
         kw = keyword.lower()
-        filtered = [c for c in MOCK_CVES if
+        filtered = [c for c in filtered if
                     kw in c["description"].lower() or
                     any(kw in p for p in c["affected_products"])]
+
+    # Lọc theo severity
     if severity:
         sev_order = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
         min_sev = sev_order.get(severity.upper(), 3)
