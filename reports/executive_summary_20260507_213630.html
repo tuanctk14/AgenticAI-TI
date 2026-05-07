@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Security Report - HTML Test</title>
+  <style>
+    body { background: #1a1a2e; color: #e0e0e0; font-family: "Courier New", monospace; margin: 20px; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    h1 { color: #00d4ff; border-bottom: 2px solid #00d4ff; padding-bottom: 10px; }
+    h2 { color: #00d4ff; margin-top: 30px; }
+    h3 { color: #00a8cc; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th { background: #16213e; color: #00d4ff; padding: 10px; text-align: left; border: 1px solid #0f3460; }
+    td { padding: 8px; border: 1px solid #0f3460; }
+    tr:nth-child(even) { background: #0f3460; }
+    tr:hover { background: #1a4d6d; }
+    .critical { color: #ff4444; font-weight: bold; }
+    .high { color: #ff8800; font-weight: bold; }
+    .medium { color: #ffcc00; }
+    .low { color: #00cc00; }
+    code { background: #0f3460; padding: 2px 6px; border-radius: 3px; color: #00d4ff; }
+    pre { background: #0f3460; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    a { color: #00d4ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    hr { border: none; border-top: 1px solid #0f3460; }
+    footer { margin-top: 40px; text-align: center; color: #666; border-top: 1px solid #0f3460; padding-top: 10px; }
+  </style>
+</head>
+<body>
+<div class="container">
+<h1>Security Report - HTML Test</h1>
+<p><strong>Ngay tao:</strong> 07/05/2026 21:36</p>
+<p><strong>Loai bao cao:</strong> executive_summary</p>
+<p><strong>He thong:</strong> CyberSec Multi-Agent (Ollama Local)</p>
+<hr/>
+<h2>DASHBOARD</h2>
+<table>
+<thead>
+<tr><th>Metric</th><th>Value</th></tr>
+</thead>
+<tbody>
+<tr><td>Risk Score</td><td>72/100</td></tr>
+<tr><td>Risk Level</td><td>**HIGH (7-9)**</td></tr>
+<tr><td>Total CVEs</td><td>50</td></tr>
+<tr><td>IOC (Indicators)</td><td>50</td></tr>
+<tr><td>Malware Families</td><td>50</td></tr>
+<tr><td>Attack Patterns</td><td>49</td></tr>
+<tr><td>Affected Devices</td><td>3</td></tr>
+<tr><td>Critical Matches</td><td>2</td></tr>
+</tbody>
+</table>
+<h2>TOP 3 CRITICAL ACTIONS</h2>
+<table>
+<tr><td>Priority</td><td>Device</td><td>CVE</td><td>Action</td><td>Timeline</td></tr>
+</thead>
+<tbody>
+<tr><td>P1</td><td>db-server-01</td><td>CVE-2026-36766</td><td>Patch immediately</td><td>24-48 hours</td></tr>
+</tbody>
+</table>
+<h2>DANH SACH CVE (50 CVEs)</h2>
+<table>
+<tr><td>#</td><td>CVE ID</td><td>CVSS</td><td>Mức Độ</td><td>Ngày Công Bố</td></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>**CVE-2026-36956**</td><td>8.8</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>2</td><td>**CVE-2026-36957**</td><td>7.5</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>3</td><td>**CVE-2026-36958**</td><td>7.5</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>4</td><td>**CVE-2026-36959**</td><td>7.5</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>5</td><td>**CVE-2026-7500**</td><td>5.4</td><td class="medium">MEDIUM</td><td>2026-04-30</td></tr>
+<tr><td>6</td><td>**CVE-2025-13890**</td><td>N/A</td><td>UNKNOWN</td><td>2026-04-30</td></tr>
+<tr><td>7</td><td>**CVE-2025-14543**</td><td>9.1</td><td class="critical">CRITICAL</td><td>2026-04-30</td></tr>
+<tr><td>8</td><td>**CVE-2025-51847**</td><td>N/A</td><td>UNKNOWN</td><td>2026-04-30</td></tr>
+<tr><td>9</td><td>**CVE-2025-51849**</td><td>N/A</td><td>UNKNOWN</td><td>2026-04-30</td></tr>
+<tr><td>10</td><td>**CVE-2025-51850**</td><td>N/A</td><td>UNKNOWN</td><td>2026-04-30</td></tr>
+<tr><td>11</td><td>**CVE-2026-34994**</td><td>N/A</td><td>UNKNOWN</td><td>2026-04-30</td></tr>
+<tr><td>12</td><td>**CVE-2026-34995**</td><td>N/A</td><td>UNKNOWN</td><td>2026-04-30</td></tr>
+<tr><td>13</td><td>**CVE-2026-34996**</td><td>N/A</td><td>UNKNOWN</td><td>2026-04-30</td></tr>
+<tr><td>14</td><td>**CVE-2026-34997**</td><td>N/A</td><td>UNKNOWN</td><td>2026-04-30</td></tr>
+<tr><td>15</td><td>**CVE-2026-34998**</td><td>N/A</td><td>UNKNOWN</td><td>2026-04-30</td></tr>
+<tr><td>16</td><td>**CVE-2026-36340**</td><td>8.1</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>17</td><td>**CVE-2026-36756**</td><td>5.4</td><td class="medium">MEDIUM</td><td>2026-04-30</td></tr>
+<tr><td>18</td><td>**CVE-2026-36758**</td><td>4.3</td><td class="medium">MEDIUM</td><td>2026-04-30</td></tr>
+<tr><td>19</td><td>**CVE-2026-36759**</td><td>6.5</td><td class="medium">MEDIUM</td><td>2026-04-30</td></tr>
+<tr><td>20</td><td>**CVE-2026-36960**</td><td>8.8</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>21</td><td>**CVE-2026-38939**</td><td>6.1</td><td class="medium">MEDIUM</td><td>2026-04-30</td></tr>
+<tr><td>22</td><td>**CVE-2026-38940**</td><td>6.1</td><td class="medium">MEDIUM</td><td>2026-04-30</td></tr>
+<tr><td>23</td><td>**CVE-2026-4670**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-04-30</td></tr>
+<tr><td>24</td><td>**CVE-2026-5174**</td><td>7.7</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>25</td><td>**CVE-2022-50992**</td><td>7.5</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>26</td><td>**CVE-2022-50993**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-04-30</td></tr>
+<tr><td>27</td><td>**CVE-2025-51846**</td><td>7.5</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>28</td><td>**CVE-2025-71284**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-04-30</td></tr>
+<tr><td>29</td><td>**CVE-2026-36757**</td><td>4.3</td><td class="medium">MEDIUM</td><td>2026-04-30</td></tr>
+<tr><td>30</td><td>**CVE-2026-36760**</td><td>9.6</td><td class="critical">CRITICAL</td><td>2026-04-30</td></tr>
+<tr><td>31</td><td>**CVE-2026-36764**</td><td>5.0</td><td class="medium">MEDIUM</td><td>2026-04-30</td></tr>
+<tr><td>32</td><td>**CVE-2026-36767**</td><td>10.0</td><td class="critical">CRITICAL</td><td>2026-04-30</td></tr>
+<tr><td>33</td><td>**CVE-2026-33845**</td><td>7.5</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>34</td><td>**CVE-2026-36761**</td><td>6.1</td><td class="medium">MEDIUM</td><td>2026-04-30</td></tr>
+<tr><td>35</td><td>**CVE-2026-36762**</td><td>8.8</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>36</td><td>**CVE-2026-36763**</td><td>6.1</td><td class="medium">MEDIUM</td><td>2026-04-30</td></tr>
+<tr><td>37</td><td>**CVE-2026-36765**</td><td>8.8</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>38</td><td>**CVE-2026-36766**</td><td>5.4</td><td class="medium">MEDIUM</td><td>2026-04-30</td></tr>
+<tr><td>39</td><td>**CVE-2026-3832**</td><td>3.7</td><td class="low">LOW</td><td>2026-04-30</td></tr>
+<tr><td>40</td><td>**CVE-2026-3833**</td><td>6.5</td><td class="medium">MEDIUM</td><td>2026-04-30</td></tr>
+<tr><td>41</td><td>**CVE-2026-32148**</td><td>5.9</td><td class="medium">MEDIUM</td><td>2026-04-30</td></tr>
+<tr><td>42</td><td>**CVE-2026-35514**</td><td>6.5</td><td class="medium">MEDIUM</td><td>2026-04-30</td></tr>
+<tr><td>43</td><td>**CVE-2026-40595**</td><td>7.5</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>44</td><td>**CVE-2026-40600**</td><td>8.1</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>45</td><td>**CVE-2026-40601**</td><td>7.5</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>46</td><td>**CVE-2026-40603**</td><td>6.5</td><td class="medium">MEDIUM</td><td>2026-04-30</td></tr>
+<tr><td>47</td><td>**CVE-2026-40904**</td><td>8.1</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>48</td><td>**CVE-2026-7461**</td><td>7.2</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>49</td><td>**CVE-2025-46115**</td><td>7.5</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+<tr><td>50</td><td>**CVE-2025-56568**</td><td>7.5</td><td class="high">HIGH</td><td>2026-04-30</td></tr>
+</tbody>
+</table>
+<h3>CVE Nghiêm Trọng Cần Ưu Tiên</h3>
+<ul>
+<li>**CVE-2026-36956** (CVSS: 8.8, HIGH): A Cross-Site Request Forgery (CSRF) vulnerability exists in the web management interface of the Dbit N300 T1 Pro wireless router V1.0.0. The router...</li>
+<ul>
+<li>**CVE-2026-36957** (CVSS: 7.5, HIGH): Dbit N300 T1 Pro Easy Setup Wireless Wi-Fi Router V1.0.0 is vulnerable to Denial of Service via the boa web server URI handler. By initiating a...</li>
+<ul>
+<li>**CVE-2026-36958** (CVSS: 7.5, HIGH): A denial-of-service vulnerability exists in the U-SPEED N300 V1.0.0 wireless router. By sending a large number of concurrent HTTP requests to random...</li>
+<ul>
+<li>**CVE-2026-36959** (CVSS: 7.5, HIGH): U-SPEED N300 router V1.0.0 does not implement rate limiting or account lockout protections on the /api/login endpoint. This allows an attacker on the...</li>
+<ul>
+<li>**CVE-2025-14543** (CVSS: 9.1, CRITICAL): Improper Restriction of XML External Entity Reference vulnerability in Connext Professional (Core Libraries) allows Serialized Data External...</li>
+<ul>
+<li>**CVE-2026-36340** (CVSS: 8.1, HIGH): An issue in Krayin CRM v.2.1.5 and fixed in v.2.1.6 allows a remote attacker to execute arbitrary code via the compose email function...</li>
+<ul>
+<li>**CVE-2026-36960** (CVSS: 8.8, HIGH): A Cross-Site Request Forgery (CSRF) vulnerability exists in the web management interface of the U-SPEED N300 Rounter V1.0.0. The device does not...</li>
+<ul>
+<li>**CVE-2026-4670** (CVSS: 9.8, CRITICAL): Authentication bypass by primary weakness vulnerability in Progress Software MOVEit Automation allows Authentication Bypass....</li>
+<ul>
+<li>**CVE-2026-5174** (CVSS: 7.7, HIGH): Improper input validation vulnerability in Progress Software MOVEit Automation allows Privilege Escalation....</li>
+<ul>
+<li>**CVE-2022-50992** (CVSS: 7.5, HIGH): Weaver (Fanwei) E-cology 9.5 versions prior to 10.52 contain an arbitrary file read vulnerability in the XmlRpcServlet interface at the XML-RPC...</li>
+<ul>
+<li>**CVE-2022-50993** (CVSS: 9.8, CRITICAL): Weaver (Fanwei) E-office versions prior to 10.0_20221201 contain an unauthenticated arbitrary file upload vulnerability in the OfficeServer.php...</li>
+<ul>
+<li>**CVE-2025-51846** (CVSS: 7.5, HIGH): CryptPad 2025.3.1 allows unbounded WebSocket frame flood. A remote, unauthenticated attacker can significantly degrade or deny service for all users...</li>
+<ul>
+<li>**CVE-2025-71284** (CVSS: 9.8, CRITICAL): Synway SMG Gateway Management Software contains an OS command injection vulnerability in the RADIUS configuration endpoint at /en/9-2radius.php where...</li>
+<ul>
+<li>**CVE-2026-36760** (CVSS: 9.6, CRITICAL): An issue in the fileMd5 parameter in the /a/file/upload endpoint of JeeSite v5.15.1 allows authenticated attackers with file upload permissions to...</li>
+<ul>
+<li>**CVE-2026-36767** (CVSS: 10.0, CRITICAL): A path traversal vulnerability in the /content/images/add endpoint of shopizer v3.2.5 allows attackers write arbitrary files to any writeable path...</li>
+<ul>
+<li>**CVE-2026-33845** (CVSS: 7.5, HIGH): A flaw in GnuTLS DTLS handshake parsing allows malformed fragments with zero length and non-zero offset, leading to an integer underflow during...</li>
+<ul>
+<li>**CVE-2026-36762** (CVSS: 8.8, HIGH): An issue in the fileEntityId parameter in the /a/file/upload endpoint of JeeSite v5.15.1 allows authenticated attackers with file upload permissions...</li>
+<ul>
+<li>**CVE-2026-36765** (CVSS: 8.8, HIGH): An XML external entity (XXE) vulnerability in the /designer/loadReport endpoint of SpringBlade v4.8.0 allows authenticated attackers to execute...</li>
+<ul>
+<li>**CVE-2026-40595** (CVSS: 7.5, HIGH): Chartbrew is an open-source web application that can connect directly to databases and APIs and use the data to create charts. In version 4.9.0,...</li>
+<ul>
+<li>**CVE-2026-40600** (CVSS: 8.1, HIGH): Chartbrew is an open-source web application that can connect directly to databases and APIs and use the data to create charts. In version 4.9.0,...</li>
+<ul>
+<li>**CVE-2026-40601** (CVSS: 7.5, HIGH): Chartbrew is an open-source web application that can connect directly to databases and APIs and use the data to create charts. In version 4.9.0,...</li>
+<ul>
+<li>**CVE-2026-40904** (CVSS: 8.1, HIGH): Chartbrew is an open-source web application that can connect directly to databases and APIs and use the data to create charts. In version 4.9.0,...</li>
+<ul>
+<li>**CVE-2026-7461** (CVSS: 7.2, HIGH): Improper neutralization of inputs used in an OS command in the FSx Windows File Server volume mounting component in Amazon ECS Agent on Windows...</li>
+<ul>
+<li>**CVE-2025-46115** (CVSS: 7.5, HIGH): An issue in open5gs v.2.7.3 allows a remote attacker to cause a denial of service via a crafted PDU Session Modification Request...</li>
+<ul>
+<li>**CVE-2025-56568** (CVSS: 7.5, HIGH): Assertion failure vulnerability in the PCO (Protocol Configuration Options) parser in the SMF (Session Management Function) component of Open5GS...</li>
+<h2>THREAT INTELLIGENCE (149 Kết Quả)</h2>
+<h3>Indicators of Compromise (IOC)</h3>
+<table>
+<tr><td>#</td><td>Loại</td><td>Tên/Pattern</td><td>Score</td><td>Confidence</td></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>IOC</td><td>MacOS_Trojan_Adload_f6b18a0a</td><td>75</td><td>100%</td></tr>
+<tr><td>2</td><td>IOC</td><td>3c2aa3687ac9f466ce909e2cb12b07a5</td><td>75</td><td>100%</td></tr>
+<tr><td>3</td><td>IOC</td><td>win_pebbledash_auto</td><td>75</td><td>100%</td></tr>
+<tr><td>4</td><td>IOC</td><td>e9df1f28cfbc831b89a404816a0242ead5bb142c</td><td>75</td><td>100%</td></tr>
+<tr><td>5</td><td>IOC</td><td>e46907cfaf96d2fde8da8a0281e4e16958a968ed</td><td>75</td><td>100%</td></tr>
+<tr><td>6</td><td>IOC</td><td>b91b318a9fbb153409a846bf173e9d1bd0cc4dbf</td><td>75</td><td>100%</td></tr>
+<tr><td>7</td><td>IOC</td><td>b23a3738b6174f62e4696080f2d8a5f258799ce5</td><td>75</td><td>100%</td></tr>
+<tr><td>8</td><td>IOC</td><td>577c3a0ac66ff71d9541d983e37530500cb9f2a5</td><td>75</td><td>100%</td></tr>
+<tr><td>9</td><td>IOC</td><td>39c97ca820f31e7903ccb190fee02035ffdb37b9</td><td>75</td><td>100%</td></tr>
+<tr><td>10</td><td>IOC</td><td>2f78abc001534e28eb208a73245ce5389c40ddbe</td><td>75</td><td>100%</td></tr>
+</tbody>
+</table>
+<h3>Malware Families</h3>
+<table>
+<tr><td>#</td><td>Tên Malware</td><td>Loại</td><td>Bí Danh</td><td>Mô Tả</td></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>DocSwap</td><td></td><td></td><td>[DocSwap](https://attack.mitre.org/software/S9005) is an And...</td></tr>
+<tr><td>2</td><td>Crocodilus</td><td></td><td></td><td>[Crocodilus](https://attack.mitre.org/software/S9004) is an ...</td></tr>
+<tr><td>3</td><td>DOWNIISSA</td><td></td><td></td><td>[DOWNIISSA](https://attack.mitre.org/software/S9021) is a sh...</td></tr>
+<tr><td>4</td><td>DRYHOOK</td><td></td><td></td><td>[DRYHOOK](https://attack.mitre.org/software/S9013) is Python...</td></tr>
+<tr><td>5</td><td>LazyWiper</td><td></td><td></td><td>[LazyWiper](https://attack.mitre.org/software/S9039) is a de...</td></tr>
+<tr><td>6</td><td>BRUSHFIRE</td><td></td><td></td><td>[BRUSHFIRE](https://attack.mitre.org/software/S9011) is a pa...</td></tr>
+<tr><td>7</td><td>Shai-Hulud</td><td></td><td></td><td>[Shai-Hulud](https://attack.mitre.org/software/S9008) is a s...</td></tr>
+<tr><td>8</td><td>SPAWNCHIMERA</td><td></td><td></td><td>[SPAWNCHIMERA](https://attack.mitre.org/software/S9024) is a...</td></tr>
+<tr><td>9</td><td>PHASEJAM</td><td></td><td></td><td>[PHASEJAM](https://attack.mitre.org/software/S9014) is a dro...</td></tr>
+<tr><td>10</td><td>LAMEHUG</td><td></td><td>PROMPTSTEAL</td><td>[LAMEHUG](https://attack.mitre.org/software/S9035) is Python...</td></tr>
+</tbody>
+</table>
+<h3>Attack Patterns (MITRE ATT&CK)</h3>
+<table>
+<tr><td>#</td><td>Technique</td><td>Tên</td><td>Mô Tả</td></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>N/A</td><td>Block Communications</td><td>Operational technology communications occur over serial COM,...</td></tr>
+<tr><td>2</td><td>N/A</td><td>Unauthorized Message</td><td>Adversaries may send unauthorized messages to ICS systems an...</td></tr>
+<tr><td>3</td><td>N/A</td><td>Online Edit</td><td>Adversaries may execute an online edit of a PLC to update pa...</td></tr>
+<tr><td>4</td><td>N/A</td><td>Broadcast Discovery</td><td>Adversaries may perform broadcast discovery requests to enum...</td></tr>
+<tr><td>5</td><td>N/A</td><td>Modify Firmware</td><td>Firmware is low-level software embedded in hardware that ena...</td></tr>
+<tr><td>6</td><td>N/A</td><td>Reporting Message</td><td>Adversaries may block or prevent a reporting message from re...</td></tr>
+<tr><td>7</td><td>N/A</td><td>Download All</td><td>Adversaries may execute a full program download to a PLC to ...</td></tr>
+<tr><td>8</td><td>N/A</td><td>Module Firmware</td><td>Adversaries may install malicious or vulnerable firmware ont...</td></tr>
+<tr><td>9</td><td>N/A</td><td>Hardcoded Credentials</td><td>Adversaries may leverage credentials that are hardcoded in s...</td></tr>
+<tr><td>10</td><td>N/A</td><td>System Firmware</td><td>System firmware on modern assets is often designed with an u...</td></tr>
+</tbody>
+</table>
+<h2>THIET BI BI ANH HUONG (3 Thiết Bị)</h2>
+<table>
+<tr><td>Thiết Bị</td><td>IP</td><td>OS</td><td>CVE</td><td>Mức Độ</td><td>Phần Mềm Lỗi</td></tr>
+</thead>
+<tbody>
+<tr><td>web-server-01</td><td>192.168.1.10</td><td>Windows Server 2019 10.0.17763</td><td>CVE-2022-50993</td><td>**CRITICAL**</td><td>PHP 7.4.3</td></tr>
+<tr><td>web-server-01</td><td>192.168.1.10</td><td>Windows Server 2019 10.0.17763</td><td>CVE-2025-71284</td><td>**CRITICAL**</td><td>PHP 7.4.3</td></tr>
+<tr><td>app-server-01</td><td>192.168.1.30</td><td>CentOS 7.9</td><td>CVE-2026-36765</td><td>**HIGH**</td><td>Spring Framework 5.3.18</td></tr>
+<tr><td>db-server-01</td><td>192.168.1.20</td><td>Ubuntu 20.04</td><td>CVE-2026-36766</td><td>**MEDIUM**</td><td>OpenSSH 8.2p1</td></tr>
+<tr><td>web-server-01</td><td>192.168.1.10</td><td>Windows Server 2019 10.0.17763</td><td>CVE-2026-38939</td><td>**MEDIUM**</td><td>PHP 7.4.3</td></tr>
+<tr><td>web-server-01</td><td>192.168.1.10</td><td>Windows Server 2019 10.0.17763</td><td>CVE-2026-38940</td><td>**MEDIUM**</td><td>PHP 7.4.3</td></tr>
+<tr><td>app-server-01</td><td>192.168.1.30</td><td>CentOS 7.9</td><td>CVE-2026-36764</td><td>**MEDIUM**</td><td>Spring Framework 5.3.18</td></tr>
+<tr><td>app-server-01</td><td>192.168.1.30</td><td>CentOS 7.9</td><td>CVE-2026-36763</td><td>**MEDIUM**</td><td>Spring Framework 5.3.18</td></tr>
+</tbody>
+</table>
+<h3>Chi Tiết Khắc Phục Từng Thiết Bị</h3>
+<h4>web-server-01 (192.168.1.10) - **CRITICAL**</h4>
+<ul>
+<li>**OS**: Windows Server 2019 10.0.17763</li>
+<ul>
+<li>**Criticality**: HIGH</li>
+<p><strong>Lý do bị ảnh hưởng:</strong></p>
+<ul>
+<li>**CVE-2022-50993** (CVSS: 9.8): Weaver (Fanwei) E-office versions prior to 10.0_20221201 contain an...</li>
+<ul>
+<li>**CVE-2025-71284** (CVSS: 9.8): Synway SMG Gateway Management Software contains an OS command injection...</li>
+<ul>
+<li>**CVE-2026-38939** (CVSS: 6.1): Cross Site Scripting vulnerability in andrewtch88 mvc-ecommerce v.1.0 allows a...</li>
+<ul>
+<li>**CVE-2026-38940** (CVSS: 6.1): Cross Site Scripting vulnerability in RafyMrX TOKO-ONLINE-ROTI v.1.0 allows a...</li>
+<p><strong>Hướng khắc phục:</strong></p>
+<ul>
+<li>⚡ **Ưu tiên CRITICAL**: Xử lý ngay trong 24 giờ</li>
+<ul>
+<li>**Cập nhật phần mềm**: Nâng cấp PHP 7.4.3 lên phiên bản mới nhất</li>
+<ul>
+<li>**Kiểm tra logs**: Tìm kiếm dấu hiệu bị khai thác (suspicious activities, error patterns)</li>
+<ul>
+<li>**Network segmentation**: Giới hạn truy cập từ bên ngoài nếu chưa có</li>
+<ul>
+<li>**Credential reset**: Reset tất cả passwords, invalidate sessions nếu cần</li>
+<ul>
+<li>**MFA enforcement**: Enable Multi-Factor Authentication nếu chưa có</li>
+<h4>app-server-01 (192.168.1.30) - **HIGH**</h4>
+<ul>
+<li>**OS**: CentOS 7.9</li>
+<ul>
+<li>**Criticality**: HIGH</li>
+<p><strong>Lý do bị ảnh hưởng:</strong></p>
+<ul>
+<li>**CVE-2026-36765** (CVSS: 8.8): An XML external entity (XXE) vulnerability in the /designer/loadReport endpoint...</li>
+<ul>
+<li>**CVE-2026-36764** (CVSS: 5.0): A Server-Side Request Forgery (SSRF) in the /ureport/datasource/testConnection...</li>
+<ul>
+<li>**CVE-2026-36763** (CVSS: 6.1): A stored cross-site scripting (XSS) vulnerability in the...</li>
+<p><strong>Hướng khắc phục:</strong></p>
+<ul>
+<li>🔴 **Ưu tiên HIGH**: Xử lý trong 72 giờ</li>
+<ul>
+<li>**Cập nhật phần mềm**: Nâng cấp Spring Framework 5.3.18 lên phiên bản mới nhất</li>
+<ul>
+<li>**Kiểm tra logs**: Tìm kiếm dấu hiệu bị khai thác (suspicious activities, error patterns)</li>
+<ul>
+<li>**Network segmentation**: Giới hạn truy cập từ bên ngoài nếu chưa có</li>
+<ul>
+<li>**Credential reset**: Reset tất cả passwords, invalidate sessions nếu cần</li>
+<ul>
+<li>**MFA enforcement**: Enable Multi-Factor Authentication nếu chưa có</li>
+<h4>db-server-01 (192.168.1.20) - **MEDIUM**</h4>
+<ul>
+<li>**OS**: Ubuntu 20.04</li>
+<ul>
+<li>**Criticality**: CRITICAL</li>
+<p><strong>Lý do bị ảnh hưởng:</strong></p>
+<ul>
+<li>**CVE-2026-36766** (CVSS: 5.4): Multiple authenticated cross-site scripting (XSS) vulnerabilities in the...</li>
+<p><strong>Hướng khắc phục:</strong></p>
+<ul>
+<li>🟡 **Ưu tiên MEDIUM**: Lên lịch xử lý trong 2 tuần</li>
+<ul>
+<li>**Cập nhật phần mềm**: Nâng cấp OpenSSH 8.2p1 lên phiên bản mới nhất</li>
+<ul>
+<li>**Kiểm tra logs**: Tìm kiếm dấu hiệu bị khai thác (suspicious activities, error patterns)</li>
+<ul>
+<li>**Network segmentation**: Giới hạn truy cập từ bên ngoài nếu chưa có</li>
+<ul>
+<li>**Credential reset**: Reset tất cả passwords, invalidate sessions nếu cần</li>
+<ul>
+<li>**MFA enforcement**: Enable Multi-Factor Authentication nếu chưa có</li>
+<hr/>
+<p><em>Tạo bởi CyberSec Multi-Agent System | 07/05/2026 21:36:30</em></p>
+<p><em>Model: Ollama Local | Report ID: 20260507_213630</em></p>
+</div>
+<footer>
+<p>CyberSec Multi-Agent System | Ollama Local Edition</p>
+</footer>
+</body>
+</html>
