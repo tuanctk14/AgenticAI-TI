@@ -95,6 +95,7 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
                         "score": 75,
                         "confidence": n.get("confidence", 0),
                         "description": n.get("description", "")[:300] if n.get("description") else "",
+                        "created_at": n.get("created_at"),
                     })
 
         # Process malwares
@@ -110,6 +111,7 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
                         "aliases": n.get("aliases", []) or [],
                         "score": 80,
                         "description": n.get("description", "")[:300] if n.get("description") else "",
+                        "created_at": n.get("created_at"),
                     })
 
         # Process threat actors
@@ -124,6 +126,7 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
                         "aliases": n.get("aliases", []) or [],
                         "score": 85,
                         "description": n.get("description", "")[:300] if n.get("description") else "",
+                        "created_at": n.get("created_at"),
                     })
 
         # Process attack patterns
@@ -138,11 +141,12 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
                         "technique_id": n.get("x_mitre_id", "N/A"),
                         "score": 70,
                         "description": n.get("description", "")[:300] if n.get("description") else "",
+                        "created_at": n.get("created_at"),
                     })
 
         # Client-side date filtering dùng created_at field
         if start_date or end_date:
-            from datetime import datetime
+            from datetime import datetime, timezone
             filtered_results = []
             for r in results:
                 created_at_str = r.get("created_at")
@@ -151,23 +155,31 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
                     continue
 
                 try:
-                    # Parse created_at (format: 2026-05-05T06:05:18.797Z)
+                    # Parse created_at (format: 2026-05-05T06:05:18.797Z) - luôn có timezone
                     created_at = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
 
-                    # Lọc theo start_date
+                    # Lọc theo start_date - ensure timezone aware
                     if start_date:
+                        # start_date từ main.py không có Z suffix, nên thêm +00:00
                         start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+                        # Nếu naive, thêm timezone UTC
+                        if start_dt.tzinfo is None:
+                            start_dt = start_dt.replace(tzinfo=timezone.utc)
                         if created_at < start_dt:
                             continue
 
-                    # Lọc theo end_date
+                    # Lọc theo end_date - ensure timezone aware
                     if end_date:
+                        # end_date từ main.py không có Z suffix, nên thêm +00:00
                         end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+                        # Nếu naive, thêm timezone UTC
+                        if end_dt.tzinfo is None:
+                            end_dt = end_dt.replace(tzinfo=timezone.utc)
                         if created_at > end_dt:
                             continue
 
                     filtered_results.append(r)
-                except (ValueError, AttributeError, TypeError):
+                except (ValueError, AttributeError, TypeError) as e:
                     # Nếu parse fail, skip entity này
                     continue
 
