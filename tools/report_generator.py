@@ -97,8 +97,14 @@ def _build_report_from_state(
     # Dashboard cho executive_summary
     if report_type == "executive_summary":
         cves = state.get("collected_cves") or []
+        indicators = state.get("collected_indicators") or []
         devices = state.get("matched_devices") or []
         device_cve_map = state.get("device_cve_map") or {}
+
+        # Count IOC/Malware
+        ioc_count = len([i for i in indicators if i.get("entity_type") == "Indicator"])
+        malware_count = len([i for i in indicators if i.get("entity_type") == "Malware"])
+        attack_pattern_count = len([i for i in indicators if i.get("entity_type") == "Attack Pattern"])
 
         # Tính Risk Score
         risk_score = 0
@@ -124,12 +130,15 @@ def _build_report_from_state(
         unique_devices = len({d['device_id'] for d in devices}) if devices else len(device_cve_map)
 
         lines += [
-            "\n## EXECUTIVE DASHBOARD",
+            "\n## DASHBOARD",
             f"\n| Metric | Value |",
             f"|--------|-------|",
             f"| Risk Score | {risk_score}/100 |",
             f"| Risk Level | **{risk_level}** |",
             f"| Total CVEs | {len(cves)} |",
+            f"| IOC (Indicators) | {ioc_count} |",
+            f"| Malware Families | {malware_count} |",
+            f"| Attack Patterns | {attack_pattern_count} |",
             f"| Affected Devices | {unique_devices} |",
             f"| Critical Matches | {len([d for d in devices if d.get('risk_level') == 'CRITICAL'])} |",
             "",
