@@ -145,51 +145,6 @@ def _build_report_from_state(
             "",
         ]
 
-        # Top Critical Actions by Device (not CVE)
-        if device_cve_map:
-            lines += [
-                "\n## TOP CRITICAL DEVICES (Device-Level Risk)",
-                "",
-                "| Priority | Device | Hostname | CVE Count | Max Risk | Action |",
-                "|----------|--------|----------|-----------|----------|--------|",
-            ]
-
-            # Sort devices by risk and CVE count
-            sorted_devices = sorted(
-                device_cve_map.items(),
-                key=lambda x: (
-                    len([r for r in x[1].get("risk_levels", {}).values() if r == "CRITICAL"]),
-                    len(x[1].get("cve_ids", []))
-                ),
-                reverse=True
-            )
-
-            for i, (device_id, data) in enumerate(sorted_devices[:3], 1):
-                risk_levels = data.get("risk_levels", {})
-                max_risk = max(risk_levels.values()) if risk_levels else "LOW"
-                hostname = data["device_info"].get("hostname", "N/A")
-                cve_count = data.get("unique_cve_count", 0)
-
-                lines.append(
-                    f"| P{i} | {device_id} | {hostname} | {cve_count} "
-                    f"| **{max_risk}** | Patch & Update |"
-                )
-            lines.append("")
-        elif devices:
-            critical_devices = [d for d in devices if d.get("criticality") == "CRITICAL"][:3]
-            if critical_devices:
-                lines += [
-                    "\n## TOP 3 CRITICAL ACTIONS",
-                    "",
-                    "| Priority | Device | CVE | Action | Timeline |",
-                    "|----------|--------|-----|--------|----------|",
-                ]
-                for i, d in enumerate(critical_devices, 1):
-                    lines.append(
-                        f"| P{i} | {d['hostname']} | {d['cve_id']} "
-                        f"| Patch immediately | 24-48 hours |"
-                    )
-                lines.append("")
 
     # CVEs - hiển thị cho tất cả loại báo cáo
     cves: list = state.get("collected_cves") or []
