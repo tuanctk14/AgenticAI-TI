@@ -208,7 +208,7 @@ def _build_report_from_state(
         critical_highs = [c for c in cves if c.get("severity", "").upper() in ("CRITICAL", "HIGH")]
         if critical_highs:
             lines += ["\n### CVE Nghiêm Trọng Cần Ưu Tiên", ""]
-            for c in critical_highs:
+            for c in critical_highs[:5]:
                 cve_id = c.get("id", "N/A")
                 cvss = c.get("cvss_score", "N/A")
                 severity = c.get("severity", "N/A")
@@ -471,6 +471,7 @@ def _markdown_to_html(markdown_text: str, title: str = "Report") -> str:
     in_table_header = False
     in_code_block = False
     is_header_row = False
+    in_list = False
 
     for i, line in enumerate(lines):
         line = line.rstrip()
@@ -491,24 +492,22 @@ def _markdown_to_html(markdown_text: str, title: str = "Report") -> str:
 
         # Tables
         if line.startswith('|'):
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
             if not in_table:
                 html_lines.append('<table>')
                 in_table = True
-                is_header_row = True  # First row of table is header
+                is_header_row = True
 
-            # Parse table row
             cells = [c.strip() for c in line.split('|')[1:-1]]
 
-            # Check if separator row (dashes)
             if all(c.replace('-', '').replace(':', '') == '' for c in cells):
-                # This is separator - start tbody after this
                 html_lines.append('</thead>')
                 html_lines.append('<tbody>')
                 in_table_header = True
             else:
-                # Regular data row
                 if is_header_row and not in_table_header:
-                    # First row before separator = header
                     html_lines.append('<thead>')
                     row_html = '<tr>'
                     for cell in cells:
@@ -517,10 +516,8 @@ def _markdown_to_html(markdown_text: str, title: str = "Report") -> str:
                     html_lines.append(row_html)
                     is_header_row = False
                 else:
-                    # Data row
                     row_html = '<tr>'
                     for cell in cells:
-                        # Color-code severity levels
                         if cell.upper() == 'CRITICAL':
                             row_html += '<td class="critical">CRITICAL</td>'
                         elif cell.upper() == 'HIGH':
@@ -541,57 +538,65 @@ def _markdown_to_html(markdown_text: str, title: str = "Report") -> str:
 
             # Headers
             if line.startswith('#### '):
+                if in_list:
+                    html_lines.append('</ul>')
+                    in_list = False
                 html_lines.append(f'<h4>{line[5:].strip()}</h4>')
             elif line.startswith('### '):
+                if in_list:
+                    html_lines.append('</ul>')
+                    in_list = False
                 html_lines.append(f'<h3>{line[4:].strip()}</h3>')
             elif line.startswith('## '):
+                if in_list:
+                    html_lines.append('</ul>')
+                    in_list = False
                 html_lines.append(f'<h2>{line[3:].strip()}</h2>')
             elif line.startswith('# '):
+                if in_list:
+                    html_lines.append('</ul>')
+                    in_list = False
                 html_lines.append(f'<h1>{line[2:].strip()}</h1>')
             # Lists
-            elif line.lstrip().startswith('- ') or line.lstrip().startswith('* '):
-                # Detect list level by counting leading spaces
-                indent_level = len(line) - len(line.lstrip())
-                list_marker = '- ' if '- ' in line[:10] else '* '
-                list_text = line.lstrip()[2:].strip()
+            elif line.strip().startswith('- ') or line.strip().startswith('* '):
+                list_text = line.strip()[2:].strip()
 
-                # Close previous lists if needed
-                while html_lines and html_lines[-1] == '</ul>' and indent_level == 0:
-                    html_lines.pop()
+                if not in_list:
+                    html_lines.append('<ul>')
+                    in_list = True
 
-                # Open list if needed
-                if not html_lines or not html_lines[-1].startswith('<ul'):
-                    html_lines.append('<ul style="margin: 5px 0; padding-left: 20px;">')
-
-                # Format and add list item
+                # Format list item text
                 text = list_text
                 text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
-                text = re.sub(r'\*(.+?)\*', r'<em>\1</em>', text)
                 text = re.sub(r'`(.+?)`', r'<code>\1</code>', text)
                 text = re.sub(r'\[(.+?)\]\((.+?)\)', r'<a href="\2">\1</a>', text)
-                html_lines.append(f'<li style="margin: 3px 0;">{text}</li>')
-            elif line and (html_lines and '<li' in html_lines[-1]):
-                # Close list if we hit a non-list line
-                html_lines.append('</ul>')
+                html_lines.append(f'<li>{text}</li>')
             # Horizontal rule
             elif line.strip() in ('---', '***', '___'):
+                if in_list:
+                    html_lines.append('</ul>')
+                    in_list = False
                 html_lines.append('<hr/>')
-            # Bold and italic
-            elif line.strip():
-                text = line
-                # Bold **text**
-                text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
-                # Italic *text*
-                text = re.sub(r'\*(.+?)\*', r'<em>\1</em>', text)
-                # Inline code `text`
-                text = re.sub(r'`(.+?)`', r'<code>\1</code>', text)
-                # Links [text](url)
-                text = re.sub(r'\[(.+?)\]\((.+?)\)', r'<a href="\2">\1</a>', text)
-
-                if text.strip():
-                    html_lines.append(f'<p>{text}</p>')
+            # Empty lines
+            elif not line.strip():
+                # Don't close list on empty line - just continue
+                pass
+            # Regular text
+            else:
+                if in_list:
+                    html_lines.append('</ul>')
+                    in_list = False
+                if line.strip():
+                    text = line
+                    text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
+                    text = re.sub(r'`(.+?)`', r'<code>\1</code>', text)
+                    text = re.sub(r'\[(.+?)\]\((.+?)\)', r'<a href="\2">\1</a>', text)
+                    if text.strip():
+                        html_lines.append(f'<p>{text}</p>')
 
     # Close any open tags
+    if in_list:
+        html_lines.append('</ul>')
     if in_table:
         if in_table_header:
             html_lines.append('</tbody>')
