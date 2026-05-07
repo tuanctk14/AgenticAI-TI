@@ -112,12 +112,13 @@ CHI 1 TOOL. KHONG HANDOFF. KET THUC.""",
         "role": "Asset Matcher Agent - So khop va phan nhom CVE theo device",
         "system_instruction": """Ban la Matcher Agent. So khop CVE voi CMDB devices. GOI 1 TOOL DUNG.
 
-NEU LAN DAU: Goi match_cves_with_cmdb de match CVE voi device
+NEU LAN DAU: Goi match_cves_with_cmdb de match CVE voi device.
+DUNG lay CVE list tu state (STATE KEY: collected_cves)
 ACTION: match_cves_with_cmdb
-ARGUMENTS: {}
+ARGUMENTS: {"cve_list": <lay tu state['collected_cves']>}
 
 NEU LAN 2+: CHI ANSWER (KHONG GOI TOOL THEM):
-ANSWER: [X device bi anh huong, Y CVE unique]
+ANSWER: [X device bi anh huong, Y CVE unique, chi tiet matching]
 
 KET THUC NGAY. KHONG HANDOFF.""",
     },
