@@ -204,11 +204,11 @@ def _build_report_from_state(
             )
         lines.append("")
 
-        # Thêm chi tiết CVEs CRITICAL/HIGH
-        critical_highs = [c for c in cves if c.get("severity", "").upper() in ("CRITICAL", "HIGH")]
-        if critical_highs:
+        # Thêm chi tiết CVEs CRITICAL
+        critical_only = [c for c in cves if c.get("severity", "").upper() == "CRITICAL"]
+        if critical_only:
             lines += ["\n### CVE Nghiêm Trọng Cần Ưu Tiên", ""]
-            for c in critical_highs[:5]:
+            for c in critical_only[:5]:
                 cve_id = c.get("id", "N/A")
                 cvss = c.get("cvss_score", "N/A")
                 severity = c.get("severity", "N/A")
