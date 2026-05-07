@@ -57,7 +57,7 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all")
     try:
         resp = requests.post(
             f"{OPENCTI_URL}/graphql",
-            json={"query": gql, "variables": {"search": search_term, "first": 50}},
+            json={"query": gql, "variables": {"search": search_term, "first": 500}},
             headers={"Authorization": f"Bearer {OPENCTI_TOKEN}", "Content-Type": "application/json"},
             timeout=15,
         )
