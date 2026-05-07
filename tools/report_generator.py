@@ -115,6 +115,9 @@ def _build_report_from_state(
                     "entity_type": "Indicator",
                     "id": ioc.get("id"),
                     "name": f"{ioc.get('type', 'unknown').upper()}: {ioc.get('value', '')}",
+                    "type": ioc.get("type"),
+                    "value": ioc.get("value"),
+                    "threat_actor": ioc.get("threat_actor", ""),
                     "source": "KB",
                 })
             for mal in kb_malwares:
@@ -122,6 +125,8 @@ def _build_report_from_state(
                     "entity_type": "Malware",
                     "id": mal.get("id"),
                     "name": mal.get("malware_family", ""),
+                    "type": mal.get("type"),
+                    "threat_actor": mal.get("threat_actor", ""),
                     "source": "KB",
                 })
 
@@ -222,7 +227,11 @@ def _build_report_from_state(
                 "entity_type": "Indicator",
                 "id": ioc.get("id"),
                 "name": f"{ioc.get('type', 'unknown').upper()}: {ioc.get('value', '')}",
+                "type": ioc.get("type", "indicator"),
+                "value": ioc.get("value", ""),
                 "description": ioc.get("description", ""),
+                "cvss_score": ioc.get("cvss_score", "N/A"),
+                "threat_actor": ioc.get("threat_actor", ""),
                 "score": ioc.get("cvss_score", 0) / 10 if ioc.get("cvss_score") else 0,
                 "confidence": 80,
                 "source": "KB",
@@ -232,8 +241,11 @@ def _build_report_from_state(
                 "entity_type": "Malware",
                 "id": mal.get("id"),
                 "name": mal.get("malware_family", ""),
+                "type": mal.get("type", ""),
                 "malware_types": [mal.get("type", "")],
                 "description": mal.get("description", ""),
+                "cvss_score": mal.get("cvss_score", "N/A"),
+                "threat_actor": mal.get("threat_actor", ""),
                 "aliases": [mal.get("id", "")],
                 "source": "KB",
             })
@@ -249,26 +261,36 @@ def _build_report_from_state(
         # Indicators of Compromise
         if ioc_list:
             lines += ["\n### Indicators of Compromise (IOC)", ""]
-            lines.append("| # | Loại | Tên/Pattern | Score | Confidence |")
-            lines.append("|---|------|-------------|-------|------------|")
+            lines.append("| # | Loại | Giá Trị/Pattern | CVSS | Threat Actor |")
+            lines.append("|---|------|-----------------|------|--------------|")
             for i, ioc in enumerate(ioc_list[:10], 1):
-                name = ioc.get("name", "N/A")
-                score = ioc.get("score", 0)
-                conf = ioc.get("confidence", 0)
-                lines.append(f"| {i} | IOC | {name} | {score} | {conf}% |")
+                # Get actual type from KB (ip, domain, sha256, email, url, mutex, etc)
+                ioc_type = ioc.get("type", "indicator").upper()
+                # Get actual value/pattern
+                value = ioc.get("value", ioc.get("pattern", "N/A"))
+                # Truncate long hashes/values
+                if len(str(value)) > 50:
+                    value = str(value)[:47] + "..."
+                cvss = ioc.get("cvss_score", "N/A")
+                threat_actor = ioc.get("threat_actor", "-")
+                if threat_actor and threat_actor != "-":
+                    threat_actor = threat_actor[:20]  # Truncate long names
+                lines.append(f"| {i} | {ioc_type} | {value} | {cvss} | {threat_actor} |")
             lines.append("")
 
         # Malware Families
         if malware_list:
             lines += ["\n### Malware Families", ""]
-            lines.append("| # | Tên Malware | Loại | Bí Danh | Mô Tả |")
-            lines.append("|---|-------------|------|--------|-------|")
+            lines.append("| # | Tên Malware | Loại | CVSS | Threat Actor |")
+            lines.append("|---|-------------|------|------|--------------|")
             for i, mal in enumerate(malware_list[:10], 1):
                 name = mal.get("name", "N/A")
-                mal_types = ", ".join(mal.get("malware_types", [])[:2])
-                aliases = ", ".join(mal.get("aliases", [])[:2])
-                desc = mal.get("description", "N/A")[:60]
-                lines.append(f"| {i} | {name} | {mal_types} | {aliases} | {desc}... |")
+                mal_type = mal.get("type", ", ".join(mal.get("malware_types", ["unknown"]))[:20])
+                cvss = mal.get("cvss_score", "N/A")
+                threat_actor = mal.get("threat_actor", "-")
+                if threat_actor and threat_actor != "-":
+                    threat_actor = threat_actor[:20]
+                lines.append(f"| {i} | {name} | {mal_type} | {cvss} | {threat_actor} |")
             lines.append("")
 
         # Attack Patterns
