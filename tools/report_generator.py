@@ -134,8 +134,6 @@ def _build_report_from_state(
             "\n## DASHBOARD",
             f"\n| Metric | Value |",
             f"|--------|-------|",
-            f"| Risk Score | {risk_score}/100 |",
-            f"| Risk Level | **{risk_level}** |",
             f"| Total CVEs | {len(cves)} |",
             f"| IOC (Indicators) | {ioc_count} |",
             f"| Malware Families | {malware_count} |",
