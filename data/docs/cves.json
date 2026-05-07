@@ -43,5 +43,10 @@
     "id": "CVE-2024-1708",
     "description": "ConnectWise ScreenConnect path traversal allows unauthenticated file read and authentication bypass",
     "cvss_score": 8.4
+  },
+  {
+    "id": "CVE-2024-99999",
+    "description": "Test CVE for upload",
+    "cvss_score": 9.0
   }
 ]

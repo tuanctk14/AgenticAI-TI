@@ -79,68 +79,96 @@
     ]
   },
   {
-    "id": "MAL-001",
-    "description": "ShadowPad modular backdoor used exclusively by Chinese APT groups allowing remote access and plugin-based capability expansion",
-    "cvss_score": 9.7,
-    "malware_family": "ShadowPad",
-    "type": "backdoor",
-    "threat_actor": "APT41",
-    "affected_software": [
-      "Windows",
-      "log4j",
-      "Apache"
+    "id": "IOC-LOCKBIT-001",
+    "description": "LockBit 3.0 ransomware executable encrypts files with AES-256 and appends .lockbit extension to victims",
+    "cvss_score": 9.8,
+    "type": "sha256",
+    "value": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+    "malware_family": "LockBit",
+    "tags": [
+      "ransomware",
+      "LockBit3",
+      "encryption"
     ]
   },
   {
-    "id": "MAL-003",
-    "description": "Cobalt Strike beacon used as post-exploitation framework for lateral movement credential dumping and C2 communication",
-    "cvss_score": 9.5,
-    "malware_family": "CobaltStrike",
-    "type": "post_exploitation",
-    "threat_actor": "Multiple",
-    "affected_software": [
-      "Windows",
-      "Windows Server",
-      "Active Directory"
-    ]
-  },
-  {
-    "id": "MAL-005",
-    "description": "Mimikatz credential dumping tool extracting plaintext passwords NTLM hashes and Kerberos tickets from Windows memory",
+    "id": "IOC-LOCKBIT-002",
+    "description": "LockBit 3.0 C2 negotiation site on Tor network used for ransom payment and victim communication",
     "cvss_score": 9.0,
-    "malware_family": "Mimikatz",
-    "type": "credential_dumper",
-    "threat_actor": "Multiple",
-    "affected_software": [
-      "Windows",
-      "Windows Server",
-      "Active Directory"
+    "type": "url",
+    "value": "lockbit-support.onion",
+    "malware_family": "LockBit",
+    "tags": [
+      "C2",
+      "ransomware",
+      "tor"
     ]
   },
   {
-    "id": "MAL-007",
-    "description": "PlugX remote access trojan with DLL sideloading persistence used by multiple Chinese APT groups for long-term espionage",
-    "cvss_score": 8.8,
-    "malware_family": "PlugX",
-    "type": "rat",
-    "threat_actor": "APT41",
-    "affected_software": [
-      "Windows",
-      "Windows Server"
-    ]
-  },
-  {
-    "id": "MAL-008",
-    "description": "StealC infostealer targeting browser credentials cryptocurrency wallets and email client data via fake software installer",
+    "id": "IOC-LOCKBIT-003",
+    "description": "LockBit mutex name created on infected systems to prevent double encryption",
     "cvss_score": 8.5,
-    "malware_family": "StealC",
-    "type": "infostealer",
-    "threat_actor": "Various",
-    "affected_software": [
-      "Windows",
-      "Chrome",
-      "Firefox",
-      "Outlook"
+    "type": "mutex",
+    "value": "Global\\LockBit_Mutex_2023",
+    "malware_family": "LockBit",
+    "tags": [
+      "mutex",
+      "ransomware",
+      "indicator"
+    ]
+  },
+  {
+    "id": "IOC-BLACKCAT-001",
+    "description": "BlackCat ALPHV ransomware Rust binary targeting Windows and Linux including VMware ESXi with ChaCha20 encryption",
+    "cvss_score": 9.9,
+    "type": "sha256",
+    "value": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+    "malware_family": "BlackCat",
+    "tags": [
+      "ransomware",
+      "ALPHV",
+      "cross-platform",
+      "ESXi"
+    ]
+  },
+  {
+    "id": "IOC-BLACKCAT-002",
+    "description": "BlackCat ALPHV ransomware leak site on Tor publishing stolen victim data for triple extortion",
+    "cvss_score": 9.0,
+    "type": "url",
+    "value": "alphvuzxyxv6ylumd2ngp46xo3hiwizbmkjjjn5bfyjwpkrikx26tad.onion",
+    "malware_family": "BlackCat",
+    "tags": [
+      "leak-site",
+      "ransomware",
+      "extortion"
+    ]
+  },
+  {
+    "id": "IOC-EMOTET-001",
+    "description": "Emotet v5 loader DLL executed via rundll32 stealing Outlook credentials and hijacking email threads for spam",
+    "cvss_score": 9.2,
+    "type": "sha256",
+    "value": "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+    "malware_family": "Emotet",
+    "tags": [
+      "loader",
+      "banking-trojan",
+      "email-theft"
+    ]
+  },
+  {
+    "id": "IOC-EMOTET-002",
+    "description": "Emotet phishing campaign in Vietnam impersonating VietinBank invoice with malicious macro-enabled Excel attachment",
+    "cvss_score": 8.8,
+    "type": "email_subject",
+    "value": "Thông báo hoá đơn VietinBank tháng 10/2024",
+    "malware_family": "Emotet",
+    "tags": [
+      "phishing",
+      "vietnam",
+      "banking",
+      "macro"
     ]
   }
 ]
