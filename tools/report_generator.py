@@ -159,45 +159,165 @@ def _build_report_from_state(
             lines.append("")
         elif devices:
             critical_devices = [d for d in devices if d.get("criticality") == "CRITICAL"][:3]
-            lines += [
-                "\n## TOP 3 CRITICAL ACTIONS",
-                "",
-                "| Priority | Device | CVE | Action | Timeline |",
-                "|----------|--------|-----|--------|----------|",
-            ]
-            for i, d in enumerate(critical_devices, 1):
-                lines.append(
-                    f"| P{i} | {d['hostname']} | {d['cve_id']} "
-                    f"| Patch immediately | 24-48 hours |"
-                )
-            lines.append("")
+            if critical_devices:
+                lines += [
+                    "\n## TOP 3 CRITICAL ACTIONS",
+                    "",
+                    "| Priority | Device | CVE | Action | Timeline |",
+                    "|----------|--------|-----|--------|----------|",
+                ]
+                for i, d in enumerate(critical_devices, 1):
+                    lines.append(
+                        f"| P{i} | {d['hostname']} | {d['cve_id']} "
+                        f"| Patch immediately | 24-48 hours |"
+                    )
+                lines.append("")
 
-    # CVEs
+    # CVEs - hiển thị cho tất cả loại báo cáo
     cves: list = state.get("collected_cves") or []
-    if cves and report_type != "executive_summary":
-        lines += ["\n## CVE DA THU THAP", ""]
-        lines.append("| CVE ID | CVSS | Severity | Published |")
-        lines.append("|--------|------|----------|-----------|")
-        for c in cves:
+    if cves:
+        lines += [f"\n## DANH SACH CVE ({len(cves)} CVEs)", ""]
+        lines.append("| # | CVE ID | CVSS | Mức Độ | Ngày Công Bố |")
+        lines.append("|---|--------|------|--------|--------------|")
+        for i, c in enumerate(cves, 1):
             lines.append(
-                f"| {c.get('id','N/A')} | {c.get('cvss_score','N/A')} "
+                f"| {i} | **{c.get('id','N/A')}** | {c.get('cvss_score','N/A')} "
                 f"| {c.get('severity','N/A')} | {c.get('published','N/A')} |"
             )
-        lines.append(f"\nTong: {len(cves)} CVE")
+        lines.append("")
 
-    # Matched devices
+        # Thêm chi tiết CVEs CRITICAL/HIGH
+        critical_highs = [c for c in cves if c.get("severity", "").upper() in ("CRITICAL", "HIGH")]
+        if critical_highs:
+            lines += ["\n### CVE Nghiêm Trọng Cần Ưu Tiên", ""]
+            for c in critical_highs[:5]:  # Show top 5
+                cve_id = c.get("id", "N/A")
+                cvss = c.get("cvss_score", "N/A")
+                severity = c.get("severity", "N/A")
+                desc = c.get("description", "N/A")[:200]
+                lines.append(f"- **{cve_id}** (CVSS: {cvss}, {severity}): {desc}...")
+            lines.append("")
+
+    # IOC / Malware / Threat Intelligence
+    indicators: list = state.get("collected_indicators") or []
+    if indicators:
+        lines += [f"\n## THREAT INTELLIGENCE ({len(indicators)} Kết Quả)", ""]
+
+        # Chia theo entity type
+        ioc_list = [i for i in indicators if i.get("entity_type") == "Indicator"]
+        malware_list = [i for i in indicators if i.get("entity_type") == "Malware"]
+        pattern_list = [i for i in indicators if i.get("entity_type") == "Attack Pattern"]
+
+        # Indicators of Compromise
+        if ioc_list:
+            lines += ["\n### Indicators of Compromise (IOC)", ""]
+            lines.append("| # | Loại | Tên/Pattern | Score | Confidence |")
+            lines.append("|---|------|-------------|-------|------------|")
+            for i, ioc in enumerate(ioc_list[:10], 1):
+                name = ioc.get("name", "N/A")
+                score = ioc.get("score", 0)
+                conf = ioc.get("confidence", 0)
+                lines.append(f"| {i} | IOC | {name} | {score} | {conf}% |")
+            lines.append("")
+
+        # Malware Families
+        if malware_list:
+            lines += ["\n### Malware Families", ""]
+            lines.append("| # | Tên Malware | Loại | Bí Danh | Mô Tả |")
+            lines.append("|---|-------------|------|--------|-------|")
+            for i, mal in enumerate(malware_list[:10], 1):
+                name = mal.get("name", "N/A")
+                mal_types = ", ".join(mal.get("malware_types", [])[:2])
+                aliases = ", ".join(mal.get("aliases", [])[:2])
+                desc = mal.get("description", "N/A")[:60]
+                lines.append(f"| {i} | {name} | {mal_types} | {aliases} | {desc}... |")
+            lines.append("")
+
+        # Attack Patterns
+        if pattern_list:
+            lines += ["\n### Attack Patterns (MITRE ATT&CK)", ""]
+            lines.append("| # | Technique | Tên | Mô Tả |")
+            lines.append("|---|-----------|-----|-------|")
+            for i, pat in enumerate(pattern_list[:10], 1):
+                name = pat.get("name", "N/A")
+                pattern = pat.get("pattern", "N/A")[:30]
+                desc = pat.get("description", "N/A")[:60]
+                lines.append(f"| {i} | {pattern} | {name} | {desc}... |")
+            lines.append("")
+
+    # Matched devices with remediation
     devices: list = state.get("matched_devices") or []
     if devices:
-        lines += ["\n## THIET BI BI ANH HUONG", ""]
-        lines.append("| Hostname | IP | Department | CVE | Risk | Software |")
-        lines.append("|----------|----|------------|-----|------|---------|")
+        lines += [f"\n## THIET BI BI ANH HUONG ({len({d['device_id'] for d in devices})} Thiết Bị)", ""]
+
+        # Bảng tóm tắt
+        lines.append("| Thiết Bị | IP | OS | CVE | Mức Độ | Phần Mềm Lỗi |")
+        lines.append("|----------|----|----|-----|--------|-------------|")
         for d in devices[:20]:  # Limit to 20 rows for readability
             lines.append(
-                f"| {d['hostname']} | {d['ip']} | {d['department']} "
+                f"| {d['hostname']} | {d['ip']} | {d['os']} "
                 f"| {d['cve_id']} | **{d['risk_level']}** | {d['affected_software']} |"
             )
-        affected_count = len({d["device_id"] for d in devices})
-        lines.append(f"\nTong: {len(devices)} matches tren {affected_count} thiet bi")
+        lines.append("")
+
+        # Chi tiết từng thiết bị
+        lines += ["\n### Chi Tiết Khắc Phục Từng Thiết Bị", ""]
+
+        # Build CVE info lookup
+        cves_dict = {c["id"]: c for c in cves}
+
+        # Group devices with their CVEs
+        device_map = {}
+        for d in devices:
+            dev_id = d["device_id"]
+            if dev_id not in device_map:
+                device_map[dev_id] = {
+                    "hostname": d["hostname"],
+                    "ip": d["ip"],
+                    "os": d["os"],
+                    "criticality": d["criticality"],
+                    "cves": []
+                }
+            device_map[dev_id]["cves"].append(d)
+
+        # Render each device
+        for dev_id, dev_info in device_map.items():
+            risk_level = max([c.get("risk_level", "MEDIUM") for c in dev_info["cves"]],
+                            key=lambda x: (x == "CRITICAL", x == "HIGH"))
+            lines.append(f"\n#### {dev_info['hostname']} ({dev_info['ip']}) - **{risk_level}**")
+            lines.append(f"- **OS**: {dev_info['os']}")
+            lines.append(f"- **Criticality**: {dev_info['criticality']}")
+            lines.append("")
+
+            # Lý do bị ảnh hưởng
+            lines.append("**Lý do bị ảnh hưởng:**")
+            for cve_match in dev_info["cves"][:3]:  # Show top 3
+                cve_id = cve_match["cve_id"]
+                cve_info = cves_dict.get(cve_id, {})
+                desc = cve_info.get("description", "N/A")[:100]
+                cvss = cve_match.get("cvss_score", "N/A")
+                lines.append(f"- **{cve_id}** (CVSS: {cvss}): {desc}...")
+
+            lines.append("")
+            lines.append("**Hướng khắc phục:**")
+
+            # Add remediation steps for highest risk CVE
+            highest_risk_cve = max(dev_info["cves"], key=lambda x: float(x.get("cvss_score", 0)))
+            cve_id = highest_risk_cve["cve_id"]
+            cve_info = cves_dict.get(cve_id, {})
+            cvss = highest_risk_cve.get("cvss_score", 0)
+            software = highest_risk_cve.get("affected_software", "unknown")
+            desc = cve_info.get("description", "")
+
+            remediation = _get_remediation(float(cvss) if isinstance(cvss, (int, float)) else 0,
+                                          software, desc)
+            for step in remediation:
+                # step đã có dấu - ở đầu nên không cần thêm
+                if step.startswith("- "):
+                    lines.append(step)
+                else:
+                    lines.append(f"- {step}")
+            lines.append("")
 
     # MITRE ATT&CK
     attack: dict = state.get("attack_info") or {}
@@ -230,6 +350,44 @@ def _build_report_from_state(
         lines += ["\n## PHAN TICH & KHUYEN NGHI", "", answer]
 
     return "\n".join(lines)
+
+
+def _get_remediation(cve_score: float, affected_software: str, description: str) -> list[str]:
+    """Tạo danh sách hướng khắc phục dựa trên CVSS score và loại lỗ hổng."""
+    steps = []
+
+    # Bước 1: Timeline ưu tiên
+    if cve_score >= 9.0:
+        steps.append("⚡ **Ưu tiên CRITICAL**: Xử lý ngay trong 24 giờ")
+    elif cve_score >= 7.0:
+        steps.append("🔴 **Ưu tiên HIGH**: Xử lý trong 72 giờ")
+    else:
+        steps.append("🟡 **Ưu tiên MEDIUM**: Lên lịch xử lý trong 2 tuần")
+
+    # Bước 2: Action cơ bản
+    steps.append(f"- **Cập nhật phần mềm**: Nâng cấp {affected_software} lên phiên bản mới nhất")
+    steps.append("- **Kiểm tra logs**: Tìm kiếm dấu hiệu bị khai thác (suspicious activities, error patterns)")
+    steps.append("- **Network segmentation**: Giới hạn truy cập từ bên ngoài nếu chưa có")
+
+    # Bước 3: Dựa vào loại lỗ hổng từ description
+    desc_lower = description.lower()
+    if "rce" in desc_lower or "remote code execution" in desc_lower:
+        steps.append("- **RCE Detection**: Scan hệ thống bằng antivirus/EDR để phát hiện backdoor, shell scripts")
+        steps.append("- **Firewall rules**: Kiểm tra và tightening inbound connections từ internet")
+    elif "sql" in desc_lower:
+        steps.append("- **SQL Injection mitigation**: Review và sanitize tất cả SQL queries, dùng parameterized statements")
+        steps.append("- **Database audit**: Kiểm tra access logs của database, xóa suspicious accounts")
+    elif "auth" in desc_lower or "bypass" in desc_lower:
+        steps.append("- **Credential reset**: Reset tất cả passwords, invalidate sessions nếu cần")
+        steps.append("- **MFA enforcement**: Enable Multi-Factor Authentication nếu chưa có")
+    elif "path traversal" in desc_lower or "directory traversal" in desc_lower:
+        steps.append("- **File access audit**: Kiểm tra web server logs cho directory traversal attempts")
+        steps.append("- **Access control**: Đảm bảo proper file permissions và không expose sensitive directories")
+    elif "xss" in desc_lower or "cross-site" in desc_lower:
+        steps.append("- **Input validation**: Implement proper input sanitization và output encoding")
+        steps.append("- **CSP headers**: Thiết lập Content Security Policy headers")
+
+    return steps
 
 
 def _markdown_to_html(markdown_text: str, title: str = "Report") -> str:

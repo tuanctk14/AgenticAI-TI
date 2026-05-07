@@ -268,7 +268,7 @@ def _ask_time_range() -> tuple[str, str, int]:
     print("\n=== CHỌN KHOẢNG THỜI GIAN ===")
     print("  [Enter]            = 7 ngày gần đây (mặc định)")
     print("  Số ngày (VD: 30)   = 30 ngày gần đây")
-    print("  Ngày cụ thể        = 2026-04-01 to 2026-05-07")
+    print("  Ngày cụ thể        = 01-04-2026 to 07-05-2026  (định dạng DD-MM-YYYY)")
 
     user_input = input("\nNhập (để trống = 7 ngày): ").strip()
 
@@ -285,20 +285,38 @@ def _ask_time_range() -> tuple[str, str, int]:
         days_back = int(user_input)
         start_dt = end_dt - timedelta(days=days_back)
     else:
-        # Try to parse date range: "YYYY-MM-DD to YYYY-MM-DD"
+        # Try to parse date range: "DD-MM-YYYY to DD-MM-YYYY" hoặc "YYYY-MM-DD to YYYY-MM-DD"
         try:
             if " to " in user_input:
                 date_parts = user_input.split(" to ")
-                start_dt = datetime.fromisoformat(date_parts[0].strip())
-                end_dt = datetime.fromisoformat(date_parts[1].strip())
+                start_str = date_parts[0].strip()
+                end_str = date_parts[1].strip()
+
+                # Try DD-MM-YYYY format first
+                try:
+                    start_dt = datetime.strptime(start_str, "%d-%m-%Y")
+                    end_dt = datetime.strptime(end_str, "%d-%m-%Y")
+                except ValueError:
+                    # Fall back to YYYY-MM-DD format
+                    start_dt = datetime.fromisoformat(start_str)
+                    end_dt = datetime.fromisoformat(end_str)
+
+                # Make timezone aware
+                start_dt = start_dt.replace(tzinfo=timezone.utc)
+                end_dt = end_dt.replace(tzinfo=timezone.utc)
                 days_back = (end_dt.date() - start_dt.date()).days
             else:
                 # Try single date
-                start_dt = datetime.fromisoformat(user_input.strip())
+                try:
+                    start_dt = datetime.strptime(user_input.strip(), "%d-%m-%Y")
+                except ValueError:
+                    start_dt = datetime.fromisoformat(user_input.strip())
+                start_dt = start_dt.replace(tzinfo=timezone.utc)
                 end_dt = datetime.now(timezone.utc)
                 days_back = (end_dt.date() - start_dt.date()).days
         except ValueError:
-            print("❌ Format không hợp lệ, dùng 7 ngày mặc định")
+            print("❌ Format không hợp lệ (dùng DD-MM-YYYY hoặc YYYY-MM-DD), dùng 7 ngày mặc định")
+            end_dt = datetime.now(timezone.utc)
             start_dt = end_dt - timedelta(days=7)
             days_back = 7
 
@@ -306,7 +324,10 @@ def _ask_time_range() -> tuple[str, str, int]:
     start_date = start_dt.strftime("%Y-%m-%dT%H:%M:%S.000")
     end_date = end_dt.strftime("%Y-%m-%dT%H:%M:%S.000")
 
-    print(f"\n✅ Khoảng thời gian: {start_dt.date()} → {end_dt.date()} ({days_back} ngày)")
+    # Display in DD-MM-YYYY format
+    start_display = start_dt.strftime("%d-%m-%Y")
+    end_display = end_dt.strftime("%d-%m-%Y")
+    print(f"\n✅ Khoảng thời gian: {start_display} → {end_display} ({days_back} ngày)")
     return start_date, end_date, days_back
 
 
@@ -382,9 +403,11 @@ def _ask_and_export(state: dict, start_date: str, end_date: str):
     fmt_choice = input("\nChọn (1/2, mặc định 1): ").strip() or "1"
     export_format = "markdown" if fmt_choice == "2" else "html"
 
-    # Tạo báo cáo
-    date_range = f"{start_date[:10]} to {end_date[:10]}"
-    title = f"Security Report - {date_range}"
+    # Tạo báo cáo với format DD-MM-YYYY
+    start_fmt = f"{start_date[8:10]}-{start_date[5:7]}-{start_date[:4]}"
+    end_fmt = f"{end_date[8:10]}-{end_date[5:7]}-{end_date[:4]}"
+    date_range_display = f"{start_fmt} đến {end_fmt}"
+    title = f"Security Report - {date_range_display}"
 
     result = generate_report(
         report_type="executive_summary",
