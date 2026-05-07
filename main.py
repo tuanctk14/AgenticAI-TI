@@ -392,17 +392,11 @@ def _run_report_pipeline(start_date: str, end_date: str, days_back: int) -> dict
 
 def _ask_and_export(state: dict, start_date: str, end_date: str):
     """
-    Hỏi người dùng muốn xuất định dạng nào và tạo báo cáo.
+    Tạo báo cáo HTML.
     """
     print("\n" + "="*55)
     print("📄 XUẤT BÁO CÁO")
     print("="*55)
-    print("Chọn định dạng xuất:")
-    print("  1. HTML (.html) - Mở bằng browser, đẹp nhất")
-    print("  2. Markdown (.md) - Văn bản thuần, dễ đọc")
-
-    fmt_choice = input("\nChọn (1/2, mặc định 1): ").strip() or "1"
-    export_format = "markdown" if fmt_choice == "2" else "html"
 
     # Tạo báo cáo với format DD-MM-YYYY
     start_fmt = f"{start_date[8:10]}-{start_date[5:7]}-{start_date[:4]}"
@@ -415,18 +409,14 @@ def _ask_and_export(state: dict, start_date: str, end_date: str):
         title=title,
         content="",
         state=state,
-        export_format=export_format
+        export_format="html"
     )
 
     file_path = result.get("file_path", "")
     if file_path:
         print(f"\n✅ Báo cáo đã được lưu tại:")
         print(f"   {file_path}")
-        print(f"\n📂 Bạn có thể mở file này bằng:")
-        if export_format == "html":
-            print(f"   - Browser (double-click file)")
-        else:
-            print(f"   - Text editor hoặc Markdown viewer")
+        print(f"\n📂 Mở file bằng browser (double-click file)")
 
 
 # ── Interactive menu ───────────────────────────────────────────────────────
