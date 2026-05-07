@@ -15,20 +15,22 @@ def generate_report(
     title:       str = "",
     content:     str = "",
     state:       dict | None = None,
-    export_format: str = "markdown",
+    export_format: str = "html",
 ) -> dict:
     """
     Tạo báo cáo bảo mật và lưu ra file.
 
     report_type: vulnerability_assessment | executive_summary | patch_advisory |
                  threat_intel | incident_report
-    export_format: markdown (.md) | html (.html)
+    export_format: html (.html) - chỉ hỗ trợ HTML format
     """
-    print(f"  [Report] Tạo: type='{report_type}', title='{title}', format='{export_format}'")
+    # Force HTML format
+    export_format = "html"
+    print(f"  [Report] Tạo: type='{report_type}', title='{title}', format='html'")
 
     ts    = datetime.now()
     rid   = ts.strftime("%Y%m%d_%H%M%S")
-    ext   = ".html" if export_format == "html" else ".md"
+    ext   = ".html"
     fname = f"{report_type}_{rid}{ext}"
     fpath = os.path.join(REPORTS_DIR, fname)
 
@@ -51,9 +53,8 @@ def generate_report(
     )
     full_content = content + footer
 
-    # Convert sang HTML nếu cần
-    if export_format == "html":
-        full_content = _markdown_to_html(full_content, title or report_type)
+    # Convert sang HTML
+    full_content = _markdown_to_html(full_content, title or report_type)
 
     # Lưu file
     os.makedirs(REPORTS_DIR, exist_ok=True)
@@ -548,14 +549,30 @@ def _markdown_to_html(markdown_text: str, title: str = "Report") -> str:
             elif line.startswith('# '):
                 html_lines.append(f'<h1>{line[2:].strip()}</h1>')
             # Lists
-            elif line.startswith('- '):
-                if not html_lines[-1].startswith('<ul>'):
-                    html_lines.append('<ul>')
-                html_lines.append(f'<li>{line[2:].strip()}</li>')
-            elif line.startswith('* '):
-                if not html_lines[-1].startswith('<ul>'):
-                    html_lines.append('<ul>')
-                html_lines.append(f'<li>{line[2:].strip()}</li>')
+            elif line.lstrip().startswith('- ') or line.lstrip().startswith('* '):
+                # Detect list level by counting leading spaces
+                indent_level = len(line) - len(line.lstrip())
+                list_marker = '- ' if '- ' in line[:10] else '* '
+                list_text = line.lstrip()[2:].strip()
+
+                # Close previous lists if needed
+                while html_lines and html_lines[-1] == '</ul>' and indent_level == 0:
+                    html_lines.pop()
+
+                # Open list if needed
+                if not html_lines or not html_lines[-1].startswith('<ul'):
+                    html_lines.append('<ul style="margin: 5px 0; padding-left: 20px;">')
+
+                # Format and add list item
+                text = list_text
+                text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
+                text = re.sub(r'\*(.+?)\*', r'<em>\1</em>', text)
+                text = re.sub(r'`(.+?)`', r'<code>\1</code>', text)
+                text = re.sub(r'\[(.+?)\]\((.+?)\)', r'<a href="\2">\1</a>', text)
+                html_lines.append(f'<li style="margin: 3px 0;">{text}</li>')
+            elif line and (html_lines and '<li' in html_lines[-1]):
+                # Close list if we hit a non-list line
+                html_lines.append('</ul>')
             # Horizontal rule
             elif line.strip() in ('---', '***', '___'):
                 html_lines.append('<hr/>')
