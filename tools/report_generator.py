@@ -103,7 +103,15 @@ def _build_report_from_state(
         # Tính Risk Score
         risk_score = 0
         if cves:
-            avg_cvss = sum(float(c.get("cvss_score", 0) or 0) for c in cves) / len(cves)
+            scores = []
+            for c in cves:
+                score = c.get("cvss_score", 0) or 0
+                if score and score != "N/A":
+                    try:
+                        scores.append(float(score))
+                    except (ValueError, TypeError):
+                        pass
+            avg_cvss = sum(scores) / len(scores) if scores else 0.0
             risk_score = min(100, int(avg_cvss * 10))
 
         risk_level = (

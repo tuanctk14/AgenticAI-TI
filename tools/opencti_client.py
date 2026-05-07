@@ -28,28 +28,28 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all")
         print(f"  [OpenCTI] ❌ OPENCTI_URL không được set")
         return {"context": [], "source": "OpenCTI-ERROR", "error": "Missing OPENCTI_URL"}
 
-    # Multi-query GraphQL: lấy indicators + malwares + threatActorsGroup
-    # Simplified: removed stixCoreRelationships which causes subscription errors
+    # Multi-query GraphQL: lấy indicators + malwares + threatActorsGroup + attackPatterns
+    # Với ordering theo created_at desc (mới nhất trước)
     gql = """
     query GetThreatIntel($search: String, $first: Int) {
-      indicators(search: $search, first: $first) {
+      indicators(search: $search, first: $first, orderBy: created_at, orderMode: desc) {
         edges { node {
           id name indicator_types pattern confidence description
         }}
       }
-      malwares(search: $search, first: $first) {
+      malwares(search: $search, first: $first, orderBy: created_at, orderMode: desc) {
+        edges { node {
+          id name malware_types aliases description
+        }}
+      }
+      threatActorsGroup(search: $search, first: $first, orderBy: created_at, orderMode: desc) {
         edges { node {
           id name aliases description
         }}
       }
-      threatActorsGroup(search: $search, first: $first) {
+      attackPatterns(search: $search, first: $first, orderBy: created_at, orderMode: desc) {
         edges { node {
-          id name aliases description
-        }}
-      }
-      attackPatterns(search: $search, first: $first) {
-        edges { node {
-          id name description
+          id name x_mitre_id description
         }}
       }
     }"""
@@ -96,6 +96,7 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all")
                     results.append({
                         "id": n.get("id", "Unknown"), "name": n.get("name", "Unknown"),
                         "entity_type": "Malware",
+                        "malware_types": n.get("malware_types", []) or [],
                         "aliases": n.get("aliases", []) or [],
                         "score": 80,
                         "description": n.get("description", "")[:300] if n.get("description") else "",
@@ -124,6 +125,7 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all")
                     results.append({
                         "id": n.get("id", "Unknown"), "name": n.get("name", "Unknown"),
                         "entity_type": "Attack Pattern",
+                        "technique_id": n.get("x_mitre_id", "N/A"),
                         "score": 70,
                         "description": n.get("description", "")[:300] if n.get("description") else "",
                     })

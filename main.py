@@ -362,7 +362,7 @@ def _run_report_pipeline(start_date: str, end_date: str, days_back: int) -> dict
 
     # Bước 2: Lấy IOC/Malware từ OpenCTI
     print(f"\n2️⃣  Lấy IOC/Malware từ OpenCTI...")
-    ioc_result = fetch_opencti_indicators(search_term="recent threats")
+    ioc_result = fetch_opencti_indicators(search_term="")
     state["collected_indicators"] = ioc_result.get("context", [])
     print(f"   ✅ Tìm được {len(state['collected_indicators'])} IOC/Malware")
 
