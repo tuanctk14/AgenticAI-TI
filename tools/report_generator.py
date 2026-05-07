@@ -144,18 +144,20 @@ def _build_report_from_state(
         ]
 
 
-    # CVEs - hiển thị cho tất cả loại báo cáo
+    # CVEs - hiển thị chỉ CRITICAL và HIGH
     cves: list = state.get("collected_cves") or []
     if cves:
-        lines += [f"\n## DANH SÁCH CVE ({len(cves)} CVEs)", ""]
-        lines.append("| # | CVE ID | CVSS | Mức Độ | Ngày Công Bố |")
-        lines.append("|---|--------|------|--------|--------------|")
-        for i, c in enumerate(cves, 1):
-            lines.append(
-                f"| {i} | **{c.get('id','N/A')}** | {c.get('cvss_score','N/A')} "
-                f"| {c.get('severity','N/A')} | {c.get('published','N/A')} |"
-            )
-        lines.append("")
+        critical_high_cves = [c for c in cves if c.get("severity", "").upper() in ("CRITICAL", "HIGH")]
+        if critical_high_cves:
+            lines += [f"\n## DANH SÁCH CVE ({len(critical_high_cves)} CVEs CRITICAL/HIGH)", ""]
+            lines.append("| # | CVE ID | CVSS | Mức Độ | Ngày Công Bố |")
+            lines.append("|---|--------|------|--------|--------------|")
+            for i, c in enumerate(critical_high_cves, 1):
+                lines.append(
+                    f"| {i} | **{c.get('id','N/A')}** | {c.get('cvss_score','N/A')} "
+                    f"| {c.get('severity','N/A')} | {c.get('published','N/A')} |"
+                )
+            lines.append("")
 
         # Thêm chi tiết CVEs CRITICAL
         critical_only = [c for c in cves if c.get("severity", "").upper() == "CRITICAL"]
