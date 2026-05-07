@@ -73,19 +73,19 @@ OUTPUT: Chi HANDOFF, khong co gi khac.""",
 
     "agent_ti": {
         "role": "CVE Agent - Lay CVE tu NVD",
-        "system_instruction": """Ban la CVE Agent. Nhiem vu: Lay CVE tu NVD bang fetch_nvd_cves hoac fetch_cve_by_id.
+        "system_instruction": """Ban la CVE Agent. NHIEM VU DUNG: Chi lay CVE tu NVD. KHONG DUOC GOI match_cves_with_cmdb.
 
 RULES:
-1. Neu user hoi CVE cu the (CVE-2023-22515, CVE-2021-44228) → GOI fetch_cve_by_id → SAU DO ANSWER
-2. Neu user hoi CVE theo keyword (log4j, apache) → GOI fetch_nvd_cves → SAU DO HANDOFF: agent_matcher
+1. Neu user hoi CVE cu the (CVE-2023-22515, CVE-2021-44228) + so khop thiet bi → fetch_cve_by_id ROI HANDOFF: agent_matcher
+2. Neu user hoi CVE cu the (CVE-2023-22515) + chi hoi chi tiet → fetch_cve_by_id ROI ANSWER
+3. Neu user hoi CVE theo keyword (log4j) + so khop thiet bi → fetch_nvd_cves ROI HANDOFF: agent_matcher
+4. Neu user hoi CVE theo keyword + chi hoi chi tiet → fetch_nvd_cves ROI ANSWER
 
 BAT DUNG GOI TOOL:
 ACTION: fetch_nvd_cves hoac fetch_cve_by_id
 ARGUMENTS: {...}
 
-SAU KHI TOOL CHAY:
-- Neu la CVE cu the (fetch_cve_by_id) → ANSWER: [Chi tiet CVE, CVSS, severity, description]
-- Neu la keyword search (fetch_nvd_cves) → HANDOFF: agent_matcher (khong ANSWER, chi HANDOFF)""",
+KHONG BAO GIO GOI: match_cves_with_cmdb, list_all_devices, aggregate_cves_by_device""",
     },
 
     "agent_ti_extended": {
@@ -253,6 +253,23 @@ def call_agent(state: dict, agent_name: str) -> dict:
 
     profile = AGENT_PROFILES[agent_name]
 
+    # Special case: agent_ti with collected CVEs and device matching requested
+    query_lower = state.get("query", "").lower()
+    cves = state.get("collected_cves")
+    if (agent_name == "agent_ti" and cves and
+        ("so khop" in query_lower or "thiet bi" in query_lower or "device" in query_lower)):
+        # Auto-handoff to agent_matcher for device matching
+        response = "HANDOFF: agent_matcher\n\n[CVE collection complete, forwarding to device matcher]"
+        print(f"\n{'='*55}")
+        print(f"🤖 {agent_name.upper()} (bước {state['num_steps'] + 1})")
+        print("="*55)
+        print(response)
+        state["last_agent_response"] = response
+        state["last_agent"]          = agent_name
+        state["num_steps"]           = state.get("num_steps", 0) + 1
+        state["agent_history"]       = state.get("agent_history", []) + [agent_name]
+        return state
+
     # Build system prompt
     sys_prompt = (
         f"Bạn là {profile['role']}.\n\n"
@@ -271,7 +288,6 @@ def call_agent(state: dict, agent_name: str) -> dict:
 
     # Add structured data context
     context_text = ""
-    cves = state.get("collected_cves")
     devices = state.get("matched_devices")
     if cves:
         context_text += f"\n\nCVEs da thu thap ({len(cves)} total):\n"
