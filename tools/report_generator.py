@@ -207,12 +207,15 @@ def _build_report_from_state(
         critical_highs = [c for c in cves if c.get("severity", "").upper() in ("CRITICAL", "HIGH")]
         if critical_highs:
             lines += ["\n### CVE Nghiêm Trọng Cần Ưu Tiên", ""]
-            for c in critical_highs[:5]:  # Show top 5
+            for c in critical_highs:
                 cve_id = c.get("id", "N/A")
                 cvss = c.get("cvss_score", "N/A")
                 severity = c.get("severity", "N/A")
                 desc = c.get("description", "N/A")[:200]
-                lines.append(f"- **{cve_id}** (CVSS: {cvss}, {severity}): {desc}...")
+                if desc and desc != "N/A":
+                    lines.append(f"- **{cve_id}** (CVSS: {cvss}, {severity}): {desc}")
+                else:
+                    lines.append(f"- **{cve_id}** (CVSS: {cvss}, {severity})")
             lines.append("")
 
     # IOC / Malware / Threat Intelligence
@@ -308,26 +311,32 @@ def _build_report_from_state(
 
             # Lý do bị ảnh hưởng
             lines.append("**Lý do bị ảnh hưởng:**")
-            for cve_match in dev_info["cves"][:3]:  # Show top 3
+            for cve_match in dev_info["cves"]:
                 cve_id = cve_match["cve_id"]
                 cve_info = cves_dict.get(cve_id, {})
                 desc = cve_info.get("description", "N/A")[:100]
                 cvss = cve_match.get("cvss_score", "N/A")
-                lines.append(f"- **{cve_id}** (CVSS: {cvss}): {desc}...")
+                if desc and desc != "N/A":
+                    lines.append(f"- **{cve_id}** (CVSS: {cvss}): {desc}")
+                else:
+                    lines.append(f"- **{cve_id}** (CVSS: {cvss})")
 
             lines.append("")
             lines.append("**Hướng khắc phục:**")
 
             # Add remediation steps for highest risk CVE
-            highest_risk_cve = max(dev_info["cves"], key=lambda x: float(x.get("cvss_score", 0)))
+            highest_risk_cve = max(dev_info["cves"], key=lambda x: float(x.get("cvss_score", 0)) if isinstance(x.get("cvss_score"), (int, float, str)) and str(x.get("cvss_score")).replace('.', '', 1).isdigit() else 0)
             cve_id = highest_risk_cve["cve_id"]
             cve_info = cves_dict.get(cve_id, {})
             cvss = highest_risk_cve.get("cvss_score", 0)
             software = highest_risk_cve.get("affected_software", "unknown")
             desc = cve_info.get("description", "")
 
-            remediation = _get_remediation(float(cvss) if isinstance(cvss, (int, float)) else 0,
-                                          software, desc)
+            try:
+                cvss_float = float(cvss) if cvss and cvss != "N/A" else 0
+            except (ValueError, TypeError):
+                cvss_float = 0
+            remediation = _get_remediation(cvss_float, software, desc)
             for step in remediation:
                 # step đã có dấu - ở đầu nên không cần thêm
                 if step.startswith("- "):
