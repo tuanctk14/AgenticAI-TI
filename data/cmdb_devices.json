@@ -1,0 +1,80 @@
+[
+  {
+    "device_id": "SRV-001",
+    "hostname": "web-server-01",
+    "ip": "192.168.1.10",
+    "type": "Server",
+    "os": "Windows Server 2019",
+    "os_version": "10.0.17763",
+    "software": [
+      {"name": "Apache HTTP Server", "version": "2.4.49"},
+      {"name": "OpenSSL",            "version": "1.0.2k"},
+      {"name": "PHP",                "version": "7.4.3"}
+    ],
+    "criticality": "HIGH",
+    "department": "IT",
+    "location": "HaNoi-DC1"
+  },
+  {
+    "device_id": "SRV-002",
+    "hostname": "db-server-01",
+    "ip": "192.168.1.20",
+    "type": "Server",
+    "os": "Ubuntu",
+    "os_version": "20.04",
+    "software": [
+      {"name": "MySQL",   "version": "8.0.26"},
+      {"name": "OpenSSH", "version": "8.2p1"},
+      {"name": "log4j",   "version": "2.14.1"}
+    ],
+    "criticality": "CRITICAL",
+    "department": "Finance",
+    "location": "HaNoi-DC1"
+  },
+  {
+    "device_id": "PC-001",
+    "hostname": "workstation-finance-01",
+    "ip": "192.168.2.101",
+    "type": "Workstation",
+    "os": "Windows 10",
+    "os_version": "21H2",
+    "software": [
+      {"name": "Microsoft Office", "version": "2019"},
+      {"name": "Chrome",           "version": "109.0.5414"},
+      {"name": "Adobe Acrobat",    "version": "21.011"}
+    ],
+    "criticality": "MEDIUM",
+    "department": "Finance",
+    "location": "HaNoi-Office"
+  },
+  {
+    "device_id": "FW-001",
+    "hostname": "firewall-core-01",
+    "ip": "10.0.0.1",
+    "type": "Network Device",
+    "os": "Cisco IOS",
+    "os_version": "15.7",
+    "software": [
+      {"name": "Cisco IOS", "version": "15.7(3)M6"}
+    ],
+    "criticality": "CRITICAL",
+    "department": "Network",
+    "location": "HaNoi-DC1"
+  },
+  {
+    "device_id": "SRV-003",
+    "hostname": "app-server-01",
+    "ip": "192.168.1.30",
+    "type": "Server",
+    "os": "CentOS",
+    "os_version": "7.9",
+    "software": [
+      {"name": "Spring Framework", "version": "5.3.18"},
+      {"name": "Tomcat",           "version": "9.0.58"},
+      {"name": "OpenJDK",          "version": "11.0.14"}
+    ],
+    "criticality": "HIGH",
+    "department": "Development",
+    "location": "HaNoi-DC2"
+  }
+]
