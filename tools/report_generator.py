@@ -275,20 +275,8 @@ def _build_report_from_state(
     # Matched devices with remediation
     devices: list = state.get("matched_devices") or []
     if devices:
-        lines += [f"\n## THIET BI BI ANH HUONG ({len({d['device_id'] for d in devices})} Thiết Bị)", ""]
-
-        # Bảng tóm tắt
-        lines.append("| Thiết Bị | IP | OS | CVE | Mức Độ | Phần Mềm Lỗi |")
-        lines.append("|----------|----|----|-----|--------|-------------|")
-        for d in devices[:20]:  # Limit to 20 rows for readability
-            lines.append(
-                f"| {d['hostname']} | {d['ip']} | {d['os']} "
-                f"| {d['cve_id']} | **{d['risk_level']}** | {d['affected_software']} |"
-            )
-        lines.append("")
-
-        # Chi tiết từng thiết bị
-        lines += ["\n### Chi Tiết Khắc Phục Từng Thiết Bị", ""]
+        unique_device_ids = {d['device_id'] for d in devices}
+        lines += [f"\n## THIET BI BI ANH HUONG ({len(unique_device_ids)} Thiết Bị)", ""]
 
         # Build CVE info lookup
         cves_dict = {c["id"]: c for c in cves}
@@ -307,34 +295,42 @@ def _build_report_from_state(
                 }
             device_map[dev_id]["cves"].append(d)
 
-        # Render each device
+        # Calculate risk level for each device
+        device_risk = {}
         for dev_id, dev_info in device_map.items():
             risk_level = max([c.get("risk_level", "MEDIUM") for c in dev_info["cves"]],
-                            key=lambda x: (x == "CRITICAL", x == "HIGH"))
+                            key=lambda x: (x == "CRITICAL", x == "HIGH", x == "MEDIUM"))
+            device_risk[dev_id] = risk_level
+
+        # Sort devices by risk level (CRITICAL > HIGH > MEDIUM > LOW)
+        risk_order = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
+        sorted_devices = sorted(device_map.items(),
+                               key=lambda x: risk_order.get(device_risk[x[0]], 4))
+
+        # Bảng tóm tắt thiết bị (hiển thị đầy đủ, không giới hạn)
+        lines.append("| # | Thiết Bị | IP | OS | CVE Count | Mức Độ |")
+        lines.append("|---|----------|----|----|-----------|--------|")
+        for idx, (dev_id, dev_info) in enumerate(sorted_devices, 1):
+            cve_count = len(dev_info["cves"])
+            risk = device_risk[dev_id]
+            lines.append(
+                f"| {idx} | {dev_info['hostname']} | {dev_info['ip']} | {dev_info['os']} "
+                f"| {cve_count} | **{risk}** |"
+            )
+        lines.append("")
+
+        # Chi tiết từng thiết bị
+        lines += ["\n### Chi Tiết Khắc Phục Từng Thiết Bị", ""]
+
+        # Render each device in sorted order (without "Lý do bị ảnh hưởng" section)
+        for dev_id, dev_info in sorted_devices:
+            risk_level = device_risk[dev_id]
             lines.append(f"\n#### {dev_info['hostname']} ({dev_info['ip']}) - **{risk_level}**")
             lines.append(f"- **OS**: {dev_info['os']}")
             lines.append(f"- **Criticality**: {dev_info['criticality']}")
+            lines.append(f"- **CVEs Ảnh Hưởng**: {len(dev_info['cves'])}")
             lines.append("")
 
-            # Lý do bị ảnh hưởng
-            lines.append("**Lý do bị ảnh hưởng:**")
-            for cve_match in dev_info["cves"]:
-                cve_id = cve_match["cve_id"]
-                cve_info = cves_dict.get(cve_id, {})
-                desc = cve_info.get("description", "")
-                cvss = cve_match.get("cvss_score", "N/A")
-                # Cắt ngắn description nhưng đảm bảo không bị cắt giữa câu
-                if desc and desc != "N/A":
-                    # Chỉ lấy phần trước newline (loại bỏ "This issue affects..." part)
-                    desc = desc.split('\n')[0]
-                    # Cắt để tối đa 80 ký tự, tại whitespace cuối cùng
-                    if len(desc) > 80:
-                        desc = desc[:80].rsplit(" ", 1)[0]
-                    lines.append(f"- **{cve_id}** (CVSS: {cvss}): {desc}...")
-                else:
-                    lines.append(f"- **{cve_id}** (CVSS: {cvss})")
-
-            lines.append("")
             lines.append("**Hướng khắc phục:**")
 
             # Add remediation steps for highest risk CVE
