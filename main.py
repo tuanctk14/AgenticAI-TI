@@ -97,6 +97,57 @@ def run_query(query: str, verbose: bool = True) -> dict:
     return result
 
 
+def _get_remediation_steps(cve_description: str) -> list[str]:
+    """Tạo remediation steps dựa trên loại lỗ hổng."""
+    desc = cve_description.lower()
+    steps = []
+
+    # Priority based on CVSS (will be added by caller)
+    # Priority added later in device loop
+
+    # Specific remediation based on vulnerability type
+    if "rce" in desc or "remote code execution" in desc:
+        steps.extend([
+            "- **RCE Detection**: Scan hệ thống bằng antivirus/EDR để phát hiện backdoor, shell scripts",
+            "- **Firewall rules**: Kiểm tra và tightening inbound connections từ internet",
+            "- **Kiểm tra logs**: Tìm kiếm dấu hiệu bị khai thác (suspicious activities, error patterns)"
+        ])
+    elif "sql" in desc:
+        steps.extend([
+            "- **SQL Injection mitigation**: Review và sanitize tất cả SQL queries, dùng parameterized statements",
+            "- **Database audit**: Kiểm tra access logs của database, xóa suspicious accounts"
+        ])
+    elif "auth" in desc or "bypass" in desc:
+        steps.extend([
+            "- **Credential reset**: Reset tất cả passwords, invalidate sessions nếu cần",
+            "- **MFA enforcement**: Enable Multi-Factor Authentication nếu chưa có",
+            "- **Kiểm tra logs**: Tìm kiếm dấu hiệu truy cập bất hợp pháp (unauthorized access attempts)"
+        ])
+    elif "path traversal" in desc or "directory traversal" in desc:
+        steps.extend([
+            "- **File access audit**: Kiểm tra web server logs cho directory traversal attempts",
+            "- **Access control**: Đảm bảo proper file permissions và không expose sensitive directories"
+        ])
+    elif "xss" in desc or "cross-site" in desc:
+        steps.extend([
+            "- **Input validation**: Implement proper input sanitization và output encoding",
+            "- **CSP headers**: Thiết lập Content Security Policy headers"
+        ])
+    elif "csrf" in desc or "cross-site request" in desc:
+        steps.extend([
+            "- **CSRF tokens**: Implement CSRF protection tokens trên tất cả state-changing operations",
+            "- **SameSite cookies**: Thiết lập SameSite attribute trên cookies"
+        ])
+    else:
+        # Default remediation for unknown vulnerability types
+        steps.extend([
+            "- **Kiểm tra logs**: Tìm kiếm dấu hiệu bị khai thác (suspicious activities)",
+            "- **Network segmentation**: Giới hạn truy cập từ bên ngoài nếu chưa có"
+        ])
+
+    return steps
+
+
 def _print_summary(result: dict):
     """In tóm tắt kết quả sau khi chạy xong - CHI TIẾT ĐẦY ĐỦ."""
     print("\n" + "="*70)
@@ -198,6 +249,11 @@ def _print_summary(result: dict):
         print(f"Tổng thiết bị bị ảnh hưởng: {affected}\n")
 
         device_dict = {}
+        cves_dict = {}  # Store CVE objects for description lookup
+        cves_collected = result.get("collected_cves") or []
+        for cve in cves_collected:
+            cves_dict[cve.get("id")] = cve
+
         for d in devices:
             dev_id = d["device_id"]
             if dev_id not in device_dict:
@@ -206,6 +262,7 @@ def _print_summary(result: dict):
                     "ip": d.get("ip"),
                     "os": d.get("os"),
                     "criticality": d.get("criticality"),
+                    "affected_software": d.get("affected_software"),
                     "cves": []
                 }
             device_dict[dev_id]["cves"].append({
@@ -220,6 +277,7 @@ def _print_summary(result: dict):
             os = info["os"]
             criticality = info["criticality"]
             cves = info["cves"]
+            software = info.get("affected_software", "N/A")
 
             print(f"• Device: {dev_id}")
             print(f"  Hostname: {hostname}")
@@ -230,6 +288,39 @@ def _print_summary(result: dict):
             print(f"  CVEs cụ thể:")
             for cve in cves:
                 print(f"    - {cve['cve_id']}: {cve['risk_level']} (CVSS: {cve['cvss_score']})")
+            print()
+
+            # Hướng khắc phục
+            print(f"  **Hướng khắc phục:**")
+
+            # Find highest risk CVE
+            highest_risk_cve = max(cves, key=lambda x: float(x.get("cvss_score", 0)) if isinstance(x.get("cvss_score"), (int, float, str)) and str(x.get("cvss_score")).replace('.', '', 1).isdigit() else 0)
+            cvss = highest_risk_cve.get("cvss_score", 0)
+            try:
+                cvss_float = float(cvss) if cvss and cvss != "N/A" else 0
+            except (ValueError, TypeError):
+                cvss_float = 0
+
+            # Timeline priority
+            if cvss_float >= 9.0:
+                print(f"    - ⚡ **Ưu tiên CRITICAL**: Xử lý ngay trong 24 giờ")
+            elif cvss_float >= 7.0:
+                print(f"    - 🔴 **Ưu tiên HIGH**: Xử lý trong 72 giờ")
+            else:
+                print(f"    - 🟡 **Ưu tiên MEDIUM**: Lên lịch xử lý trong 2 tuần")
+
+            # Update affected software
+            print(f"    - **Cập nhật phần mềm**: Nâng cấp {software} lên phiên bản mới nhất")
+
+            # Get remediation based on CVE description
+            cve_description = ""
+            highest_cve_id = highest_risk_cve.get("cve_id")
+            if highest_cve_id in cves_dict:
+                cve_description = cves_dict[highest_cve_id].get("description", "")
+
+            remediation_steps = _get_remediation_steps(cve_description)
+            for step in remediation_steps:
+                print(f"    {step}")
             print()
 
     # ── Reports ──────────────────────────────────────────────────────────────
