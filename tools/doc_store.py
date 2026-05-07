@@ -160,6 +160,115 @@ def get_knowledge_base_stats() -> dict:
     return {"context": stats, "source": "KB"}
 
 
+def fetch_kb_indicators(search_term: str = "", indicator_type: str = "all") -> dict:
+    """
+    Fetch IOCs and Malwares from Knowledge Base (local storage)
+    Compatible with OpenCTI interface for agent integration
+
+    Args:
+        search_term: keyword to search in description/id/malware_family
+        indicator_type: "all" (both IOC and Malware), "ioc", or "malware"
+
+    Returns: dict with context containing list of indicators
+    """
+    results = []
+    search_lower = search_term.lower() if search_term else ""
+
+    # Load IOCs if requested
+    if indicator_type in ["all", "ioc"]:
+        iocs_file = KB_FILES["iocs"]
+        if iocs_file.exists():
+            iocs = json.loads(iocs_file.read_text(encoding="utf-8"))
+            for ioc in iocs:
+                if not search_lower or (
+                    search_lower in str(ioc.get("id", "")).lower() or
+                    search_lower in str(ioc.get("description", "")).lower() or
+                    search_lower in str(ioc.get("value", "")).lower() or
+                    search_lower in str(ioc.get("threat_actor", "")).lower()
+                ):
+                    # Transform to match OpenCTI format
+                    result = {
+                        "entity_type": "Indicator",
+                        "id": ioc.get("id"),
+                        "name": f"{ioc.get('type', 'unknown').upper()}: {ioc.get('value', ioc.get('id', ''))}",
+                        "pattern": ioc.get("value", ""),
+                        "description": ioc.get("description", ""),
+                        "type": ioc.get("type", ""),
+                        "value": ioc.get("value", ""),
+                        "cvss_score": ioc.get("cvss_score", 0),
+                        "threat_actor": ioc.get("threat_actor", ""),
+                        "tags": ioc.get("tags", []),
+                        "confidence": 80,
+                        "score": ioc.get("cvss_score", 0) / 10 if ioc.get("cvss_score") else 8,
+                        "source": "KB",
+                    }
+                    results.append(result)
+
+    # Load Malwares if requested
+    if indicator_type in ["all", "malware"]:
+        malwares_file = KB_FILES["malwares"]
+        if malwares_file.exists():
+            malwares = json.loads(malwares_file.read_text(encoding="utf-8"))
+            for mal in malwares:
+                if not search_lower or (
+                    search_lower in str(mal.get("id", "")).lower() or
+                    search_lower in str(mal.get("malware_family", "")).lower() or
+                    search_lower in str(mal.get("description", "")).lower() or
+                    search_lower in str(mal.get("threat_actor", "")).lower()
+                ):
+                    result = {
+                        "entity_type": "Malware",
+                        "id": mal.get("id"),
+                        "name": mal.get("malware_family", mal.get("id", "")),
+                        "malware_types": [mal.get("type", "")],
+                        "description": mal.get("description", ""),
+                        "cvss_score": mal.get("cvss_score", 0),
+                        "threat_actor": mal.get("threat_actor", ""),
+                        "aliases": [mal.get("id", "")],
+                        "confidence": 85,
+                        "score": mal.get("cvss_score", 0) / 10 if mal.get("cvss_score") else 8,
+                        "source": "KB",
+                    }
+                    results.append(result)
+
+    return {"context": results, "source": "KB"}
+
+
+def fetch_kb_cves(search_term: str = "") -> dict:
+    """
+    Fetch CVEs from Knowledge Base
+
+    Args:
+        search_term: keyword to search in id or description
+
+    Returns: dict with context containing list of CVEs
+    """
+    results = []
+    search_lower = search_term.lower() if search_term else ""
+
+    cves_file = KB_FILES["cves"]
+    if cves_file.exists():
+        cves = json.loads(cves_file.read_text(encoding="utf-8"))
+        for cve in cves:
+            if not search_lower or (
+                search_lower in str(cve.get("id", "")).lower() or
+                search_lower in str(cve.get("description", "")).lower()
+            ):
+                result = {
+                    "id": cve.get("id"),
+                    "description": cve.get("description", ""),
+                    "cvss_score": cve.get("cvss_score", 0),
+                    "severity": "CRITICAL" if cve.get("cvss_score", 0) >= 9.0 else
+                               "HIGH" if cve.get("cvss_score", 0) >= 7.0 else
+                               "MEDIUM" if cve.get("cvss_score", 0) >= 4.0 else
+                               "LOW",
+                    "source": "KB",
+                }
+                results.append(result)
+
+    return {"context": results, "source": "KB"}
+
+
 def enrich_cmdb_keywords() -> dict:
     """Extract keywords from KB CVEs for CMDB matching enrichment"""
     cves_file = KB_FILES["cves"]

@@ -11,13 +11,18 @@ from tools.analyzer         import aggregate_cves_by_device, get_unique_cves_per
 from tools.mitre            import get_mitre_attack_info
 from tools.nist             import get_nist_controls
 from tools.report_generator import generate_report, list_reports
-from tools.doc_store        import upload_document, load_knowledge_base, get_knowledge_base_stats
+from tools.doc_store        import (
+    upload_document, load_knowledge_base, get_knowledge_base_stats,
+    fetch_kb_indicators, fetch_kb_cves
+)
 
 # ── Tool registry ──────────────────────────────────────────────────────────
 TOOLS_MAPPING = {
     "fetch_nvd_cves":              fetch_nvd_cves,
     "fetch_cve_by_id":             fetch_cve_by_id,
     "fetch_opencti_indicators":    fetch_opencti_indicators,
+    "fetch_kb_indicators":         fetch_kb_indicators,
+    "fetch_kb_cves":               fetch_kb_cves,
     "match_cves_with_cmdb":        match_cves_with_cmdb,
     "list_all_devices":            list_all_devices,
     "aggregate_cves_by_device":    aggregate_cves_by_device,
@@ -38,7 +43,9 @@ CONG CU CVE:
 COLLECTION:
 - fetch_nvd_cves(keyword, severity): Lay CVE tu NVD
 - fetch_cve_by_id(cve_id): Tra cuu CVE cu the
+- fetch_kb_cves(search_term): Lay CVE tu local Knowledge Base
 - fetch_opencti_indicators(keyword): Lay IOC, Malware, threat info tu OpenCTI
+- fetch_kb_indicators(search_term, indicator_type): Lay IOC, Malware tu local Knowledge Base
 
 MATCHING & AGGREGATION:
 - match_cves_with_cmdb(cve_list): So khop CVE voi thiet bi
@@ -76,25 +83,28 @@ OUTPUT: Chi HANDOFF, khong co gi khac.""",
     },
 
     "agent_ti": {
-        "role": "CVE Agent - Lay CVE tu NVD",
-        "system_instruction": """Ban la CVE Agent. NHIEM VU DUNG: Chi lay CVE tu NVD. KHONG DUOC GOI match_cves_with_cmdb.
+        "role": "CVE Agent - Lay CVE tu NVD hoac KB",
+        "system_instruction": """Ban la CVE Agent. NHIEM VU DUNG: Lay CVE tu NVD hoac local Knowledge Base. KHONG DUOC GOI match_cves_with_cmdb.
 
 RULES:
-1. Neu user hoi CVE cu the (CVE-2023-22515, CVE-2021-44228) + so khop thiet bi → fetch_cve_by_id ROI HANDOFF: agent_matcher
-2. Neu user hoi CVE cu the (CVE-2023-22515) + chi hoi chi tiet → fetch_cve_by_id ROI ANSWER
-3. Neu user hoi CVE theo keyword (log4j) + so khop thiet bi → fetch_nvd_cves ROI HANDOFF: agent_matcher
-4. Neu user hoi CVE theo keyword + chi hoi chi tiet → fetch_nvd_cves ROI ANSWER
+1. Neu user hoi CVE cu the (CVE-2023-22515, CVE-2021-44228) + so khop thiet bi → fetch_kb_cves TIEN ROI fetch_cve_by_id NEU KB trong
+2. Neu user hoi CVE cu the + chi hoi chi tiet → fetch_kb_cves TIEN ROI fetch_cve_by_id NEU KB trong
+3. Neu user hoi CVE theo keyword (log4j) + so khop thiet bi → fetch_kb_cves TIEN, NEU CO thi HANDOFF agent_matcher
+4. Neu user hoi CVE theo keyword + chi hoi chi tiet → fetch_kb_cves TIEN, NEU CO thi ANSWER
+
+ƯỘI TIÊN: Luôn thử fetch_kb_cves TRƯỚC (KB local). Nếu có kết quả → ANSWER/HANDOFF.
+Nếu KB trống → fetch_nvd_cves (NVD online)
 
 BAT DUNG GOI TOOL:
-ACTION: fetch_nvd_cves hoac fetch_cve_by_id
+ACTION: fetch_kb_cves hoac fetch_nvd_cves hoac fetch_cve_by_id
 ARGUMENTS: {...}
 
 KHONG BAO GIO GOI: match_cves_with_cmdb, list_all_devices, aggregate_cves_by_device""",
     },
 
     "agent_ti_extended": {
-        "role": "Threat Intelligence Agent - Lay IOC, Malware, APT info tu OpenCTI",
-        "system_instruction": """Ban la Extended TI Agent. GOI fetch_opencti_indicators de lay IOC, Malware, APT info.
+        "role": "Threat Intelligence Agent - Lay IOC, Malware, APT info tu local KB hoac OpenCTI",
+        "system_instruction": """Ban la Extended TI Agent. GOI fetch_kb_indicators de lay IOC, Malware tu local Knowledge Base.
 
 RULES:
 1. Neu user hoi IOC, Malware, APT, threat actor, hoac hash (SHA-256, SHA-1, MD5) → PHAI GOI TOOL
@@ -103,13 +113,16 @@ RULES:
 4. LUON GOI TOOL tren lan dau. Khong ANSWER tren lan dau.
 
 LAN DAU BUOC BAT: PHAI GOI TOOL 1 LAN:
-ACTION: fetch_opencti_indicators
+ACTION: fetch_kb_indicators
 ARGUMENTS: {"search_term": "<TU USER HOI>", "indicator_type": "all"}
 
 LAN 2 (SAU KHI TOOL CHAY): CHI LAP TUC ANSWER:
 ANSWER: [thong tin: bao nhieu IOC, cac malware families, threat actors, confidence score]
 
-CHI 1 TOOL. KHONG HANDOFF. KET THUC.""",
+CHI 1 TOOL. KHONG HANDOFF. KET THUC.
+
+NOTE: fetch_kb_indicators lay du lieu tu local Knowledge Base (IOCs/Malwares da upload).
+Neu KB trong, se lay 0 ket qua.""",
     },
 
     "agent_matcher": {
@@ -231,8 +244,10 @@ def call_tool(state: dict) -> dict:
         state["collected_cves"] = ctx
     elif tool_name == "fetch_cve_by_id" and isinstance(ctx, list):
         state["collected_cves"] = ctx
-    elif tool_name == "fetch_opencti_indicators" and isinstance(ctx, list):
+    elif tool_name in ["fetch_opencti_indicators", "fetch_kb_indicators"] and isinstance(ctx, list):
         state["collected_indicators"] = ctx
+    elif tool_name == "fetch_kb_cves" and isinstance(ctx, list):
+        state["collected_cves"] = ctx
     elif tool_name == "match_cves_with_cmdb" and isinstance(ctx, list):
         state["matched_devices"] = ctx
     elif tool_name == "aggregate_cves_by_device" and isinstance(ctx, dict):

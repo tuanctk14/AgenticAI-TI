@@ -5,6 +5,7 @@ import os
 import json
 from datetime import datetime
 from config import REPORTS_DIR
+from tools.doc_store import load_knowledge_base
 
 # Lưu trong memory để tra cứu trong session
 REPORTS_STORE: dict[str, dict] = {}
@@ -102,6 +103,33 @@ def _build_report_from_state(
         devices = state.get("matched_devices") or []
         device_cve_map = state.get("device_cve_map") or {}
 
+        # If no indicators collected, try to load from KB
+        if not indicators:
+            kb = load_knowledge_base("all")
+            kb_iocs = kb.get("context", {}).get("iocs", [])
+            kb_malwares = kb.get("context", {}).get("malwares", [])
+
+            # Convert KB format to indicator format
+            for ioc in kb_iocs:
+                indicators.append({
+                    "entity_type": "Indicator",
+                    "id": ioc.get("id"),
+                    "name": f"{ioc.get('type', 'unknown').upper()}: {ioc.get('value', '')}",
+                    "source": "KB",
+                })
+            for mal in kb_malwares:
+                indicators.append({
+                    "entity_type": "Malware",
+                    "id": mal.get("id"),
+                    "name": mal.get("malware_family", ""),
+                    "source": "KB",
+                })
+
+        # If no CVEs collected, try to load from KB
+        if not cves:
+            kb = load_knowledge_base("cves")
+            cves = kb.get("context", {}).get("cves", [])
+
         # Count IOC/Malware
         ioc_count = len([i for i in indicators if i.get("entity_type") == "Indicator"])
         malware_count = len([i for i in indicators if i.get("entity_type") == "Malware"])
@@ -182,6 +210,34 @@ def _build_report_from_state(
 
     # IOC / Malware / Threat Intelligence
     indicators: list = state.get("collected_indicators") or []
+
+    # If no indicators, load from KB
+    if not indicators:
+        kb = load_knowledge_base("all")
+        kb_iocs = kb.get("context", {}).get("iocs", [])
+        kb_malwares = kb.get("context", {}).get("malwares", [])
+
+        for ioc in kb_iocs:
+            indicators.append({
+                "entity_type": "Indicator",
+                "id": ioc.get("id"),
+                "name": f"{ioc.get('type', 'unknown').upper()}: {ioc.get('value', '')}",
+                "description": ioc.get("description", ""),
+                "score": ioc.get("cvss_score", 0) / 10 if ioc.get("cvss_score") else 0,
+                "confidence": 80,
+                "source": "KB",
+            })
+        for mal in kb_malwares:
+            indicators.append({
+                "entity_type": "Malware",
+                "id": mal.get("id"),
+                "name": mal.get("malware_family", ""),
+                "malware_types": [mal.get("type", "")],
+                "description": mal.get("description", ""),
+                "aliases": [mal.get("id", "")],
+                "source": "KB",
+            })
+
     if indicators:
         lines += [f"\n## THREAT INTELLIGENCE ({len(indicators)} Kết Quả)", ""]
 
