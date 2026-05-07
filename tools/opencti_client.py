@@ -5,7 +5,7 @@ import requests
 from config import OPENCTI_URL, OPENCTI_TOKEN
 
 
-def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all") -> dict:
+def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all", start_date: str = None, end_date: str = None, max_results: int = 50) -> dict:
     """
     Truy vấn OpenCTI GraphQL API để lấy IOC, Malware, Threat Actors, Attack Patterns.
 
@@ -15,9 +15,18 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all")
     - threat_actors: APT/Threat Actor groups
     - attack_patterns: ATT&CK patterns
 
+    Args:
+        search_term: Từ khóa tìm kiếm
+        indicator_type: Loại indicator (all | indicator | malware | threat_actor | attack_pattern)
+        start_date: ISO format để lọc theo ngày tạo (hiện tại không hỗ trợ, nhưng có thể dùng trong tương lai)
+        end_date: ISO format để lọc theo ngày tạo (hiện tại không hỗ trợ, nhưng có thể dùng trong tương lai)
+        max_results: Max results per entity type (default 50, max 500 từ API)
+
+    Note: OpenCTI API sắp xếp theo created_at desc (mới nhất trước), nên lấy top N là đủ
+
     Required: OPENCTI_TOKEN environment variable phải được set.
     """
-    print(f"  [OpenCTI] Tìm: term='{search_term}', type='{indicator_type}'")
+    print(f"  [OpenCTI] Tìm: term='{search_term}', type='{indicator_type}', max_results_per_type={max_results}")
 
     # Bắt buộc có OPENCTI_TOKEN
     if not OPENCTI_TOKEN:
@@ -30,26 +39,27 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all")
 
     # Multi-query GraphQL: lấy indicators + malwares + threatActorsGroup + attackPatterns
     # Với ordering theo created_at desc (mới nhất trước)
+    # Lấy created_at field để lọc theo date range (client-side)
     gql = """
     query GetThreatIntel($search: String, $first: Int) {
       indicators(search: $search, first: $first, orderBy: created_at, orderMode: desc) {
         edges { node {
-          id name indicator_types pattern confidence description
+          id name indicator_types pattern confidence description created_at
         }}
       }
       malwares(search: $search, first: $first, orderBy: created_at, orderMode: desc) {
         edges { node {
-          id name malware_types aliases description
+          id name malware_types aliases description created_at
         }}
       }
       threatActorsGroup(search: $search, first: $first, orderBy: created_at, orderMode: desc) {
         edges { node {
-          id name aliases description
+          id name aliases description created_at
         }}
       }
       attackPatterns(search: $search, first: $first, orderBy: created_at, orderMode: desc) {
         edges { node {
-          id name x_mitre_id description
+          id name x_mitre_id description created_at
         }}
       }
     }"""
@@ -57,7 +67,7 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all")
     try:
         resp = requests.post(
             f"{OPENCTI_URL}/graphql",
-            json={"query": gql, "variables": {"search": search_term, "first": 500}},
+            json={"query": gql, "variables": {"search": search_term, "first": min(max_results, 500)}},
             headers={"Authorization": f"Bearer {OPENCTI_TOKEN}", "Content-Type": "application/json"},
             timeout=15,
         )
@@ -129,6 +139,41 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all")
                         "score": 70,
                         "description": n.get("description", "")[:300] if n.get("description") else "",
                     })
+
+        # Client-side date filtering dùng created_at field
+        if start_date or end_date:
+            from datetime import datetime
+            filtered_results = []
+            for r in results:
+                created_at_str = r.get("created_at")
+                if not created_at_str:
+                    # Nếu không có created_at, skip entity này vì lọc theo date
+                    continue
+
+                try:
+                    # Parse created_at (format: 2026-05-05T06:05:18.797Z)
+                    created_at = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
+
+                    # Lọc theo start_date
+                    if start_date:
+                        start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+                        if created_at < start_dt:
+                            continue
+
+                    # Lọc theo end_date
+                    if end_date:
+                        end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+                        if created_at > end_dt:
+                            continue
+
+                    filtered_results.append(r)
+                except (ValueError, AttributeError, TypeError):
+                    # Nếu parse fail, skip entity này
+                    continue
+
+            results = filtered_results
+            if len(results) == 0:
+                print(f"  [OpenCTI] ℹ️  No results in date range")
 
         if results:
             entity_counts = {}

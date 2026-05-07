@@ -360,11 +360,12 @@ def _run_report_pipeline(start_date: str, end_date: str, days_back: int) -> dict
     state["collected_cves"] = cve_result.get("context", [])
     print(f"   ✅ Tìm được {len(state['collected_cves'])} CVEs")
 
-    # Bước 2: Lấy IOC/Malware từ OpenCTI
+    # Bước 2: Lấy IOC/Malware từ OpenCTI và lọc theo date range
     print(f"\n2️⃣  Lấy IOC/Malware từ OpenCTI...")
-    ioc_result = fetch_opencti_indicators(search_term="")
+    # Lấy max_results=100 mỗi loại, sau đó lọc client-side theo date range
+    ioc_result = fetch_opencti_indicators(search_term="", start_date=start_date, end_date=end_date, max_results=100)
     state["collected_indicators"] = ioc_result.get("context", [])
-    print(f"   ✅ Tìm được {len(state['collected_indicators'])} IOC/Malware")
+    print(f"   ✅ Tìm được {len(state['collected_indicators'])} IOC/Malware (trong khoảng thời gian)")
 
     # Bước 3: So khớp CVE với thiết bị nội bộ
     if state["collected_cves"]:
