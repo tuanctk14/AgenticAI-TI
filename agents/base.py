@@ -80,7 +80,19 @@ DETECTION ORDER:
 - IPv4/IPv6 format → agent_ti_extended
 - Device pattern SRV-*, DEVICE-* → agent_device hoac agent_ti neu co CVE
 
-OUTPUT: CHI CO HANDOFF, KHONG CO GI KHAC.""",
+OUTPUT FORMAT (TUYỆT ĐỐI CHỈ CÓ HANDOFF):
+HANDOFF: agent_ti
+HOẶC:
+HANDOFF: agent_ti_extended
+HOẶC:
+HANDOFF: agent_device
+HOẶC:
+HANDOFF: agent_matcher
+HOẶC:
+HANDOFF: agent_reporter
+
+KHÔNG BAO GIỜ OUTPUT: "agent_ti_extended" (THIẾU "HANDOFF:")
+KHÔNG ANSWER, KHÔNG DESCRIBE, KHÔNG GIAI THÍCH.""",
     },
 
     "agent_ti": {
