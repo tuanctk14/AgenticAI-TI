@@ -43,24 +43,24 @@ BANNER = """
 
 MENU = """
 +--------------------------------------------------------------+
-|                    MENU CHINH                                |
+|                           MENU                               |
 +--------------------------------------------------------------+
-|  1. Quet CVE va tim thiet bi bi anh huong                    |
-|  2. Tao bao cao                                              |
-|  3. Upload / xu ly tai lieu noi bo                           |
-|  4. Cau hoi tu do (hoi bat ky)                               |
-|  0. Thoat                                                    |
+|  1. Quét CVE và tìm thiết bị ảnh hưởng                       |
+|  2. Tạo báo cáo                                              |
+|  3. Upload / xử lý tài liệu nội bộ                           |
+|  4. Chat với ATI BOT                                         |
+|  0. Thoát                                                    |
 +--------------------------------------------------------------+
 """
 
 PRESET_QUERIES = {
     "1": (
-        "Hay quet lo hong (keyword: {}) tu NVD, "
-        "so khop voi thiet bi noi bo va cho biet thiet bi nao bi anh huong."
+        "Hãy quét lỗ hổng (keyword: {}) từ NVD, "
+        "so khớp với thiết bị nội bộ và cho biết thiết bị nào bị ảnh hưởng."
     ),
     "2": (
-        "Thuc hien danh gia CVE: lay CVE severity HIGH tu NVD, "
-        "so khop voi he thong noi bo, tao bao cao executive_summary."
+        "Thực hiện đánh giá CVE: lấy CVE severity HIGH từ NVD, "
+        "so khớp với hệ thống nội bộ, tạo báo cáo executive_summary."
     ),
     "3": None,   # Upload document
     "4": None,   # Free query
@@ -410,7 +410,7 @@ def _run_report_pipeline(start_date: str, end_date: str, days_back: int) -> dict
     Returns: state dict với dữ liệu thu thập
     """
     print("\n" + "="*55)
-    print("📡 TRY THẬP DỮ LIỆU CHO BÁO CÁO")
+    print("📡 THU THẬP DỮ LIỆU CHO BÁO CÁO")
     print("="*55)
 
     state = {
@@ -564,15 +564,15 @@ def interactive_mode():
 
     while True:
         print(MENU)
-        choice = input("Chon (0-5): ").strip()
+        choice = input("Chọn (0-4): ").strip()
 
         if choice == "0":
-            print("\nTam biet!\n")
+            print("\nTạm biệt!\n")
             break
 
         elif choice == "1":
             # Menu 1: CVE scan
-            keyword = input("\nNhap tu khoa CVE (vy du: log4j): ").strip()
+            keyword = input("\nNhập từ khóa CVE (ví dụ: log4j): ").strip()
             query = PRESET_QUERIES["1"].format(keyword) if keyword else PRESET_QUERIES["1"].format("CVE")
             run_query(query)
 
@@ -612,16 +612,16 @@ def interactive_mode():
 
         elif choice == "4":
             # Menu 4: Free query (IOC/Malware/APT/CVE/Device/Report)
-            query = input("\nNhap cau hoi (CVE, IOC, Malware, APT, device, ...): ").strip()
+            query = input("\nNhập câu hỏi (CVE, IOC, Malware, APT, device, ...): ").strip()
             if query:
                 run_query(query)
             else:
-                print("Cau hoi trong.")
+                print("Câu hỏi trống.")
 
         else:
-            print("Lua chon khong hop le.")
+            print("Lựa chọn không hợp lệ.")
 
-        input("\n[Enter de tiep tuc]")
+        input("\n[Enter để tiếp tục]")
 
 
 # ── CLI ────────────────────────────────────────────────────────────────────

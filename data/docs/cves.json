@@ -208,5 +208,11 @@
     "exploit_status": "WEAPONIZED",
     "known_threat_actors": "Various",
     "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
+  },
+  {
+    "id": "CVE-2022-26134",
+    "description": "Atlassian Confluence OGNL injection allows unauthenticated remote code execution via HTTP request",
+    "cvss_score": 9.8,
+    "uploaded_date": "2026-05-08T13:44:28.618839+00:00"
   }
 ]
