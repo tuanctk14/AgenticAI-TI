@@ -91,7 +91,9 @@ def generate_report(
     fpath = os.path.join(REPORTS_DIR, fname)
 
     # ── Nếu có date range, chạy pipeline để collect data ──────────────────────
-    if start_date and end_date and not state:
+    # Check if state is empty (no collected data yet) or not provided
+    has_collected_data = state and state.get("collected_cves")
+    if start_date and end_date and not has_collected_data:
         from main import _run_report_pipeline
 
         # Ensure end_date has 23:59:59 for full day coverage
