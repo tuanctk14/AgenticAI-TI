@@ -68,6 +68,8 @@ def generate_report(
     content:     str = "",
     state:       dict | None = None,
     export_format: str = "html",
+    start_date:  str = "",
+    end_date:    str = "",
 ) -> dict:
     """
     Tạo báo cáo bảo mật và lưu ra file.
@@ -75,6 +77,8 @@ def generate_report(
     report_type: vulnerability_assessment | executive_summary | patch_advisory |
                  threat_intel | incident_report
     export_format: html (.html) - chỉ hỗ trợ HTML format
+    start_date: ISO format "YYYY-MM-DDTHH:MM:SS.000" (optional, triggers pipeline)
+    end_date: ISO format "YYYY-MM-DDTHH:MM:SS.000" (optional, triggers pipeline)
     """
     # Force HTML format
     export_format = "html"
@@ -85,6 +89,23 @@ def generate_report(
     ext   = ".html"
     fname = f"{report_type}_{rid}{ext}"
     fpath = os.path.join(REPORTS_DIR, fname)
+
+    # ── Nếu có date range, chạy pipeline để collect data ──────────────────────
+    if start_date and end_date and not state:
+        from main import _run_report_pipeline
+
+        # Ensure end_date has 23:59:59 for full day coverage
+        if end_date and "T00:00:00" in end_date:
+            end_date = end_date.replace("T00:00:00.000", "T23:59:59.000")
+
+        days_back = 7  # Default fallback
+        state = _run_report_pipeline(start_date, end_date, days_back)
+
+        # Update title to show date range
+        if not title:
+            start_fmt = f"{start_date[8:10]}-{start_date[5:7]}-{start_date[:4]}"
+            end_fmt = f"{end_date[8:10]}-{end_date[5:7]}-{end_date[:4]}"
+            title = f"Security Report - {start_fmt} đến {end_fmt}"
 
     # ── Xây dựng nội dung báo cáo từ state nếu có ──────────────────────
     if state and not content:

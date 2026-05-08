@@ -213,14 +213,26 @@ Tra loi bang tieng Viet.""",
 
 Nhiem vu: Tong hop va tao bao cao.
 
+HUONG DAN:
+- Neu nguoi dung chi yeu cau tao bao cao (khong chi ra ngay) → dung 7 ngay gan nhat
+- Neu nguoi dung chi ra khoang ngay (VD: "01-05-2026 to 03-05-2026")
+  Format input: DD-MM-YYYY (ngay-thang-nam)
+  Convert sang: YYYY-MM-DDTHH:MM:SS.000
+  Example: "01-05-2026" → "2026-05-01T00:00:00.000"
+
 BUOC 1: GOI TOOL DUNG 1 LAN:
 
+Neu CO khoang ngay:
+ACTION: generate_report
+ARGUMENTS: {"report_type": "executive_summary", "start_date": "YYYY-MM-DDTHH:MM:SS.000", "end_date": "YYYY-MM-DDTHH:MM:SS.000"}
+
+Neu KHONG co khoang ngay:
 ACTION: generate_report
 ARGUMENTS: {"report_type": "executive_summary"}
 
 BUOC 2: NGAY LAP TUC ANSWER:
 
-ANSWER: Da tao bao cao. File da luu. Tong hop noi dung...
+ANSWER: Da tao bao cao. File da luu. [Tong hop noi dung chi tiet]...
 
 KHONG DUOC GOI TOOL LAN 2. KHONG DUOC HANDOFF. KET THUC.
 
