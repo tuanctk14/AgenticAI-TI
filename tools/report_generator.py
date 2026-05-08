@@ -3,12 +3,63 @@ tools/report_generator.py - Tạo và lưu báo cáo bảo mật (MD / TXT)
 """
 import os
 import json
+import re
 from datetime import datetime
 from config import REPORTS_DIR
 from tools.doc_store import load_knowledge_base
 
 # Lưu trong memory để tra cứu trong session
 REPORTS_STORE: dict[str, dict] = {}
+
+
+def _extract_ioc_type_from_pattern(pattern: str, ioc_type: str = None) -> str:
+    """
+    Extract IOC type from STIX pattern or return provided type.
+    Parses patterns like:
+    - [file:hashes.'SHA-256' = 'xxx'] -> SHA256
+    - [file:hashes.'MD5' = 'xxx'] -> MD5
+    - [file:hashes.'SHA-1' = 'xxx'] -> SHA1
+    - [network-traffic:dst_ref.type = 'ipv4-addr' AND network-traffic:dst_ref.value = 'xxx'] -> IPv4
+    - [ipv4-addr:value = 'xxx'] -> IPv4
+    - [ipv6-addr:value = 'xxx'] -> IPv6
+    - [domain-name:value = 'xxx'] -> Domain
+    - [email-addr:value = 'xxx'] -> Email
+    - [url:value = 'xxx'] -> URL
+    """
+    if not isinstance(pattern, str):
+        return ioc_type or "INDICATOR"
+
+    # If it's a Yara rule, return as-is
+    if pattern.strip().startswith("rule "):
+        return "YARA"
+
+    # If already provided a type from KB, use it
+    if ioc_type and ioc_type.upper() not in ["INDICATOR", "UNKNOWN"]:
+        return ioc_type.upper()
+
+    # Parse STIX pattern
+    pattern_upper = pattern.upper()
+
+    if "SHA-256" in pattern_upper or "SHA256" in pattern_upper:
+        return "SHA256"
+    elif "SHA-1" in pattern_upper or "SHA1" in pattern_upper:
+        return "SHA1"
+    elif "MD5" in pattern_upper:
+        return "MD5"
+    elif "IPV4-ADDR" in pattern_upper:
+        return "IPv4"
+    elif "IPV6-ADDR" in pattern_upper:
+        return "IPv6"
+    elif "DOMAIN-NAME" in pattern_upper:
+        return "Domain"
+    elif "EMAIL-ADDR" in pattern_upper or "EMAIL" in pattern_upper:
+        return "Email"
+    elif "URL" in pattern_upper:
+        return "URL"
+    elif "FILE" in pattern_upper:
+        return "File"
+
+    return ioc_type.upper() if ioc_type else "INDICATOR"
 
 
 def generate_report(
@@ -264,17 +315,52 @@ def _build_report_from_state(
             lines.append("| # | Loại | Giá Trị/Pattern | CVSS | Threat Actor |")
             lines.append("|---|------|-----------------|------|--------------|")
             for i, ioc in enumerate(ioc_list[:10], 1):
-                # Get actual type from KB (ip, domain, sha256, email, url, mutex, etc)
-                ioc_type = ioc.get("type", "indicator").upper()
-                # Get actual value/pattern
-                value = ioc.get("value", ioc.get("pattern", "N/A"))
-                # Truncate long hashes/values
+                # Get actual type - use smart detection from pattern if from OpenCTI
+                ioc_type_raw = ioc.get("type")
+                pattern = ioc.get("pattern", "")
+
+                # Use smart detection if KB doesn't have type info
+                # Check: if type is None, empty, or "indicator"
+                type_str = str(ioc_type_raw).upper() if ioc_type_raw else ""
+                if (not ioc_type_raw or
+                    type_str == "NONE" or
+                    type_str == "INDICATOR" or
+                    type_str == "UNKNOWN"):
+                    # Parse from pattern
+                    ioc_type = _extract_ioc_type_from_pattern(pattern, ioc_type_raw)
+                else:
+                    ioc_type = type_str.replace("\n", " ")[:20]
+
+                # Get actual value/pattern - prefer value over pattern
+                value = ioc.get("value", "").strip() if ioc.get("value") else ""
+
+                if not value:
+                    # Fallback to pattern but clean it (remove newlines)
+                    if isinstance(pattern, str):
+                        # Remove newlines from pattern
+                        pattern_clean = pattern.replace("\n", " ").replace("\r", "")
+                        # If still too long or looks like STIX/Yara, use name instead
+                        if (len(pattern_clean) > 50 or
+                            pattern_clean.startswith("[") or
+                            pattern_clean.startswith("rule ")):
+                            value = ioc.get("name", "N/A")[:50]
+                        else:
+                            value = pattern_clean[:50]
+                    else:
+                        value = "N/A"
+
+                # Final truncate
                 if len(str(value)) > 50:
                     value = str(value)[:47] + "..."
-                cvss = ioc.get("cvss_score", "N/A")
-                threat_actor = ioc.get("threat_actor", "-")
+
+                # Ensure no newlines in final value
+                value = str(value).replace("\n", " ").replace("\r", "")
+
+                cvss = str(ioc.get("cvss_score", "N/A")).replace("\n", " ")
+                threat_actor = str(ioc.get("threat_actor", "-")).replace("\n", " ")
                 if threat_actor and threat_actor != "-":
-                    threat_actor = threat_actor[:20]  # Truncate long names
+                    threat_actor = threat_actor[:20]
+
                 lines.append(f"| {i} | {ioc_type} | {value} | {cvss} | {threat_actor} |")
             lines.append("")
 
@@ -284,10 +370,13 @@ def _build_report_from_state(
             lines.append("| # | Tên Malware | Loại | CVSS | Threat Actor |")
             lines.append("|---|-------------|------|------|--------------|")
             for i, mal in enumerate(malware_list[:10], 1):
-                name = mal.get("name", "N/A")
-                mal_type = mal.get("type", ", ".join(mal.get("malware_types", ["unknown"]))[:20])
-                cvss = mal.get("cvss_score", "N/A")
-                threat_actor = mal.get("threat_actor", "-")
+                name = str(mal.get("name", "N/A")).replace("\n", " ")[:50]
+                mal_type_val = mal.get("type")
+                if not mal_type_val:
+                    mal_type_val = ", ".join(mal.get("malware_types", ["unknown"]))
+                mal_type = str(mal_type_val)[:20].replace("\n", " ")
+                cvss = str(mal.get("cvss_score", "N/A")).replace("\n", " ")
+                threat_actor = str(mal.get("threat_actor", "-")).replace("\n", " ")
                 if threat_actor and threat_actor != "-":
                     threat_actor = threat_actor[:20]
                 lines.append(f"| {i} | {name} | {mal_type} | {cvss} | {threat_actor} |")
@@ -299,9 +388,19 @@ def _build_report_from_state(
             lines.append("| # | Technique | Tên | Mô Tả |")
             lines.append("|---|-----------|-----|-------|")
             for i, pat in enumerate(pattern_list[:10], 1):
-                name = pat.get("name", "N/A")
-                pattern = pat.get("pattern", "N/A")[:30]
-                desc = pat.get("description", "N/A")[:60]
+                name = str(pat.get("name", "N/A")).replace("\n", " ")[:50]
+                pattern = pat.get("pattern", "N/A")
+                # Clean pattern - remove newlines and multi-line content
+                if isinstance(pattern, str):
+                    if "\n" in pattern or len(pattern) > 40:
+                        # Use name for Yara/long patterns
+                        pattern = name[:30] if len(name) > 0 else "[YARA Rule]"
+                    else:
+                        pattern = pattern[:30]
+                else:
+                    pattern = str(pattern)[:30]
+                pattern = pattern.replace("\n", " ").replace("\r", "")
+                desc = str(pat.get("description", "N/A"))[:60].replace("\n", " ").replace("\r", "")
                 lines.append(f"| {i} | {pattern} | {name} | {desc}... |")
             lines.append("")
 
