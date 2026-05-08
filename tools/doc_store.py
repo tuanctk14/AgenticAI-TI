@@ -6,6 +6,7 @@ import json
 import csv
 import re
 from pathlib import Path
+from datetime import datetime, timezone
 
 KB_DIR = Path("data/docs")
 KB_FILES = {
@@ -114,7 +115,7 @@ def _classify(record: dict) -> str:
 
 
 def _merge_and_save(category: str, record: dict):
-    """Merge record into KB file (dedup by id)"""
+    """Merge record into KB file (dedup by id) and add upload timestamp"""
     kb_file = KB_FILES[category]
     existing = []
     if kb_file.exists():
@@ -127,6 +128,9 @@ def _merge_and_save(category: str, record: dict):
 
     ids = {r.get("id") for r in existing if r.get("id")}
     if record.get("id") not in ids:
+        # Add upload timestamp if not already present
+        if "uploaded_date" not in record:
+            record["uploaded_date"] = datetime.now(timezone.utc).isoformat()
         existing.append(record)
 
     kb_file.write_text(json.dumps(existing, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -148,14 +152,37 @@ def load_knowledge_base(category: str = "all") -> dict:
 
 
 def get_knowledge_base_stats() -> dict:
-    """Get count of records per category"""
+    """Get count of records per category and latest upload date"""
     stats = {}
     for cat, f in KB_FILES.items():
         if f.exists():
-            data = json.loads(f.read_text(encoding="utf-8"))
-            stats[cat] = len(data)
+            try:
+                data = json.loads(f.read_text(encoding="utf-8"))
+                # Get count
+                stats[cat] = {
+                    "count": len(data),
+                    "latest_upload": None
+                }
+                # Get latest upload date
+                if data:
+                    dates = []
+                    for record in data:
+                        if record.get("uploaded_date"):
+                            dates.append(record.get("uploaded_date"))
+                    if dates:
+                        # Sort and get the latest date
+                        dates.sort(reverse=True)
+                        # Format the date nicely (ISO format → DD-MM-YYYY HH:MM)
+                        latest_iso = dates[0]
+                        try:
+                            dt = datetime.fromisoformat(latest_iso.replace('Z', '+00:00'))
+                            stats[cat]["latest_upload"] = dt.strftime("%d-%m-%Y %H:%M")
+                        except:
+                            stats[cat]["latest_upload"] = latest_iso[:10]
+            except:
+                stats[cat] = {"count": 0, "latest_upload": None}
         else:
-            stats[cat] = 0
+            stats[cat] = {"count": 0, "latest_upload": None}
 
     return {"context": stats, "source": "KB"}
 

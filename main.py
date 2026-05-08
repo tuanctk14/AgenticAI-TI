@@ -539,7 +539,18 @@ def interactive_mode():
                     print(f"✅ Đã lưu: CVEs={saved.get('cves',0)}, IOCs={saved.get('iocs',0)}, Malwares={saved.get('malwares',0)}")
                 stats = get_knowledge_base_stats()
                 s = stats.get("context", {})
-                print(f"📊 KB hiện tại: CVEs={s.get('cves',0)}, IOCs={s.get('iocs',0)}, Malwares={s.get('malwares',0)}")
+
+                # Display KB stats with upload dates
+                print(f"\n[Knowledge Base Stats]")
+                for cat in ["cves", "iocs", "malwares"]:
+                    info = s.get(cat, {})
+                    count = info.get("count", 0) if isinstance(info, dict) else info
+                    latest = info.get("latest_upload") if isinstance(info, dict) else None
+                    cat_name = {"cves": "CVEs", "iocs": "IOCs", "malwares": "Malwares"}.get(cat)
+                    if latest:
+                        print(f"   {cat_name:10s}: {count:3d} records | Last upload: {latest}")
+                    else:
+                        print(f"   {cat_name:10s}: {count:3d} records | Chua upload")
 
         elif choice == "4":
             # Menu 4: Free query (IOC/Malware/APT/CVE/Device/Report)
