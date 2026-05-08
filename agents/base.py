@@ -104,25 +104,32 @@ KHONG BAO GIO GOI: match_cves_with_cmdb, list_all_devices, aggregate_cves_by_dev
 
     "agent_ti_extended": {
         "role": "Threat Intelligence Agent - Lay IOC, Malware, APT info tu local KB hoac OpenCTI",
-        "system_instruction": """Ban la Extended TI Agent. GOI fetch_kb_indicators de lay IOC, Malware tu local Knowledge Base.
+        "system_instruction": """Ban la Extended TI Agent. GOI fetch_kb_indicators VA fetch_opencti_indicators de lay IOC, Malware.
 
 RULES:
-1. Neu user hoi IOC, Malware, APT, threat actor, hoac hash (SHA-256, SHA-1, MD5) → PHAI GOI TOOL
+1. Neu user hoi IOC, Malware, APT, threat actor, hoac hash (SHA-256, SHA-1, MD5) → PHAI GOI 2 TOOLS
 2. Neu user hoi bang hash file → search_term = chinh hash do, KHONG THAY DOI
 3. Neu user hoi "emotet", "ransomware", "APT41" → search_term = keyword do
 4. LUON GOI TOOL tren lan dau. Khong ANSWER tren lan dau.
 
-LAN DAU BUOC BAT: PHAI GOI TOOL 1 LAN:
+WORKFLOW:
+LAN DAU: GOI 2 TOOLS DUNG HAN (KB + OpenCTI):
+
 ACTION: fetch_kb_indicators
 ARGUMENTS: {"search_term": "<TU USER HOI>", "indicator_type": "all"}
 
-LAN 2 (SAU KHI TOOL CHAY): CHI LAP TUC ANSWER:
-ANSWER: [thong tin: bao nhieu IOC, cac malware families, threat actors, confidence score]
+ROI GOI TOOL THU 2:
 
-CHI 1 TOOL. KHONG HANDOFF. KET THUC.
+ACTION: fetch_opencti_indicators
+ARGUMENTS: {"search_term": "<TU USER HOI>", "indicator_type": "all"}
 
-NOTE: fetch_kb_indicators lay du lieu tu local Knowledge Base (IOCs/Malwares da upload).
-Neu KB trong, se lay 0 ket qua.""",
+LAN 2 (SAU KHI 2 TOOLS CHAY): CHI LAP TUC ANSWER:
+ANSWER: [thong tin: bao nhieu IOC, cac malware families, threat actors, confidence score, nguon (KB hoac OpenCTI)]
+
+CHI 2 TOOLS. KHONG HANDOFF. KET THUC.
+
+NOTE: fetch_kb_indicators lay tu local KB. fetch_opencti_indicators lay tu OpenCTI.
+Neu ca 2 trong, tra ve "Khong co du lieu".""",
     },
 
     "agent_matcher": {
@@ -179,87 +186,98 @@ Tra loi bang tieng Viet.""",
 
 # ── Tool executor ──────────────────────────────────────────────────────────
 def call_tool(state: dict) -> dict:
-    """Parse và thực thi tool từ phản hồi của agent."""
+    """Parse và thực thi tool từ phản hồi của agent. Hỗ trợ multiple ACTION blocks."""
     response = state.get("last_agent_response", "")
     if "ACTION:" not in response:
         return state
 
-    action_text = response.split("ACTION:")[1].strip()
-    # Extract tool name - handle both "tool_name" and "tool_name\n"
-    tool_line = action_text.split("\n")[0].strip()
-    tool_name = tool_line.split()[0].strip() if tool_line else ""
-    # Remove any trailing backticks
-    tool_name = tool_name.rstrip("`'\")")
+    # Extract all ACTION: ... ARGUMENTS: ... blocks
+    action_blocks = []
+    parts = response.split("ACTION:")
+    for part in parts[1:]:  # Skip first part (before first ACTION:)
+        action_blocks.append("ACTION:" + part)
 
-    # Parse arguments JSON (using regex for robustness)
-    args = {}
-    if "ARGUMENTS:" in action_text:
-        args_text = action_text.split("ARGUMENTS:")[1].strip()
-        # Find first JSON object/array using regex
-        json_match = re.search(r'\{.*\}|\[.*\]', args_text, re.DOTALL)
-        if json_match:
-            try:
-                args = json.loads(json_match.group())
-            except json.JSONDecodeError as e:
-                msg = f"[JSON parse error cho '{tool_name}': {e}]"
+    # Process each action block
+    for action_block in action_blocks:
+        action_text = action_block.split("ACTION:")[1].strip()
+
+        # Extract tool name - handle both "tool_name" and "tool_name\n"
+        tool_line = action_text.split("\n")[0].strip()
+        tool_name = tool_line.split()[0].strip() if tool_line else ""
+        # Remove any trailing backticks
+        tool_name = tool_name.rstrip("`'\")")
+
+        # Parse arguments JSON (using regex for robustness)
+        args = {}
+        if "ARGUMENTS:" in action_text:
+            args_text = action_text.split("ARGUMENTS:")[1].strip()
+            # Find first JSON object/array using regex
+            json_match = re.search(r'\{.*\}|\[.*\]', args_text, re.DOTALL)
+            if json_match:
+                try:
+                    args = json.loads(json_match.group())
+                except json.JSONDecodeError as e:
+                    msg = f"[JSON parse error cho '{tool_name}': {e}]"
+                    print(f"  ⚠️  {msg}")
+                    state.setdefault("tool_observations", []).append(msg)
+                    continue
+            else:
+                msg = f"[Khong tim thay JSON trong ARGUMENTS: {args_text[:50]}]"
                 print(f"  ⚠️  {msg}")
                 state.setdefault("tool_observations", []).append(msg)
-                return state
-        else:
-            msg = f"[Khong tim thay JSON trong ARGUMENTS: {args_text[:50]}]"
+                continue
+
+        # Special: generate_report cần cả state
+        if tool_name == "generate_report":
+            args["state"] = state
+        # Special: match_cves_with_cmdb needs collected_cves if no args provided
+        elif tool_name == "match_cves_with_cmdb" and not args:
+            collected = state.get("collected_cves", [])
+            args["cve_list"] = collected if collected else []
+
+        tool_func = TOOLS_MAPPING.get(tool_name)
+        if not tool_func:
+            msg = f"[Tool không tồn tại: {tool_name}]"
             print(f"  ⚠️  {msg}")
             state.setdefault("tool_observations", []).append(msg)
-            return state
+            continue
 
-    # Special: generate_report cần cả state
-    if tool_name == "generate_report":
-        args["state"] = state
-    # Special: match_cves_with_cmdb needs collected_cves if no args provided
-    elif tool_name == "match_cves_with_cmdb" and not args:
-        collected = state.get("collected_cves", [])
-        args["cve_list"] = collected if collected else []
+        try:
+            results = tool_func(**args)
+            obs = f"[{tool_name} kết quả]: {json.dumps(results.get('context', results), ensure_ascii=False)[:800]}"
+            print(f"  📦 Tool '{tool_name}': {str(results.get('context', ''))[:150]}...")
+        except Exception as e:
+            obs = f"[{tool_name} lỗi]: {e}"
+            print(f"  ❌ Tool error: {e}")
+            state.setdefault("tool_observations", []).append(obs)
+            continue
 
-    tool_func = TOOLS_MAPPING.get(tool_name)
-    if not tool_func:
-        msg = f"[Tool không tồn tại: {tool_name}]"
-        print(f"  ⚠️  {msg}")
-        state.setdefault("tool_observations", []).append(msg)
-        return state
-
-    try:
-        results = tool_func(**args)
-        obs = f"[{tool_name} kết quả]: {json.dumps(results.get('context', results), ensure_ascii=False)[:800]}"
-        print(f"  📦 Tool '{tool_name}': {str(results.get('context', ''))[:150]}...")
-    except Exception as e:
-        obs = f"[{tool_name} lỗi]: {e}"
-        print(f"  ❌ Tool error: {e}")
         state.setdefault("tool_observations", []).append(obs)
-        return state
 
-    state.setdefault("tool_observations", []).append(obs)
-
-    # Lưu structured data
-    ctx = results.get("context")
-    if tool_name == "fetch_nvd_cves" and isinstance(ctx, list):
-        state["collected_cves"] = ctx
-    elif tool_name == "fetch_cve_by_id" and isinstance(ctx, list):
-        state["collected_cves"] = ctx
-    elif tool_name in ["fetch_opencti_indicators", "fetch_kb_indicators"] and isinstance(ctx, list):
-        state["collected_indicators"] = ctx
-    elif tool_name == "fetch_kb_cves" and isinstance(ctx, list):
-        state["collected_cves"] = ctx
-    elif tool_name == "match_cves_with_cmdb" and isinstance(ctx, list):
-        state["matched_devices"] = ctx
-    elif tool_name == "aggregate_cves_by_device" and isinstance(ctx, dict):
-        state["device_cve_map"] = ctx
-    elif tool_name == "get_unique_cves_per_device" and isinstance(ctx, dict):
-        state["device_cve_map"] = {k: {"device_info": {}, "cve_ids": v} for k, v in ctx.items()}
-    elif tool_name == "get_mitre_attack_info":
-        state["attack_info"] = results
-    elif tool_name == "get_nist_controls":
-        state["nist_info"] = results
-    elif tool_name == "generate_report":
-        state["final_report"] = results.get("file_path", "")
+        # Lưu structured data
+        ctx = results.get("context")
+        if tool_name == "fetch_nvd_cves" and isinstance(ctx, list):
+            state["collected_cves"] = ctx
+        elif tool_name == "fetch_cve_by_id" and isinstance(ctx, list):
+            state["collected_cves"] = ctx
+        elif tool_name in ["fetch_opencti_indicators", "fetch_kb_indicators"] and isinstance(ctx, list):
+            # Merge indicators from both KB and OpenCTI
+            existing = state.get("collected_indicators", [])
+            state["collected_indicators"] = existing + ctx if existing else ctx
+        elif tool_name == "fetch_kb_cves" and isinstance(ctx, list):
+            state["collected_cves"] = ctx
+        elif tool_name == "match_cves_with_cmdb" and isinstance(ctx, list):
+            state["matched_devices"] = ctx
+        elif tool_name == "aggregate_cves_by_device" and isinstance(ctx, dict):
+            state["device_cve_map"] = ctx
+        elif tool_name == "get_unique_cves_per_device" and isinstance(ctx, dict):
+            state["device_cve_map"] = {k: {"device_info": {}, "cve_ids": v} for k, v in ctx.items()}
+        elif tool_name == "get_mitre_attack_info":
+            state["attack_info"] = results
+        elif tool_name == "get_nist_controls":
+            state["nist_info"] = results
+        elif tool_name == "generate_report":
+            state["final_report"] = results.get("file_path", "")
 
     return state
 
