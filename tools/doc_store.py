@@ -227,6 +227,7 @@ def fetch_kb_indicators(search_term: str = "", indicator_type: str = "all") -> d
                         "tags": ioc.get("tags", []),
                         "confidence": 80,
                         "score": ioc.get("cvss_score", 0) / 10 if ioc.get("cvss_score") else 8,
+                        "uploaded_date": ioc.get("uploaded_date"),
                         "source": "KB",
                     }
                     results.append(result)
@@ -254,6 +255,7 @@ def fetch_kb_indicators(search_term: str = "", indicator_type: str = "all") -> d
                         "aliases": [mal.get("id", "")],
                         "confidence": 85,
                         "score": mal.get("cvss_score", 0) / 10 if mal.get("cvss_score") else 8,
+                        "uploaded_date": mal.get("uploaded_date"),
                         "source": "KB",
                     }
                     results.append(result)
@@ -281,14 +283,16 @@ def fetch_kb_cves(search_term: str = "") -> dict:
                 search_lower in str(cve.get("id", "")).lower() or
                 search_lower in str(cve.get("description", "")).lower()
             ):
+                cvss = float(cve.get("cvss_score", 0)) if cve.get("cvss_score") else 0
                 result = {
                     "id": cve.get("id"),
                     "description": cve.get("description", ""),
-                    "cvss_score": cve.get("cvss_score", 0),
-                    "severity": "CRITICAL" if cve.get("cvss_score", 0) >= 9.0 else
-                               "HIGH" if cve.get("cvss_score", 0) >= 7.0 else
-                               "MEDIUM" if cve.get("cvss_score", 0) >= 4.0 else
+                    "cvss_score": cvss,
+                    "severity": "CRITICAL" if cvss >= 9.0 else
+                               "HIGH" if cvss >= 7.0 else
+                               "MEDIUM" if cvss >= 4.0 else
                                "LOW",
+                    "uploaded_date": cve.get("uploaded_date"),
                     "source": "KB",
                 }
                 results.append(result)

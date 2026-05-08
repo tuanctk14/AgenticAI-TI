@@ -392,6 +392,8 @@ def _ask_time_range() -> tuple[str, str, int]:
             days_back = 7
 
     # Convert to NVD API format: ISO 8601 with milliseconds
+    # Set end_date to end of day (23:59:59) for proper range filtering
+    end_dt = end_dt.replace(hour=23, minute=59, second=59)
     start_date = start_dt.strftime("%Y-%m-%dT%H:%M:%S.000")
     end_date = end_dt.strftime("%Y-%m-%dT%H:%M:%S.000")
 
@@ -419,24 +421,80 @@ def _run_report_pipeline(start_date: str, end_date: str, days_back: int) -> dict
         "tool_observations": [],
     }
 
-    # Bước 1: Lấy CVE từ NVD
-    print(f"\n1️⃣  Lấy CVE từ NVD ({days_back} ngày)...")
-    cve_result = fetch_nvd_cves(
+    # Bước 1: Lấy CVE từ KB + NVD (merge cả hai)
+    print(f"\n1️⃣  Lấy CVE...")
+    from tools.doc_store import fetch_kb_cves, load_knowledge_base
+    from datetime import datetime
+
+    # Lấy từ KB
+    kb_cves = fetch_kb_cves("").get("context", [])
+
+    # Lọc CVE theo date range (uploaded_date)
+    filtered_kb_cves = []
+    start_dt_cmp = datetime.fromisoformat(start_date + '+00:00')
+    end_dt_cmp = datetime.fromisoformat(end_date + '+00:00')
+
+    for cve in kb_cves:
+        uploaded = cve.get("uploaded_date", "")
+        if uploaded:
+            try:
+                upload_dt = datetime.fromisoformat(uploaded.replace('Z', '+00:00'))
+                if start_dt_cmp <= upload_dt <= end_dt_cmp:
+                    filtered_kb_cves.append(cve)
+            except:
+                pass
+
+    print(f"   KB:  {len(filtered_kb_cves)} CVEs")
+
+    # Cũng lấy từ NVD (merge cả hai)
+    nvd_result = fetch_nvd_cves(
         keyword="",
         severity="",
         days_back=days_back,
         start_date=start_date,
         end_date=end_date
     )
-    state["collected_cves"] = cve_result.get("context", [])
-    print(f"   ✅ Tìm được {len(state['collected_cves'])} CVEs")
+    nvd_cves = nvd_result.get("context", [])
+    print(f"   NVD: {len(nvd_cves)} CVEs")
 
-    # Bước 2: Lấy IOC/Malware từ OpenCTI và lọc theo date range
-    print(f"\n2️⃣  Lấy IOC/Malware từ OpenCTI...")
-    # Lấy max_results=100 mỗi loại, sau đó lọc client-side theo date range
+    # Merge KB + NVD (dedup by ID)
+    kb_ids = {cve.get("id") for cve in filtered_kb_cves if cve.get("id")}
+    for cve in nvd_cves:
+        if cve.get("id") not in kb_ids:
+            filtered_kb_cves.append(cve)
+
+    state["collected_cves"] = filtered_kb_cves
+    print(f"   ✅ Total: {len(state['collected_cves'])} CVEs collected")
+
+    # Bước 2: Lấy IOC/Malware từ KB trước, sau đó OpenCTI
+    print(f"\n2️⃣  Lấy IOC/Malware...")
+
+    # Lấy từ KB
+    from tools.doc_store import fetch_kb_indicators
+    kb_indicators = fetch_kb_indicators("", "all").get("context", [])
+
+    # Lọc theo date range
+    filtered_kb_indicators = []
+    for ind in kb_indicators:
+        uploaded = ind.get("uploaded_date", "")
+        if uploaded:
+            try:
+                upload_dt = datetime.fromisoformat(uploaded.replace('Z', '+00:00'))
+                if start_dt_cmp <= upload_dt <= end_dt_cmp:
+                    filtered_kb_indicators.append(ind)
+            except:
+                pass
+
+    print(f"   KB:  {len(filtered_kb_indicators)} indicators")
+
+    # Cũng lấy từ OpenCTI
     ioc_result = fetch_opencti_indicators(search_term="", start_date=start_date, end_date=end_date, max_results=100)
-    state["collected_indicators"] = ioc_result.get("context", [])
-    print(f"   ✅ Tìm được {len(state['collected_indicators'])} IOC/Malware (trong khoảng thời gian)")
+    opencti_indicators = ioc_result.get("context", [])
+    print(f"   OpenCTI: {len(opencti_indicators)} indicators")
+
+    # Merge results (avoid duplicates by ID)
+    state["collected_indicators"] = filtered_kb_indicators + opencti_indicators
+    print(f"   ✅ Total: {len(state['collected_indicators'])} IOC/Malware collected")
 
     # Bước 3: So khớp CVE với thiết bị nội bộ
     if state["collected_cves"]:
