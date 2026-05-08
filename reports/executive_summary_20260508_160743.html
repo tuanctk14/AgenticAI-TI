@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Security Report - 01-05-2026 đến 03-05-2026</title>
+  <style>
+    body { background: #1a1a2e; color: #e0e0e0; font-family: "Courier New", monospace; margin: 20px; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    h1 { color: #00d4ff; border-bottom: 2px solid #00d4ff; padding-bottom: 10px; }
+    h2 { color: #00d4ff; margin-top: 30px; }
+    h3 { color: #00a8cc; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th { background: #16213e; color: #00d4ff; padding: 10px; text-align: left; border: 1px solid #0f3460; }
+    td { padding: 8px; border: 1px solid #0f3460; }
+    tr:nth-child(even) { background: #0f3460; }
+    tr:hover { background: #1a4d6d; }
+    .critical { color: #ff4444; font-weight: bold; }
+    .high { color: #ff8800; font-weight: bold; }
+    .medium { color: #ffcc00; }
+    .low { color: #00cc00; }
+    code { background: #0f3460; padding: 2px 6px; border-radius: 3px; color: #00d4ff; }
+    pre { background: #0f3460; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    a { color: #00d4ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    hr { border: none; border-top: 1px solid #0f3460; }
+    footer { margin-top: 40px; text-align: center; color: #666; border-top: 1px solid #0f3460; padding-top: 10px; }
+  </style>
+</head>
+<body>
+<div class="container">
+<h1>Security Report - 01-05-2026 đến 03-05-2026</h1>
+<p><strong>Ngày tạo:</strong> 08/05/2026 16:07</p>
+<p><strong>Loại báo cáo:</strong> executive_summary</p>
+<p><strong>Hệ thống:</strong> ATI-AgenticThreatIntelligence (Ollama Local)</p>
+<hr/>
+<h2>DASHBOARD</h2>
+<table>
+<thead>
+<tr><th>Metric</th><th>Value</th></tr>
+</thead>
+<tbody>
+<tr><td>Total CVEs</td><td>380</td></tr>
+<tr><td>IOC (Indicators)</td><td>99</td></tr>
+<tr><td>Malware Families</td><td>31</td></tr>
+<tr><td>Attack Patterns</td><td>46</td></tr>
+<tr><td>Affected Devices</td><td>4</td></tr>
+<tr><td>Critical Matches</td><td>6</td></tr>
+</tbody>
+</table>
+<h2>DANH SÁCH CVE (180 CVEs CRITICAL/HIGH)</h2>
+<table>
+<tr><td>#</td><td>CVE ID</td><td>CVSS</td><td>Mức Độ</td><td>Ngày Công Bố</td></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>**CVE-2026-5403**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>2</td><td>**CVE-2026-5405**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>3</td><td>**CVE-2026-5656**</td><td>7.0</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>4</td><td>**CVE-2026-7512**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>5</td><td>**CVE-2026-7513**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>6</td><td>**CVE-2026-7519**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>7</td><td>**CVE-2026-7538**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>8</td><td>**CVE-2026-7545**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>9</td><td>**CVE-2026-7546**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>10</td><td>**CVE-2026-7548**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>11</td><td>**CVE-2026-42994**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>12</td><td>**CVE-2026-7549**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>13</td><td>**CVE-2026-7550**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>14</td><td>**CVE-2026-7555**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>15</td><td>**CVE-2026-7584**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>16</td><td>**CVE-2026-42402**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>17</td><td>**CVE-2026-42403**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>18</td><td>**CVE-2026-43001**</td><td>7.9</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>19</td><td>**CVE-2026-43003**</td><td>8.0</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>20</td><td>**CVE-2026-7567**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>21</td><td>**CVE-2026-42778**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>22</td><td>**CVE-2026-42779**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>23</td><td>**CVE-2026-3772**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>24</td><td>**CVE-2026-7579**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>25</td><td>**CVE-2026-31694**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>26</td><td>**CVE-2026-31695**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>27</td><td>**CVE-2026-31696**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>28</td><td>**CVE-2026-31697**</td><td>7.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>29</td><td>**CVE-2026-31698**</td><td>7.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>30</td><td>**CVE-2026-31699**</td><td>7.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>31</td><td>**CVE-2026-31700**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>32</td><td>**CVE-2026-31702**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>33</td><td>**CVE-2026-31703**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>34</td><td>**CVE-2026-31705**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>35</td><td>**CVE-2026-31706**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>36</td><td>**CVE-2026-31707**</td><td>7.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>37</td><td>**CVE-2026-31708**</td><td>8.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>38</td><td>**CVE-2026-31709**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>39</td><td>**CVE-2026-31711**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>40</td><td>**CVE-2026-31712**</td><td>8.3</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>41</td><td>**CVE-2026-31715**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>42</td><td>**CVE-2026-31716**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>43</td><td>**CVE-2026-31717**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>44</td><td>**CVE-2026-31718**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>45</td><td>**CVE-2026-31719**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>46</td><td>**CVE-2026-42482**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>47</td><td>**CVE-2026-42483**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>48</td><td>**CVE-2026-42484**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>49</td><td>**CVE-2026-31720**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>50</td><td>**CVE-2026-31729**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>51</td><td>**CVE-2026-31730**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>52</td><td>**CVE-2026-31731**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>53</td><td>**CVE-2026-31735**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>54</td><td>**CVE-2026-31739**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>55</td><td>**CVE-2026-31742**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>56</td><td>**CVE-2026-31743**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>57</td><td>**CVE-2026-31745**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>58</td><td>**CVE-2026-31747**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>59</td><td>**CVE-2026-31748**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>60</td><td>**CVE-2026-31758**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>61</td><td>**CVE-2026-31761**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>62</td><td>**CVE-2026-31766**</td><td>7.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>63</td><td>**CVE-2026-31768**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>64</td><td>**CVE-2026-31769**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>65</td><td>**CVE-2026-31771**</td><td>8.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>66</td><td>**CVE-2026-31772**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>67</td><td>**CVE-2026-31773**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>68</td><td>**CVE-2026-31774**</td><td>7.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>69</td><td>**CVE-2026-31776**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>70</td><td>**CVE-2026-31779**</td><td>8.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>71</td><td>**CVE-2026-31780**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>72</td><td>**CVE-2026-31782**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>73</td><td>**CVE-2026-42476**</td><td>7.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>74</td><td>**CVE-2026-42477**</td><td>7.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>75</td><td>**CVE-2026-42478**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>76</td><td>**CVE-2026-43006**</td><td>7.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>77</td><td>**CVE-2026-43007**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>78</td><td>**CVE-2026-43009**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>79</td><td>**CVE-2026-43011**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>80</td><td>**CVE-2026-43015**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>81</td><td>**CVE-2026-43016**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>82</td><td>**CVE-2026-43018**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>83</td><td>**CVE-2026-43019**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>84</td><td>**CVE-2026-43023**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>85</td><td>**CVE-2026-43025**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>86</td><td>**CVE-2026-43028**</td><td>7.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>87</td><td>**CVE-2026-43029**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>88</td><td>**CVE-2026-43030**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>89</td><td>**CVE-2026-43031**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>90</td><td>**CVE-2026-43033**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>91</td><td>**CVE-2026-43037**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>92</td><td>**CVE-2026-43038**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>93</td><td>**CVE-2026-43039**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>94</td><td>**CVE-2026-43042**</td><td>7.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>95</td><td>**CVE-2026-43044**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>96</td><td>**CVE-2026-43047**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>97</td><td>**CVE-2026-43048**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>98</td><td>**CVE-2026-43049**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>99</td><td>**CVE-2026-43050**</td><td>7.0</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>100</td><td>**CVE-2026-43051**</td><td>8.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>101</td><td>**CVE-2026-43052**</td><td>7.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>102</td><td>**CVE-2026-43055**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>103</td><td>**CVE-2026-43056**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>104</td><td>**CVE-2026-43057**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>105</td><td>**CVE-2026-22165**</td><td>8.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>106</td><td>**CVE-2026-22166**</td><td>8.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>107</td><td>**CVE-2026-22167**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>108</td><td>**CVE-2026-37552**</td><td>8.4</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>109</td><td>**CVE-2026-37554**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>110</td><td>**CVE-2026-42471**</td><td>8.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>111</td><td>**CVE-2026-42472**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>112</td><td>**CVE-2026-42473**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>113</td><td>**CVE-2026-37525**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>114</td><td>**CVE-2026-37526**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>115</td><td>**CVE-2026-37530**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>116</td><td>**CVE-2026-37531**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>117</td><td>**CVE-2026-37532**</td><td>7.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>118</td><td>**CVE-2026-37534**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>119</td><td>**CVE-2026-37535**</td><td>7.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>120</td><td>**CVE-2026-37536**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>121</td><td>**CVE-2026-37537**</td><td>8.1</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>122</td><td>**CVE-2026-37538**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>123</td><td>**CVE-2026-37539**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>124</td><td>**CVE-2026-37540**</td><td>8.4</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>125</td><td>**CVE-2026-37541**</td><td>10.0</td><td class="critical">CRITICAL</td><td>2026-05-01</td></tr>
+<tr><td>126</td><td>**CVE-2026-42467**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>127</td><td>**CVE-2026-42468**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>128</td><td>**CVE-2026-42469**</td><td>8.6</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>129</td><td>**CVE-2026-42485**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>130</td><td>**CVE-2025-63547**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>131</td><td>**CVE-2025-63548**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>132</td><td>**CVE-2026-37457**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>133</td><td>**CVE-2025-52347**</td><td>7.8</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>134</td><td>**CVE-2026-30363**</td><td>8.4</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>135</td><td>**CVE-2026-7590**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>136</td><td>**CVE-2026-7592**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>137</td><td>**CVE-2026-7593**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>138</td><td>**CVE-2026-7594**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>139</td><td>**CVE-2026-7598**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-01</td></tr>
+<tr><td>140</td><td>**CVE-2026-43824**</td><td>7.7</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>141</td><td>**CVE-2026-4882**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-02</td></tr>
+<tr><td>142</td><td>**CVE-2026-6963**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>143</td><td>**CVE-2026-7458**</td><td>9.8</td><td class="critical">CRITICAL</td><td>2026-05-02</td></tr>
+<tr><td>144</td><td>**CVE-2026-7641**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>145</td><td>**CVE-2026-5109**</td><td>7.2</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>146</td><td>**CVE-2026-5110**</td><td>7.2</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>147</td><td>**CVE-2026-5111**</td><td>7.2</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>148</td><td>**CVE-2026-5112**</td><td>7.2</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>149</td><td>**CVE-2026-5113**</td><td>7.2</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>150</td><td>**CVE-2026-7049**</td><td>7.2</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>151</td><td>**CVE-2026-7647**</td><td>8.1</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>152</td><td>**CVE-2026-2052**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>153</td><td>**CVE-2026-6229**</td><td>7.2</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>154</td><td>**CVE-2026-7607**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>155</td><td>**CVE-2026-7649**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>156</td><td>**CVE-2026-5324**</td><td>7.2</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>157</td><td>**CVE-2026-7489**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>158</td><td>**CVE-2026-7490**</td><td>7.2</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>159</td><td>**CVE-2026-7491**</td><td>8.1</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>160</td><td>**CVE-2026-4060**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>161</td><td>**CVE-2026-4061**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>162</td><td>**CVE-2026-4062**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>163</td><td>**CVE-2026-4100**</td><td>7.1</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>164</td><td>**CVE-2026-6320**</td><td>7.5</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>165</td><td>**CVE-2026-2554**</td><td>8.1</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>166</td><td>**CVE-2026-7630**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>167</td><td>**CVE-2026-7632**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>168</td><td>**CVE-2026-7644**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>169</td><td>**CVE-2026-7668**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>170</td><td>**CVE-2026-7670**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-02</td></tr>
+<tr><td>171</td><td>**CVE-2026-7674**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-03</td></tr>
+<tr><td>172</td><td>**CVE-2026-7675**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-03</td></tr>
+<tr><td>173</td><td>**CVE-2026-7679**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-03</td></tr>
+<tr><td>174</td><td>**CVE-2026-5063**</td><td>7.2</td><td class="high">HIGH</td><td>2026-05-03</td></tr>
+<tr><td>175</td><td>**CVE-2026-7684**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-03</td></tr>
+<tr><td>176</td><td>**CVE-2026-7685**</td><td>8.8</td><td class="high">HIGH</td><td>2026-05-03</td></tr>
+<tr><td>177</td><td>**CVE-2026-7694**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-03</td></tr>
+<tr><td>178</td><td>**CVE-2026-7695**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-03</td></tr>
+<tr><td>179</td><td>**CVE-2026-7698**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-03</td></tr>
+<tr><td>180</td><td>**CVE-2026-7703**</td><td>7.3</td><td class="high">HIGH</td><td>2026-05-03</td></tr>
+</tbody>
+</table>
+<h3>CVE Nghiêm Trọng Cần Ưu Tiên</h3>
+<ul>
+<li><strong>CVE-2026-7538</strong> (CVSS: 9.8, CRITICAL): A vulnerability was identified in Totolink A8000RU 7.1cu.643_b20200521. This issue affects the function Vulnerability of the file...</li>
+<li><strong>CVE-2026-7546</strong> (CVSS: 9.8, CRITICAL): A security vulnerability has been detected in Totolink NR1800X 9.1.0u.6279_B20210910. The impacted element is the function find_host_ip of the...</li>
+<li><strong>CVE-2026-42994</strong> (CVSS: 9.8, CRITICAL): Bitwarden CLI 2026.4.0 from 2026-04-22T21:57Z to 2026-04-22T23:30Z, when obtained from npm, had embedded malicious code. This is related to a...</li>
+<li><strong>CVE-2026-7567</strong> (CVSS: 9.8, CRITICAL): The Temporary Login plugin for WordPress is vulnerable to Authentication Bypass in versions up to and including 1.0.0. This is due to improper input...</li>
+<li><strong>CVE-2026-42778</strong> (CVSS: 9.8, CRITICAL): The fix for CVE-2026-41409 was not applied to the 2.1.X and 2.2.X branches. Here was the original issue description:...</li>
+</ul>
+<h2>THREAT INTELLIGENCE (176 Kết Quả)</h2>
+<h3>Indicators of Compromise (IOC)</h3>
+<table>
+<tr><td>#</td><td>Loại</td><td>Giá Trị/Pattern</td><td>CVSS</td><td>Threat Actor</td></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>SHA256</td><td>3c2aa3687ac9f466ce909e2cb12b07a5</td><td>N/A</td><td>-</td></tr>
+<tr><td>2</td><td>YARA</td><td>win_pebbledash_auto</td><td>N/A</td><td>-</td></tr>
+<tr><td>3</td><td>SHA256</td><td>e9df1f28cfbc831b89a404816a0242ead5bb142c</td><td>N/A</td><td>-</td></tr>
+<tr><td>4</td><td>SHA256</td><td>e46907cfaf96d2fde8da8a0281e4e16958a968ed</td><td>N/A</td><td>-</td></tr>
+<tr><td>5</td><td>SHA256</td><td>b91b318a9fbb153409a846bf173e9d1bd0cc4dbf</td><td>N/A</td><td>-</td></tr>
+<tr><td>6</td><td>SHA256</td><td>b23a3738b6174f62e4696080f2d8a5f258799ce5</td><td>N/A</td><td>-</td></tr>
+<tr><td>7</td><td>SHA256</td><td>577c3a0ac66ff71d9541d983e37530500cb9f2a5</td><td>N/A</td><td>-</td></tr>
+<tr><td>8</td><td>SHA256</td><td>39c97ca820f31e7903ccb190fee02035ffdb37b9</td><td>N/A</td><td>-</td></tr>
+<tr><td>9</td><td>SHA256</td><td>2f78abc001534e28eb208a73245ce5389c40ddbe</td><td>N/A</td><td>-</td></tr>
+<tr><td>10</td><td>YARA</td><td>CobaltStrike_Resources_Command_Ps1_v2_5_to_v3_7_an</td><td>N/A</td><td>-</td></tr>
+</tbody>
+</table>
+<h3>Malware Families</h3>
+<table>
+<tr><td>#</td><td>Tên Malware</td><td>Loại</td><td>CVSS</td><td>Threat Actor</td></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>DocSwap</td><td></td><td>N/A</td><td>-</td></tr>
+<tr><td>2</td><td>Crocodilus</td><td></td><td>N/A</td><td>-</td></tr>
+<tr><td>3</td><td>DOWNIISSA</td><td></td><td>N/A</td><td>-</td></tr>
+<tr><td>4</td><td>DRYHOOK</td><td></td><td>N/A</td><td>-</td></tr>
+<tr><td>5</td><td>LazyWiper</td><td></td><td>N/A</td><td>-</td></tr>
+<tr><td>6</td><td>BRUSHFIRE</td><td></td><td>N/A</td><td>-</td></tr>
+<tr><td>7</td><td>Shai-Hulud</td><td></td><td>N/A</td><td>-</td></tr>
+<tr><td>8</td><td>SPAWNCHIMERA</td><td></td><td>N/A</td><td>-</td></tr>
+<tr><td>9</td><td>PHASEJAM</td><td></td><td>N/A</td><td>-</td></tr>
+<tr><td>10</td><td>LAMEHUG</td><td></td><td>N/A</td><td>-</td></tr>
+</tbody>
+</table>
+<h3>Attack Patterns (MITRE ATT&CK)</h3>
+<table>
+<tr><td>#</td><td>Technique</td><td>Tên</td><td>Mô Tả</td></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>N/A</td><td>Block Communications</td><td>Operational technology communications occur over serial COM,...</td></tr>
+<tr><td>2</td><td>N/A</td><td>Unauthorized Message</td><td>Adversaries may send unauthorized messages to ICS systems an...</td></tr>
+<tr><td>3</td><td>N/A</td><td>Online Edit</td><td>Adversaries may execute an online edit of a PLC to update pa...</td></tr>
+<tr><td>4</td><td>N/A</td><td>Broadcast Discovery</td><td>Adversaries may perform broadcast discovery requests to enum...</td></tr>
+<tr><td>5</td><td>N/A</td><td>Modify Firmware</td><td>Firmware is low-level software embedded in hardware that ena...</td></tr>
+<tr><td>6</td><td>N/A</td><td>Reporting Message</td><td>Adversaries may block or prevent a reporting message from re...</td></tr>
+<tr><td>7</td><td>N/A</td><td>Download All</td><td>Adversaries may execute a full program download to a PLC to ...</td></tr>
+<tr><td>8</td><td>N/A</td><td>Module Firmware</td><td>Adversaries may install malicious or vulnerable firmware ont...</td></tr>
+<tr><td>9</td><td>N/A</td><td>Hardcoded Credentials</td><td>Adversaries may leverage credentials that are hardcoded in s...</td></tr>
+<tr><td>10</td><td>N/A</td><td>System Firmware</td><td>System firmware on modern assets is often designed with an u...</td></tr>
+</tbody>
+</table>
+<h2>THIẾT BỊ ẢNH HƯỞNG (4 Thiết Bị)</h2>
+<table>
+<tr><td>#</td><td>Thiết Bị</td><td>IP</td><td>OS</td><td>CVE Count</td><td>Mức Độ</td></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>web-server-01</td><td>192.168.1.10</td><td>Windows Server 2019 10.0.17763</td><td>33</td><td>**CRITICAL**</td></tr>
+<tr><td>2</td><td>db-server-01</td><td>192.168.1.20</td><td>Ubuntu 20.04</td><td>2</td><td>**HIGH**</td></tr>
+<tr><td>3</td><td>app-server-01</td><td>192.168.1.30</td><td>CentOS 7.9</td><td>2</td><td>**MEDIUM**</td></tr>
+<tr><td>4</td><td>workstation-finance-01</td><td>192.168.2.101</td><td>Windows 10 21H2</td><td>1</td><td>**MEDIUM**</td></tr>
+</tbody>
+</table>
+<h3>Chi Tiết Khắc Phục Từng Thiết Bị</h3>
+<h4>web-server-01 (192.168.1.10) - **CRITICAL**</h4>
+<ul>
+<li><strong>OS</strong>: Windows Server 2019 10.0.17763</li>
+<li><strong>Criticality</strong>: HIGH</li>
+</ul>
+<p><strong>CVEs Ảnh Hưởng:</strong></p>
+<ul>
+<li><strong>CVE-2026-7567</strong> (CVSS: 9.8, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-42778</strong> (CVSS: 9.8, Phần Mềm: Apache HTTP Server 2.4.49)</li>
+<li><strong>CVE-2026-42779</strong> (CVSS: 9.8, Phần Mềm: Apache HTTP Server 2.4.49)</li>
+<li><strong>CVE-2026-42472</strong> (CVSS: 9.8, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-42473</strong> (CVSS: 9.8, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-7458</strong> (CVSS: 9.8, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-7545</strong> (CVSS: 7.3, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-7549</strong> (CVSS: 7.3, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-7550</strong> (CVSS: 7.3, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-7555</strong> (CVSS: 7.3, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-42402</strong> (CVSS: 7.5, Phần Mềm: Apache HTTP Server 2.4.49)</li>
+<li><strong>CVE-2026-42403</strong> (CVSS: 7.5, Phần Mềm: Apache HTTP Server 2.4.49)</li>
+<li><strong>CVE-2026-3772</strong> (CVSS: 8.8, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-37552</strong> (CVSS: 8.4, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-37554</strong> (CVSS: 7.5, Phần Mềm: OpenSSL 1.0.2k)</li>
+<li><strong>CVE-2026-42471</strong> (CVSS: 8.1, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-7592</strong> (CVSS: 7.3, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-7647</strong> (CVSS: 8.1, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-7630</strong> (CVSS: 7.3, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-7632</strong> (CVSS: 7.3, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-7553</strong> (CVSS: 4.7, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-42404</strong> (CVSS: 6.5, Phần Mềm: Apache HTTP Server 2.4.49)</li>
+<li><strong>CVE-2026-7578</strong> (CVSS: 4.7, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-37503</strong> (CVSS: 6.9, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-37504</strong> (CVSS: 5.3, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-37505</strong> (CVSS: 4.9, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-42474</strong> (CVSS: 6.5, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-42475</strong> (CVSS: 6.5, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2025-69606</strong> (CVSS: 6.1, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-7612</strong> (CVSS: 4.7, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-7688</strong> (CVSS: 5.0, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-7689</strong> (CVSS: 3.7, Phần Mềm: PHP 7.4.3)</li>
+<li><strong>CVE-2026-7697</strong> (CVSS: 4.7, Phần Mềm: PHP 7.4.3)</li>
+</ul>
+<p><strong>Hướng khắc phục:</strong></p>
+<ul>
+<li>⚡ <strong>Ưu tiên CRITICAL</strong>: Xử lý ngay trong 24 giờ</li>
+<li><strong>Cập nhật phần mềm</strong>: Nâng cấp Apache HTTP Server 2.4.49 lên phiên bản mới nhất</li>
+<li><strong>Cập nhật phần mềm</strong>: Nâng cấp OpenSSL 1.0.2k lên phiên bản mới nhất</li>
+<li><strong>Cập nhật phần mềm</strong>: Nâng cấp PHP 7.4.3 lên phiên bản mới nhất</li>
+<li><strong>Credential reset</strong>: Reset tất cả passwords, invalidate sessions nếu cần</li>
+<li><strong>MFA enforcement</strong>: Enable Multi-Factor Authentication nếu chưa có</li>
+<li><strong>Kiểm tra logs</strong>: Tìm kiếm dấu hiệu truy cập bất hợp pháp (unauthorized access attempts)</li>
+</ul>
+<h4>db-server-01 (192.168.1.20) - **HIGH**</h4>
+<ul>
+<li><strong>OS</strong>: Ubuntu 20.04</li>
+<li><strong>Criticality</strong>: CRITICAL</li>
+</ul>
+<p><strong>CVEs Ảnh Hưởng:</strong></p>
+<ul>
+<li><strong>CVE-2026-7598</strong> (CVSS: 7.3, Phần Mềm: OpenSSH 8.2p1)</li>
+<li><strong>CVE-2026-4658</strong> (CVSS: 6.4, Phần Mềm: OpenSSH 8.2p1)</li>
+</ul>
+<p><strong>Hướng khắc phục:</strong></p>
+<ul>
+<li>🔴 <strong>Ưu tiên HIGH</strong>: Xử lý trong 72 giờ</li>
+<li><strong>Cập nhật phần mềm</strong>: Nâng cấp OpenSSH 8.2p1 lên phiên bản mới nhất</li>
+<li><strong>Credential reset</strong>: Reset tất cả passwords, invalidate sessions nếu cần</li>
+<li><strong>MFA enforcement</strong>: Enable Multi-Factor Authentication nếu chưa có</li>
+<li><strong>Kiểm tra logs</strong>: Tìm kiếm dấu hiệu truy cập bất hợp pháp (unauthorized access attempts)</li>
+</ul>
+<h4>app-server-01 (192.168.1.30) - **MEDIUM**</h4>
+<ul>
+<li><strong>OS</strong>: CentOS 7.9</li>
+<li><strong>Criticality</strong>: HIGH</li>
+</ul>
+<p><strong>CVEs Ảnh Hưởng:</strong></p>
+<ul>
+<li><strong>CVE-2026-7676</strong> (CVSS: 4.3, Phần Mềm: Spring Framework 5.3.18)</li>
+<li><strong>CVE-2026-7677</strong> (CVSS: 3.5, Phần Mềm: Spring Framework 5.3.18)</li>
+</ul>
+<p><strong>Hướng khắc phục:</strong></p>
+<ul>
+<li>🟡 <strong>Ưu tiên MEDIUM</strong>: Lên lịch xử lý trong 2 tuần</li>
+<li><strong>Cập nhật phần mềm</strong>: Nâng cấp Spring Framework 5.3.18 lên phiên bản mới nhất</li>
+<li><strong>File access audit</strong>: Kiểm tra web server logs cho directory traversal attempts</li>
+<li><strong>Access control</strong>: Đảm bảo proper file permissions và không expose sensitive directories</li>
+</ul>
+<h4>workstation-finance-01 (192.168.2.101) - **MEDIUM**</h4>
+<ul>
+<li><strong>OS</strong>: Windows 10 21H2</li>
+<li><strong>Criticality</strong>: MEDIUM</li>
+</ul>
+<p><strong>CVEs Ảnh Hưởng:</strong></p>
+<ul>
+<li><strong>CVE-2026-7686</strong> (CVSS: 5.3, Phần Mềm: Chrome 109.0.5414)</li>
+</ul>
+<p><strong>Hướng khắc phục:</strong></p>
+<ul>
+<li>🟡 <strong>Ưu tiên MEDIUM</strong>: Lên lịch xử lý trong 2 tuần</li>
+<li><strong>Cập nhật phần mềm</strong>: Nâng cấp Chrome 109.0.5414 lên phiên bản mới nhất</li>
+<li><strong>Kiểm tra logs</strong>: Tìm kiếm dấu hiệu bị khai thác (suspicious activities)</li>
+<li><strong>Network segmentation</strong>: Giới hạn truy cập từ bên ngoài nếu chưa có</li>
+</ul>
+<hr/>
+<p>*Tạo bởi ATI-AgenticThreatIntelligence System | 08/05/2026 16:07:43*</p>
+<p>*Model: Ollama Local | Report ID: 20260508_160743*</p>
+</div>
+<footer>
+<p>ATI-AgenticThreatIntelligence System | Ollama Local Edition</p>
+</footer>
+</body>
+</html>

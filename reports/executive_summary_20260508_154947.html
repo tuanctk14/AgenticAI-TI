@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>executive_summary</title>
+  <style>
+    body { background: #1a1a2e; color: #e0e0e0; font-family: "Courier New", monospace; margin: 20px; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    h1 { color: #00d4ff; border-bottom: 2px solid #00d4ff; padding-bottom: 10px; }
+    h2 { color: #00d4ff; margin-top: 30px; }
+    h3 { color: #00a8cc; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th { background: #16213e; color: #00d4ff; padding: 10px; text-align: left; border: 1px solid #0f3460; }
+    td { padding: 8px; border: 1px solid #0f3460; }
+    tr:nth-child(even) { background: #0f3460; }
+    tr:hover { background: #1a4d6d; }
+    .critical { color: #ff4444; font-weight: bold; }
+    .high { color: #ff8800; font-weight: bold; }
+    .medium { color: #ffcc00; }
+    .low { color: #00cc00; }
+    code { background: #0f3460; padding: 2px 6px; border-radius: 3px; color: #00d4ff; }
+    pre { background: #0f3460; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    a { color: #00d4ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    hr { border: none; border-top: 1px solid #0f3460; }
+    footer { margin-top: 40px; text-align: center; color: #666; border-top: 1px solid #0f3460; padding-top: 10px; }
+  </style>
+</head>
+<body>
+<div class="container">
+<h1>Executive Summary</h1>
+<p><strong>Ngày tạo:</strong> 08/05/2026 15:49</p>
+<p><strong>Loại báo cáo:</strong> executive_summary</p>
+<p><strong>Hệ thống:</strong> ATI-AgenticThreatIntelligence (Ollama Local)</p>
+<hr/>
+<h2>DASHBOARD</h2>
+<table>
+<thead>
+<tr><th>Metric</th><th>Value</th></tr>
+</thead>
+<tbody>
+<tr><td>Total CVEs</td><td>20</td></tr>
+<tr><td>IOC (Indicators)</td><td>14</td></tr>
+<tr><td>Malware Families</td><td>9</td></tr>
+<tr><td>Attack Patterns</td><td>0</td></tr>
+<tr><td>Affected Devices</td><td>0</td></tr>
+<tr><td>Critical Matches</td><td>0</td></tr>
+</tbody>
+</table>
+<h2>THREAT INTELLIGENCE (23 Kết Quả)</h2>
+<h3>Indicators of Compromise (IOC)</h3>
+<table>
+<tr><td>#</td><td>Loại</td><td>Giá Trị/Pattern</td><td>CVSS</td><td>Threat Actor</td></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>IP</td><td>203.0.113.45</td><td>9.5</td><td>APT41</td></tr>
+<tr><td>2</td><td>DOMAIN</td><td>update-service.microsofft.com</td><td>9.0</td><td>APT41</td></tr>
+<tr><td>3</td><td>SHA256</td><td>e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934...</td><td>9.7</td><td>APT41</td></tr>
+<tr><td>4</td><td>EMAIL</td><td>hr-payroll@hanoi-corp-internal.net</td><td>8.5</td><td>APT41</td></tr>
+<tr><td>5</td><td>SHA256</td><td>9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822...</td><td>9.4</td><td>APT41</td></tr>
+<tr><td>6</td><td>IP</td><td>192.0.2.187</td><td>9.0</td><td>APT41</td></tr>
+<tr><td>7</td><td>SHA256</td><td>1234567890abcdef1234567890abcdef1234567890abcde...</td><td>9.8</td><td></td></tr>
+<tr><td>8</td><td>URL</td><td>lockbit-support.onion</td><td>9.0</td><td></td></tr>
+<tr><td>9</td><td>MUTEX</td><td>Global\LockBit_Mutex_2023</td><td>8.5</td><td></td></tr>
+<tr><td>10</td><td>SHA256</td><td>fedcba9876543210fedcba9876543210fedcba987654321...</td><td>9.9</td><td></td></tr>
+</tbody>
+</table>
+<h3>Malware Families</h3>
+<table>
+<tr><td>#</td><td>Tên Malware</td><td>Loại</td><td>CVSS</td><td>Threat Actor</td></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>ShadowPad</td><td>backdoor</td><td>9.7</td><td>APT41</td></tr>
+<tr><td>2</td><td>LockBit</td><td>ransomware</td><td>9.8</td><td>LockBit Group</td></tr>
+<tr><td>3</td><td>CobaltStrike</td><td>post_exploitation</td><td>9.5</td><td>Multiple</td></tr>
+<tr><td>4</td><td>Emotet</td><td>banking_trojan</td><td>9.2</td><td>Mealybug</td></tr>
+<tr><td>5</td><td>Mimikatz</td><td>credential_dumper</td><td>9.0</td><td>Multiple</td></tr>
+<tr><td>6</td><td>BlackCat</td><td>ransomware</td><td>9.9</td><td>ALPHV Group</td></tr>
+<tr><td>7</td><td>PlugX</td><td>rat</td><td>8.8</td><td>APT41</td></tr>
+<tr><td>8</td><td>StealC</td><td>infostealer</td><td>8.5</td><td>Various</td></tr>
+<tr><td>9</td><td>TestRansom</td><td>ransomware</td><td>N/A</td><td></td></tr>
+</tbody>
+</table>
+<hr/>
+<p>*Tạo bởi ATI-AgenticThreatIntelligence System | 08/05/2026 15:49:47*</p>
+<p>*Model: Ollama Local | Report ID: 20260508_154947*</p>
+</div>
+<footer>
+<p>ATI-AgenticThreatIntelligence System | Ollama Local Edition</p>
+</footer>
+</body>
+</html>
