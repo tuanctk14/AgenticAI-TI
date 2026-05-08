@@ -63,43 +63,54 @@ AGENT_PROFILES = {
         "role": "Supervisor Agent - Dieu phoi CVE va IOC workflow",
         "system_instruction": """Ban la Supervisor Agent. Nhiem vu: Doc cau hoi, NGAY LAP TUC HANDOFF den agent thich hop. KHONG MOT LAN ANSWER hay DESCRIBE.
 
-RULES:
-1. CVE-*, CVE ID, loi ho, NVD, keyword, severity → HANDOFF: agent_ti
-2. IOC, Malware, APT, threat actor, APT29, emotet, file hash, SHA-256, SHA-1, MD5, domain name, IP address, URL, IPv4, IPv6 → HANDOFF: agent_ti_extended
-3. CMDB, thiet bi, device, so khop → HANDOFF: agent_matcher
-4. Bao cao, report → HANDOFF: agent_reporter
-5. Tai lieu, document, upload → HANDOFF: agent_doc
-6. Chuoi hex dai 32+ ky tu (hash file), domain, IP → HANDOFF: agent_ti_extended (IOC)
-7. Khong ro → HANDOFF: agent_ti (default CVE)
+RULES - PRIORITY ORDER:
+1. CVE-*, CVE ID hoac keyword (log4j, apache, etc) + device mention → HANDOFF: agent_ti (LUU Y: fetch CVE TIEN, sau do agent_ti se tu-forward toi agent_matcher)
+2. CVE-*, CVE ID, loi ho, NVD, severity KHONG co device → HANDOFF: agent_ti
+3. IOC, Malware, APT, threat actor, APT29, emotet, file hash, SHA-256, SHA-1, MD5, domain name, IP address, URL, IPv6 → HANDOFF: agent_ti_extended
+4. Chi hoi thiet bi (device name, SRV-001, etc) ma KHONG CO CVE, Malware, IOC → HANDOFF: agent_device
+5. Hoi thiet bi + tên vendor/product (Apache, Cisco, etc) nhung KHONG ROI CVE → HANDOFF: agent_device (layer info truoc)
+6. Bao cao, report → HANDOFF: agent_reporter
+7. Tai lieu, document, upload → HANDOFF: agent_doc
+8. Khong ro → HANDOFF: agent_ti (default)
 
-DETECTION:
-- CVE format: CVE-XXXX-XXXXX
-- Hash format: 32+ hex chars (MD5/SHA-1/SHA-256 hashes)
-- Domain: contains . (dot) like example.com
-- IP: XXX.XXX.XXX.XXX pattern
-- If no clear format and multiple keywords, prioritize IOC keywords
+DETECTION ORDER:
+- Uu tien: CVE-XXXX-XXXXX format → agent_ti (truoc het)
+- Hash format: 32+ hex chars (MD5/SHA-1/SHA-256) → agent_ti_extended
+- Domain: *.* → agent_ti_extended
+- IPv4/IPv6 format → agent_ti_extended
+- Device pattern SRV-*, DEVICE-* → agent_device hoac agent_ti neu co CVE
 
-OUTPUT: Chi HANDOFF, khong co gi khac.""",
+OUTPUT: CHI CO HANDOFF, KHONG CO GI KHAC.""",
     },
 
     "agent_ti": {
         "role": "CVE Agent - Lay CVE tu NVD hoac KB",
-        "system_instruction": """Ban la CVE Agent. NHIEM VU DUNG: Lay CVE tu NVD hoac local Knowledge Base. KHONG DUOC GOI match_cves_with_cmdb.
+        "system_instruction": """Ban la CVE Agent. CHI LAM: Tìm CVE từ NVD hoặc Knowledge Base.
+
+STEP 1: Tìm CVE
+- Query có CVE-XXXX? → fetch_cve_by_id
+- Query có keyword (log4j, apache)? → fetch_kb_cves
+- Không biết? → fetch_nvd_cves với keyword
+
+OUTPUT FORMAT (chỉ 1 trong 2):
+ACTION: fetch_cve_by_id
+ARGUMENTS: {"cve_id": "CVE-2021-44228"}
+
+HOẶC:
+ACTION: fetch_kb_cves
+ARGUMENTS: {"search_term": "log4j"}
+
+HOẶC:
+ACTION: fetch_nvd_cves
+ARGUMENTS: {"keyword": "log4j"}
+
+STEP 2: Khi LLM gọi tool xong (lần 2+)
+Nếu query hỏi "device", "thiet bi", "anh huong" → ĐỪNG ANSWER, để hệ thống tự route
+Nếu query CHỈ hỏi CVE details → ANSWER với CVE info
 
 RULES:
-1. Neu user hoi CVE cu the (CVE-2023-22515, CVE-2021-44228) + so khop thiet bi → fetch_kb_cves TIEN ROI fetch_cve_by_id NEU KB trong
-2. Neu user hoi CVE cu the + chi hoi chi tiet → fetch_kb_cves TIEN ROI fetch_cve_by_id NEU KB trong
-3. Neu user hoi CVE theo keyword (log4j) + so khop thiet bi → fetch_kb_cves TIEN, NEU CO thi HANDOFF agent_matcher
-4. Neu user hoi CVE theo keyword + chi hoi chi tiet → fetch_kb_cves TIEN, NEU CO thi ANSWER
-
-ƯỘI TIÊN: Luôn thử fetch_kb_cves TRƯỚC (KB local). Nếu có kết quả → ANSWER/HANDOFF.
-Nếu KB trống → fetch_nvd_cves (NVD online)
-
-BAT DUNG GOI TOOL:
-ACTION: fetch_kb_cves hoac fetch_nvd_cves hoac fetch_cve_by_id
-ARGUMENTS: {...}
-
-KHONG BAO GIO GOI: match_cves_with_cmdb, list_all_devices, aggregate_cves_by_device""",
+❌ NEVER: match_cves_with_cmdb, list_all_devices, HANDOFF, python code
+✅ ONLY: fetch_cve_by_id, fetch_kb_cves, fetch_nvd_cves""",
     },
 
     "agent_ti_extended": {
@@ -132,14 +143,36 @@ NOTE: fetch_kb_indicators lay tu local KB. fetch_opencti_indicators lay tu OpenC
 Neu ca 2 trong, tra ve "Khong co du lieu".""",
     },
 
+    "agent_device": {
+        "role": "Device Agent - Lay thong tin thiet bi tu CMDB",
+        "system_instruction": """Ban la Device Agent. Nhiem vu: Lay thong tin thiet bi tu CMDB. KHONG DUNG match CVE, CHI lay info thiet bi.
+
+RULES:
+1. User hoi thong tin thiet bi (SRV-001, DEVICE-123) → GOI list_all_devices
+2. Thong tin tra ve: device name, OS, IP, status, installed_software, etc
+
+WORKFLOW:
+LAN DAU: GOI TOOL:
+ACTION: list_all_devices
+ARGUMENTS: {}
+
+LAN 2 (SAU KHI TOOL CHAY): CHI ANSWER:
+ANSWER: [Thong tin thiet bi: ten, OS, IP, installed_software, status, etc]
+
+CHI 1 TOOL. KHONG HANDOFF. KET THUC.""",
+    },
+
     "agent_matcher": {
         "role": "Asset Matcher Agent - So khop va phan nhom CVE theo device",
         "system_instruction": """Ban la Matcher Agent. So khop CVE voi CMDB devices. GOI 1 TOOL DUNG.
 
 IMPORTANT: match_cves_with_cmdb yeu cau CVE objects (dict voi 'id', 'description', 'cvss_score', etc), KHONG CHI CVE ID strings.
 
-NEU LAN DAU: Goi match_cves_with_cmdb de match CVE voi device.
-DUNG lay TOAN BO CVE list tu state (STATE KEY: collected_cves - day la list cac CVE dict)
+RULES:
+1. Chi GOI tool NEU co CVE (state['collected_cves'] khong trong)
+2. Neu KHONG CO CVE → ANSWER: "Khong co CVE de match. Hay goi agent_device de lay thong tin thiet bi"
+
+NEU CO CVE:
 ACTION: match_cves_with_cmdb
 ARGUMENTS: {"cve_list": <lay tu state['collected_cves']>}
 
@@ -235,6 +268,14 @@ def call_tool(state: dict) -> dict:
             collected = state.get("collected_cves", [])
             args["cve_list"] = collected if collected else []
 
+        # Agent-specific validation: prevent unauthorized tool calls
+        last_agent = state.get("last_agent", "")
+        if last_agent == "agent_ti" and tool_name in ["match_cves_with_cmdb", "list_all_devices"]:
+            msg = f"[POLICY VIOLATION: agent_ti KHONG DUOC goi '{tool_name}' - day la cua agent_matcher/agent_device]"
+            print(f"  ❌ {msg}")
+            state.setdefault("tool_observations", []).append(msg)
+            continue
+
         tool_func = TOOLS_MAPPING.get(tool_name)
         if not tool_func:
             msg = f"[Tool không tồn tại: {tool_name}]"
@@ -302,17 +343,67 @@ def call_agent(state: dict, agent_name: str) -> dict:
 
     profile = AGENT_PROFILES[agent_name]
 
-    # Special case: agent_ti with collected CVEs and device matching requested
+    # Special cases: auto-routing without calling LLM
     query_lower = state.get("query", "").lower()
     cves = state.get("collected_cves")
-    if (agent_name == "agent_ti" and cves and
-        ("so khop" in query_lower or "thiet bi" in query_lower or "device" in query_lower)):
-        # Auto-handoff to agent_matcher for device matching
-        response = "HANDOFF: agent_matcher\n\n[CVE collection complete, forwarding to device matcher]"
+
+
+    # agent_ti: on 2nd+ iteration, handle based on query context
+    if agent_name == "agent_ti" and cves and state.get("last_agent") == "agent_ti":
+        has_device_match_kw = any(kw in query_lower for kw in ["so khop", "anh huong"])
+        has_device_info_kw = any(kw in query_lower for kw in ["device", "thiet bi"])
+
+        if has_device_match_kw or (has_device_info_kw and "so khop" in query_lower):
+            # Query explicitly asks for CVE+device matching → forward to agent_matcher
+            response = f"HANDOFF: agent_matcher"
+            print(f"\n{'='*55}")
+            print(f"🤖 {agent_name.upper()} (bước {state['num_steps'] + 1})")
+            print("="*55)
+            print(response)
+            state["last_agent_response"] = response
+            state["last_agent"]          = agent_name
+            state["num_steps"]           = state.get("num_steps", 0) + 1
+            state["agent_history"]       = state.get("agent_history", []) + [agent_name]
+            return state
+        elif has_device_info_kw:
+            # Query asks device info but not explicit matching → answer with CVE info
+            response = (
+                f"ANSWER: Tìm thấy {len(cves)} CVE(s) liên quan:\n"
+                + "\n".join([f"- {c.get('id')}: {c.get('description', '')[:60]}..." for c in cves[:2]])
+                + (f"\n- ... và {len(cves) - 2} CVEs khác" if len(cves) > 2 else "")
+            )
+        else:
+            # No device context → simple answer
+            cve_summary = f"\n\n**{len(cves)} CVE(s) found:**\n"
+            for c in cves[:3]:
+                cve_summary += f"- {c.get('id')}: {c.get('description', '')[:80]}... (CVSS: {c.get('cvss_score')})\n"
+            if len(cves) > 3:
+                cve_summary += f"- ... and {len(cves) - 3} more CVEs\n"
+            response = f"ANSWER: {cve_summary}"
+
         print(f"\n{'='*55}")
         print(f"🤖 {agent_name.upper()} (bước {state['num_steps'] + 1})")
         print("="*55)
-        print(response)
+        print(response[:300] + "...")
+        state["last_agent_response"] = response
+        state["last_agent"]          = agent_name
+        state["num_steps"]           = state.get("num_steps", 0) + 1
+        state["agent_history"]       = state.get("agent_history", []) + [agent_name]
+        return state
+
+    # agent_matcher: if NO CVEs collected → auto-answer without CVE matching
+    if agent_name == "agent_matcher" and not cves:
+        response = (
+            "ANSWER: Không có CVE nào được thu thập để so khớp.\n\n"
+            "Để kiểm tra thông tin thiết bị hoặc so khớp CVE với thiết bị, vui lòng:\n"
+            "1. Hỏi cụ thể CVE hoặc từ khóa lỗ hổng (ví dụ: 'CVE-2021-44228' hoặc 'log4j')\n"
+            "2. Hoặc hỏi riêng thông tin thiết bị (ví dụ: 'Thông tin thiết bị SRV-001')\n\n"
+            "Hệ thống sẽ tự động so khớp CVE với thiết bị nếu có cả hai thông tin."
+        )
+        print(f"\n{'='*55}")
+        print(f"🤖 {agent_name.upper()} (bước {state['num_steps'] + 1})")
+        print("="*55)
+        print(response[:300] + "...")
         state["last_agent_response"] = response
         state["last_agent"]          = agent_name
         state["num_steps"]           = state.get("num_steps", 0) + 1
