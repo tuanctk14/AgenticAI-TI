@@ -327,24 +327,6 @@ def _print_summary(result: dict):
         print("=" * 70)
         print(f"📄 REPORT: {report}\n")
 
-    # ── Agent Response ────────────────────────────────────────────────────────
-    last = result.get("last_agent_response", "")
-    if last and last.strip():
-        # Check if response contains ANSWER: or other meaningful content
-        if "ANSWER:" in last:
-            answer = last.split("ANSWER:")[1].strip()
-        else:
-            # Use entire response if no ANSWER: format
-            answer = last.strip()
-
-        # Only show if answer is not just generic text
-        if answer and len(answer) > 20 and not answer.startswith("HANDOFF:"):
-            print("=" * 70)
-            print("💬 KẾT LUẬN TỪ AGENT:")
-            print("=" * 70)
-            print(answer)
-            print()
-
     print("=" * 70)
 
 
