@@ -10,7 +10,8 @@
       "C2",
       "APT41",
       "financial"
-    ]
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
   },
   {
     "id": "IOC-APT41-002",
@@ -23,7 +24,8 @@
       "C2",
       "typosquat",
       "APT41"
-    ]
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
   },
   {
     "id": "IOC-APT41-003",
@@ -37,7 +39,8 @@
       "dropper",
       "signed",
       "APT41"
-    ]
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
   },
   {
     "id": "IOC-APT41-004",
@@ -50,7 +53,8 @@
       "phishing",
       "spear-phishing",
       "financial"
-    ]
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
   },
   {
     "id": "IOC-APT41-005",
@@ -64,7 +68,8 @@
       "backdoor",
       "persistence",
       "DLL-injection"
-    ]
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
   },
   {
     "id": "IOC-APT41-006",
@@ -76,7 +81,8 @@
     "tags": [
       "exfiltration",
       "data-theft"
-    ]
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
   },
   {
     "id": "IOC-LOCKBIT-001",
@@ -89,7 +95,8 @@
       "ransomware",
       "LockBit3",
       "encryption"
-    ]
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
   },
   {
     "id": "IOC-LOCKBIT-002",
@@ -102,7 +109,8 @@
       "C2",
       "ransomware",
       "tor"
-    ]
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
   },
   {
     "id": "IOC-LOCKBIT-003",
@@ -115,7 +123,8 @@
       "mutex",
       "ransomware",
       "indicator"
-    ]
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
   },
   {
     "id": "IOC-BLACKCAT-001",
@@ -129,7 +138,8 @@
       "ALPHV",
       "cross-platform",
       "ESXi"
-    ]
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
   },
   {
     "id": "IOC-BLACKCAT-002",
@@ -142,7 +152,8 @@
       "leak-site",
       "ransomware",
       "extortion"
-    ]
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
   },
   {
     "id": "IOC-EMOTET-001",
@@ -155,7 +166,8 @@
       "loader",
       "banking-trojan",
       "email-theft"
-    ]
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
   },
   {
     "id": "IOC-EMOTET-002",
@@ -169,6 +181,15 @@
       "vietnam",
       "banking",
       "macro"
-    ]
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
+  },
+  {
+    "id": "IOC-TEST-001",
+    "type": "hash",
+    "value": "abc123def456",
+    "description": "Test IOC from CLI",
+    "threat_actor": "APT-TEST",
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
   }
 ]

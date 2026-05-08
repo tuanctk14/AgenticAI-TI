@@ -2,52 +2,62 @@
   {
     "id": "CVE-2021-44228",
     "description": "Apache Log4j2 versions less than 2.15.0 are vulnerable to remote code execution",
-    "cvss_score": 10.0
+    "cvss_score": 10.0,
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "id": "CVE-2021-41773",
     "description": "Apache HTTP Server path traversal vulnerability",
-    "cvss_score": 7.5
+    "cvss_score": 7.5,
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "id": "CVE-2022-22965",
     "description": "Spring Framework RCE vulnerability through spring data binding",
-    "cvss_score": 9.8
+    "cvss_score": 9.8,
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "id": "CVE-2024-21762",
     "description": "Fortinet FortiOS SSL VPN out-of-bounds write allows unauthenticated remote code execution via crafted HTTP requests",
-    "cvss_score": 9.8
+    "cvss_score": 9.8,
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "id": "CVE-2024-3400",
     "description": "Palo Alto Networks PAN-OS GlobalProtect OS command injection allows unauthenticated RCE with root privileges",
-    "cvss_score": 10.0
+    "cvss_score": 10.0,
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "id": "CVE-2023-20198",
     "description": "Cisco IOS XE Web UI privilege escalation allows unauthenticated attacker to create admin account",
-    "cvss_score": 10.0
+    "cvss_score": 10.0,
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "id": "CVE-2023-4966",
     "description": "Citrix NetScaler ADC Gateway session token disclosure allows authentication bypass and MFA bypass (Citrix Bleed)",
-    "cvss_score": 9.4
+    "cvss_score": 9.4,
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "id": "CVE-2024-21893",
     "description": "Ivanti Connect Secure server-side request forgery allows bypass authentication and access internal resources",
-    "cvss_score": 8.2
+    "cvss_score": 8.2,
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "id": "CVE-2024-1708",
     "description": "ConnectWise ScreenConnect path traversal allows unauthenticated file read and authentication bypass",
-    "cvss_score": 8.4
+    "cvss_score": 8.4,
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "id": "CVE-2024-99999",
     "description": "Test CVE for upload",
-    "cvss_score": 9.0
+    "cvss_score": 9.0,
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "record_type": "CVE",
@@ -61,7 +71,8 @@
     "affected_software": "Apache ActiveMQ,ActiveMQ,message-broker",
     "severity": "CRITICAL",
     "exploit_status": "ACTIVELY_EXPLOITED",
-    "known_threat_actors": "HelloKitty,TellYouThePass"
+    "known_threat_actors": "HelloKitty,TellYouThePass",
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "record_type": "CVE",
@@ -75,7 +86,8 @@
     "affected_software": "Jenkins,CI/CD,DevOps",
     "severity": "CRITICAL",
     "exploit_status": "ACTIVELY_EXPLOITED",
-    "known_threat_actors": "Various"
+    "known_threat_actors": "Various",
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "record_type": "CVE",
@@ -89,7 +101,8 @@
     "affected_software": "Confluence,Atlassian,wiki",
     "severity": "CRITICAL",
     "exploit_status": "ACTIVELY_EXPLOITED",
-    "known_threat_actors": "Storm-0062"
+    "known_threat_actors": "Storm-0062",
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "record_type": "CVE",
@@ -103,7 +116,8 @@
     "affected_software": "TeamCity,JetBrains,CI/CD",
     "severity": "CRITICAL",
     "exploit_status": "ACTIVELY_EXPLOITED",
-    "known_threat_actors": "APT29,BianLian"
+    "known_threat_actors": "APT29,BianLian",
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "record_type": "CVE",
@@ -117,7 +131,8 @@
     "affected_software": "Windows,Windows Server,SMB",
     "severity": "HIGH",
     "exploit_status": "WEAPONIZED",
-    "known_threat_actors": "Multiple"
+    "known_threat_actors": "Multiple",
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "record_type": "CVE",
@@ -131,7 +146,8 @@
     "affected_software": "Exchange,Microsoft Exchange,email",
     "severity": "CRITICAL",
     "exploit_status": "ACTIVELY_EXPLOITED",
-    "known_threat_actors": "Hafnium,APT41"
+    "known_threat_actors": "Hafnium,APT41",
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "record_type": "CVE",
@@ -145,7 +161,8 @@
     "affected_software": "Windows,Windows Server,print",
     "severity": "HIGH",
     "exploit_status": "WEAPONIZED",
-    "known_threat_actors": "Multiple"
+    "known_threat_actors": "Multiple",
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "record_type": "CVE",
@@ -159,7 +176,8 @@
     "affected_software": "SharePoint,Microsoft SharePoint,Microsoft",
     "severity": "HIGH",
     "exploit_status": "ACTIVELY_EXPLOITED",
-    "known_threat_actors": "Unknown"
+    "known_threat_actors": "Unknown",
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "record_type": "CVE",
@@ -173,7 +191,8 @@
     "affected_software": "Outlook,Microsoft Office,email",
     "severity": "CRITICAL",
     "exploit_status": "WEAPONIZED",
-    "known_threat_actors": "APT28"
+    "known_threat_actors": "APT28",
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   },
   {
     "record_type": "CVE",
@@ -187,6 +206,7 @@
     "affected_software": "OpenSSL,SSL,TLS",
     "severity": "HIGH",
     "exploit_status": "WEAPONIZED",
-    "known_threat_actors": "Various"
+    "known_threat_actors": "Various",
+    "uploaded_date": "2026-05-07T18:52:38.187011+00:00"
   }
 ]
