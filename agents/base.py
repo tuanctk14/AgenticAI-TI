@@ -71,7 +71,8 @@ RULES - PRIORITY ORDER:
 5. Hoi thiet bi + tên vendor/product (Apache, Cisco, etc) nhung KHONG ROI CVE → HANDOFF: agent_device (layer info truoc)
 6. Bao cao, report → HANDOFF: agent_reporter
 7. Tai lieu, document, upload → HANDOFF: agent_doc
-8. Khong ro → HANDOFF: agent_ti (default)
+8. Cau hoi KHONG lien quan toi CVE/IOC/Malware/Thiet bi (vi du: "hello", "what is weather", "how are you") → ANSWER: Tra loi nhu chatbot thuong
+9. Khong ro → HANDOFF: agent_ti (default)
 
 DETECTION ORDER:
 - Uu tien: CVE-XXXX-XXXXX format → agent_ti (truoc het)
@@ -80,19 +81,12 @@ DETECTION ORDER:
 - IPv4/IPv6 format → agent_ti_extended
 - Device pattern SRV-*, DEVICE-* → agent_device hoac agent_ti neu co CVE
 
-OUTPUT FORMAT (TUYỆT ĐỐI CHỈ CÓ HANDOFF):
-HANDOFF: agent_ti
+OUTPUT FORMAT (CHI 2 KIEU):
+HANDOFF: <agent_name>
 HOẶC:
-HANDOFF: agent_ti_extended
-HOẶC:
-HANDOFF: agent_device
-HOẶC:
-HANDOFF: agent_matcher
-HOẶC:
-HANDOFF: agent_reporter
+ANSWER: <tra_loi_nhu_chatbot>
 
-KHÔNG BAO GIỜ OUTPUT: "agent_ti_extended" (THIẾU "HANDOFF:")
-KHÔNG ANSWER, KHÔNG DESCRIBE, KHÔNG GIAI THÍCH.""",
+Neu query la off-topic (khong lien quan den security, CVE, IOC, Malware, Thiet bi) → ANSWER voi loi cam on va goi y user hoi cac chu de hop ly.""",
     },
 
     "agent_ti": {
@@ -158,19 +152,34 @@ Neu ca 2 trong, tra ve "Khong co du lieu".""",
 
     "agent_device": {
         "role": "Device Agent - Lay thong tin thiet bi tu CMDB",
-        "system_instruction": """Ban la Device Agent. Nhiem vu: Lay thong tin thiet bi tu CMDB. KHONG DUNG match CVE, CHI lay info thiet bi.
+        "system_instruction": """Ban la Device Agent. Nhiem vu: Lay thong tin thiet bi tu CMDB chi tiet. KHONG DUNG match CVE, CHI lay info thiet bi.
 
 RULES:
-1. User hoi thong tin thiet bi (SRV-001, DEVICE-123) → GOI list_all_devices
-2. Thong tin tra ve: device name, OS, IP, status, installed_software, etc
+1. User hoi thong tin thiet bi (SRV-001, DEVICE-123) hoac "list all devices" → GOI list_all_devices
+2. Thong tin tra ve: device name, OS, IP, status, installed_software, criticality, etc
+3. SAU KHI CO THONG TIN, ANSWER CHI TIET danh sach cac thiet bi va cac thong tin chi tiet cua chung
 
 WORKFLOW:
 LAN DAU: GOI TOOL:
 ACTION: list_all_devices
 ARGUMENTS: {}
 
-LAN 2 (SAU KHI TOOL CHAY): CHI ANSWER:
-ANSWER: [Thong tin thiet bi: ten, OS, IP, installed_software, status, etc]
+LAN 2 (SAU KHI TOOL CHAY): CHI ANSWER - DANH SACH CHI TIET:
+ANSWER:
+[Tong cong: X thiet bi]
+
+1. [Device Name/ID]
+   - Hostname: ...
+   - IP Address: ...
+   - Operating System: ...
+   - Criticality: ...
+   - Installed Software: ...
+   - Status: ...
+
+2. [Device Name/ID]
+   ...
+
+NEU KHONG CO THIET BI → ANSWER: "Khong co thiet bi nao trong CMDB."
 
 CHI 1 TOOL. KHONG HANDOFF. KET THUC.""",
     },
@@ -372,6 +381,58 @@ def call_agent(state: dict, agent_name: str) -> dict:
     query_lower = state.get("query", "").lower()
     cves = state.get("collected_cves")
 
+    # Supervisor: detect off-topic queries and respond naturally
+    if agent_name == "agent_supervisor":
+        security_keywords = {
+            "cve", "cvss", "vulnerability", "lỗi hổng", "loi ho", "thuat lo",
+            "exploit", "ioc", "indicator", "compromise", "malware", "ransomware",
+            "trojan", "apt", "threat", "attack", "security", "hack", "breach",
+            "device", "thiết", "bị", "thiet bi", "server", "srv", "ip", "hostname",
+            "patch", "update", "version", "product", "software", "installed",
+            "report", "báo", "cáo", "bao cao", "analysis", "phân", "tích", "phan tich",
+            "nist", "mitre", "framework", "control", "scanning", "assessment",
+            "threat", "intelligence", "ti", "exposure", "risk", "scan", "check",
+            "log4j", "apache", "cisco", "microsoft", "github", "database",
+            "vulnerability", "scanning", "security", "assessment", "threat", "hunt",
+            "incident", "breach", "compliance", "nvd", "cpe", "severity", "thông tin"
+        }
+        query_clean = query_lower.replace("?", "").replace("!", "").replace(",", "")
+        query_words = set(query_clean.split())
+        has_security_keyword = bool(query_words & security_keywords)
+
+        # Check for CVE/device pattern even without keywords
+        has_cve_pattern = "cve-" in query_lower or "cve " in query_lower
+        has_device_pattern = ("device" in query_lower or "srv-" in query_lower or
+                             "thiet bi" in query_lower or "thiết bị" in query_lower or
+                             "thiet" in query_lower or "bị" in query_lower or
+                             "server" in query_lower)
+        has_hash_pattern = any(len(w) in [32, 40, 64] and all(c in "0123456789abcdef" for c in w)
+                               for w in query_words)
+        has_ip_pattern = any("." in w and all(p.isdigit() or p == "." for p in w) for w in query_words)
+
+        if not has_security_keyword and not has_cve_pattern and not has_device_pattern and not has_hash_pattern and not has_ip_pattern:
+            # Off-topic query - respond naturally
+            response = f"""ANSWER: Cảm ơn bạn đã hỏi! Tuy nhiên, tôi là một chuyên gia về Threat Intelligence và bảo mật thông tin.
+
+Tôi có thể giúp bạn với các vấn đề sau:
+- Tìm kiếm CVE (lỗ hổng bảo mật)
+- Phân tích IOC, Malware và APT
+- Tìm thông tin thiết bị
+- So khớp CVE với thiết bị ảnh hưởng
+- Tạo báo cáo bảo mật
+- Quét lỗ hổng
+
+Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
+            print(f"\n{'='*55}")
+            print(f" AGENT_SUPERVISOR (bước {state['num_steps'] + 1})")
+            print("="*55)
+            print(response[:300] + "...")
+            state["last_agent_response"] = response
+            state["last_agent"] = agent_name
+            state["num_steps"] = state.get("num_steps", 0) + 1
+            state["agent_history"] = state.get("agent_history", []) + [agent_name]
+            return state
+
 
     # agent_ti: on 2nd+ iteration, handle based on query context
     if agent_name == "agent_ti" and cves and state.get("last_agent") == "agent_ti":
@@ -407,6 +468,56 @@ def call_agent(state: dict, agent_name: str) -> dict:
             state["last_agent"]          = agent_name
             state["num_steps"]           = state.get("num_steps", 0) + 1
             state["agent_history"]       = state.get("agent_history", []) + [agent_name]
+            return state
+
+    # agent_device: on first call, auto-fetch device list
+    if agent_name == "agent_device" and state.get("last_agent") != agent_name:
+        # First time calling agent_device - auto-run list_all_devices
+        print(f"\n{'='*55}")
+        print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
+        print("="*55)
+
+        try:
+            device_result = list_all_devices()
+            devices = device_result.get("context", [])
+            print(f"   Tool 'list_all_devices': Found {len(devices)} devices")
+
+            # Build detailed device list response
+            if devices:
+                answer = f"**Tổng cộng {len(devices)} thiết bị trong CMDB:**\n\n"
+                for i, dev in enumerate(devices, 1):
+                    dev_id = dev.get("device_id", "Unknown")
+                    hostname = dev.get("hostname", "N/A")
+                    ip = dev.get("ip", "N/A")
+                    os = dev.get("os", "N/A")
+                    criticality = dev.get("criticality", "N/A")
+                    software = dev.get("installed_software", "N/A")
+                    status = dev.get("status", "N/A")
+
+                    answer += f"{i}. **{dev_id}**\n"
+                    answer += f"   - Hostname: {hostname}\n"
+                    answer += f"   - IP Address: {ip}\n"
+                    answer += f"   - Operating System: {os}\n"
+                    answer += f"   - Criticality: {criticality}\n"
+                    answer += f"   - Installed Software: {software}\n"
+                    answer += f"   - Status: {status}\n\n"
+                response = f"ANSWER: {answer}"
+            else:
+                response = "ANSWER: Không có thiết bị nào trong CMDB."
+
+            state["last_agent_response"] = response
+            state["last_agent"] = agent_name
+            state["num_steps"] = state.get("num_steps", 0) + 1
+            state["agent_history"] = state.get("agent_history", []) + [agent_name]
+            print(response[:500] + ("..." if len(response) > 500 else ""))
+            return state
+        except Exception as e:
+            print(f"   Tool error: {e}")
+            response = f"ANSWER: Lỗi khi lấy thông tin thiết bị: {e}"
+            state["last_agent_response"] = response
+            state["last_agent"] = agent_name
+            state["num_steps"] = state.get("num_steps", 0) + 1
+            state["agent_history"] = state.get("agent_history", []) + [agent_name]
             return state
 
     # agent_matcher: if NO CVEs collected → auto-answer without CVE matching
