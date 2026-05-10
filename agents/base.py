@@ -425,10 +425,12 @@ def call_agent(state: dict, agent_name: str) -> dict:
         has_cve_pattern = "cve-" in query_lower or "cve " in query_lower
         has_cve_keyword = any(kw in query_lower for kw in ["log4j", "apache", "exploit", "vulnerability", "lỗi hổng", "loi ho"])
 
-        has_device_pattern = ("device" in query_lower or "srv-" in query_lower or
+        has_device_pattern = ("device" in query_lower or "srv-" in query_lower or "srv " in query_lower or
                              "thiet bi" in query_lower or "thiết bị" in query_lower or
                              "thiet" in query_lower or "bị" in query_lower or
-                             "server" in query_lower)
+                             "server" in query_lower or "pc-" in query_lower or "pc " in query_lower or
+                             "fw-" in query_lower or "fw " in query_lower or
+                             "db-" in query_lower or "db " in query_lower)
         has_hash_pattern = any(len(w) in [32, 40, 64] and all(c in "0123456789abcdef" for c in w)
                                for w in query_words)
         has_ip_pattern = any("." in w and all(p.isdigit() or p == "." for p in w) for w in query_words)
@@ -545,10 +547,35 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
             devices = device_result.get("context", [])
             print(f"   Tool 'list_all_devices': Found {len(devices)} devices")
 
+            # Filter devices if query mentions specific device ID (e.g., SRV-001)
+            query_lower = query_lower or state.get("query", "").lower()
+            filtered_devices = devices
+
+            # Check if query contains device ID pattern (SRV-XXX, PC-XXX, FW-XXX, etc)
+            device_id_patterns = ["srv-", "pc-", "fw-", "db-"]
+            mentioned_device = None
+            for pattern in device_id_patterns:
+                if pattern in query_lower:
+                    # Extract the device ID
+                    words = query_lower.split()
+                    for word in words:
+                        if word.startswith(pattern) or pattern in word:
+                            mentioned_device = word.upper().replace("-", "-")
+                            # Find exact match in devices
+                            filtered_devices = [d for d in devices if d.get("device_id", "").upper() == mentioned_device]
+                            if filtered_devices:
+                                break
+                    if filtered_devices:
+                        break
+
             # Build detailed device list response
-            if devices:
-                answer = f"**Tổng cộng {len(devices)} thiết bị trong CMDB:**\n\n"
-                for i, dev in enumerate(devices, 1):
+            if filtered_devices:
+                if mentioned_device and len(filtered_devices) == 1:
+                    answer = f"**Thông tin thiết bị {mentioned_device}:**\n\n"
+                else:
+                    answer = f"**Tổng cộng {len(filtered_devices)} thiết bị trong CMDB:**\n\n"
+
+                for i, dev in enumerate(filtered_devices, 1):
                     dev_id = dev.get("device_id", "Unknown")
                     hostname = dev.get("hostname", "N/A")
                     ip = dev.get("ip", "N/A")
@@ -566,7 +593,7 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
                     answer += f"   - Status: {status}\n\n"
                 response = f"ANSWER: {answer}"
             else:
-                response = "ANSWER: Không có thiết bị nào trong CMDB."
+                response = f"ANSWER: Không tìm thấy thiết bị {mentioned_device if mentioned_device else 'được chỉ định'} trong CMDB."
 
             state["last_agent_response"] = response
             state["last_agent"] = agent_name
