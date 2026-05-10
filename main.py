@@ -148,7 +148,7 @@ def _get_remediation_steps(cve_description: str) -> list[str]:
 
 
 def _print_chat_response(result: dict):
-    """Extract và print response cho chat mode."""
+    """Extract và print response cho chat mode với full details."""
     last_response = result.get("last_agent_response", "")
 
     # Extract ANSWER text nếu có
@@ -157,6 +157,77 @@ def _print_chat_response(result: dict):
         print(f"ATI: {answer_text}\n")
     elif last_response:
         print(f"ATI: {last_response}\n")
+
+    # ── CVE Data - Show full details ────────────────────────────────────────
+    cves = result.get("collected_cves") or []
+    if cves:
+        print("=" * 70)
+        print(" CVE DETAILS - TẤT CẢ")
+        print("=" * 70)
+        print(f"Tổng cộng: {len(cves)} CVEs\n")
+        for i, cve in enumerate(cves, 1):
+            cve_id = cve.get("id", "Unknown")
+            cvss = cve.get("cvss_score", "N/A")
+            severity = cve.get("severity", "UNKNOWN")
+            desc = cve.get("description", "No description")
+            published = cve.get("published", "Unknown")
+            references = cve.get("references", [])
+
+            print(f"{i}. {cve_id}")
+            print(f"   CVSS Score: {cvss}")
+            print(f"   Severity: {severity}")
+            print(f"   Published: {published}")
+            print(f"   Description: {desc}")
+            if references:
+                print(f"   References:")
+                for ref in references[:3]:
+                    print(f"     - {ref}")
+                if len(references) > 3:
+                    print(f"     ... and {len(references) - 3} more references")
+            print()
+
+    # ── IOC/Malware Data - Show full details ─────────────────────────────────
+    indicators = result.get("collected_indicators") or []
+    if indicators:
+        print("=" * 70)
+        print(" THREAT INTELLIGENCE DETAILS - TẤT CẢ")
+        print("=" * 70)
+        print(f"Tổng cộng: {len(indicators)} Results\n")
+
+        for i, ind in enumerate(indicators, 1):
+            ioc_id = ind.get("id", "Unknown")
+            name = ind.get("name", "Unknown")
+            entity_type = ind.get("entity_type", "Unknown")
+            score = ind.get("score", 0)
+
+            print(f"{i}. [{entity_type}] {name}")
+            print(f"   ID: {ioc_id}")
+            print(f"   Score: {score}/100")
+
+            conf = ind.get("confidence", 0)
+            if conf:
+                print(f"   Confidence: {conf}%")
+
+            pattern = ind.get("pattern", "")[:80]
+            if pattern:
+                print(f"   Pattern: {pattern}...")
+
+            malware_types = ind.get("malware_types", [])
+            if malware_types:
+                print(f"   Types: {', '.join(malware_types)}")
+
+            aliases = ind.get("aliases", [])
+            if aliases:
+                aliases_str = ", ".join(aliases[:3])
+                if len(aliases) > 3:
+                    aliases_str += f", ... ({len(aliases)} total)"
+                print(f"   Aliases: {aliases_str}")
+
+            desc = ind.get("description", "")
+            if desc:
+                print(f"   Description: {desc[:150]}...")
+
+            print()
 
     # If have device matches, print remediation info
     devices = result.get("matched_devices") or []
