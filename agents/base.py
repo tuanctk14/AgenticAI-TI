@@ -547,25 +547,52 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
             devices = device_result.get("context", [])
             print(f"   Tool 'list_all_devices': Found {len(devices)} devices")
 
-            # Filter devices if query mentions specific device ID (e.g., SRV-001)
+            # Filter devices if query mentions specific device ID, IP, or hostname
             query_lower = query_lower or state.get("query", "").lower()
             filtered_devices = devices
-
-            # Check if query contains device ID pattern (SRV-XXX, PC-XXX, FW-XXX, etc)
-            device_id_patterns = ["srv-", "pc-", "fw-", "db-"]
             mentioned_device = None
+
+            # 1. Check device ID pattern (SRV-XXX, PC-XXX, FW-XXX, DB-XXX)
+            device_id_patterns = ["srv-", "pc-", "fw-", "db-"]
             for pattern in device_id_patterns:
                 if pattern in query_lower:
-                    # Extract the device ID
                     words = query_lower.split()
                     for word in words:
                         if word.startswith(pattern) or pattern in word:
                             mentioned_device = word.upper().replace("-", "-")
-                            # Find exact match in devices
                             filtered_devices = [d for d in devices if d.get("device_id", "").upper() == mentioned_device]
                             if filtered_devices:
                                 break
                     if filtered_devices:
+                        break
+
+            # 2. Check IP address pattern (xxx.xxx.xxx.xxx)
+            if not filtered_devices or len(filtered_devices) == len(devices):
+                import re
+                ip_pattern = r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
+                ip_matches = re.findall(ip_pattern, query_lower)
+                if ip_matches:
+                    for ip in ip_matches:
+                        matching = [d for d in devices if d.get("ip", "") == ip]
+                        if matching:
+                            filtered_devices = matching
+                            mentioned_device = f"IP {ip}"
+                            break
+
+            # 3. Check hostname match
+            if not filtered_devices or len(filtered_devices) == len(devices):
+                # Extract potential hostnames from query (words with hyphens or containing 'workstation', 'server', etc)
+                hostname_candidates = []
+                words = query_lower.split()
+                for word in words:
+                    if "-" in word and not word.startswith("db-") and not word.startswith("srv-") and not word.startswith("pc-") and not word.startswith("fw-"):
+                        hostname_candidates.append(word)
+
+                for hostname in hostname_candidates:
+                    matching = [d for d in devices if hostname.lower() in d.get("hostname", "").lower()]
+                    if matching:
+                        filtered_devices = matching
+                        mentioned_device = hostname
                         break
 
             # Build detailed device list response
