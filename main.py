@@ -158,6 +158,15 @@ def _print_chat_response(result: dict):
     elif last_response:
         print(f"ATI: {last_response}\n")
 
+    # Print summary header
+    print("=" * 70)
+    print(" KẾT QUẢ CHI TIẾT ĐẦY ĐỦ")
+    print("=" * 70)
+
+    history = result.get("agent_history", [])
+    print(f"Agents đã dùng: {' → '.join(history)}")
+    print(f"Số bước: {result.get('num_steps', 0)}\n")
+
     # ── CVE Data - Show full details ────────────────────────────────────────
     cves = result.get("collected_cves") or []
     if cves:
