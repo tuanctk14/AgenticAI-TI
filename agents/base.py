@@ -117,11 +117,12 @@ ACTION: fetch_nvd_cves
 ARGUMENTS: {"keyword": "log4j"}
 
 STEP 2: Khi LLM gọi tool xong (lần 2+)
-Nếu query hỏi "device", "thiet bi", "anh huong" → ĐỪNG ANSWER, để hệ thống tự route
-Nếu query CHỈ hỏi CVE details → ANSWER với CVE info
+SAU KHI CO CVE:
+- Nếu query ban đầu hỏi "device", "thiet bi", "anh huong", "so khop" → HANDOFF: agent_matcher
+- Nếu query CHỈ hỏi CVE details → ANSWER với CVE info
 
 RULES:
-❌ NEVER: match_cves_with_cmdb, list_all_devices, HANDOFF, python code
+❌ NEVER: match_cves_with_cmdb, list_all_devices, python code
 ✅ ONLY: fetch_cve_by_id, fetch_kb_cves, fetch_nvd_cves""",
     },
 
@@ -374,10 +375,10 @@ def call_agent(state: dict, agent_name: str) -> dict:
 
     # agent_ti: on 2nd+ iteration, handle based on query context
     if agent_name == "agent_ti" and cves and state.get("last_agent") == "agent_ti":
-        has_device_match_kw = any(kw in query_lower for kw in ["so khop", "anh huong"])
-        has_device_info_kw = any(kw in query_lower for kw in ["device", "thiet bi"])
+        # Check if query asks for device matching after CVE search (handle Vietnamese diacritics)
+        has_device_kw = any(kw in query_lower for kw in ["so khớp", "so khop", "ảnh hưởng", "anh huong", "thiết bị", "thiet bi", "device"])
 
-        if has_device_match_kw or (has_device_info_kw and "so khop" in query_lower):
+        if has_device_kw:
             # Query explicitly asks for CVE+device matching → forward to agent_matcher
             response = f"HANDOFF: agent_matcher"
             print(f"\n{'='*55}")
@@ -389,15 +390,8 @@ def call_agent(state: dict, agent_name: str) -> dict:
             state["num_steps"]           = state.get("num_steps", 0) + 1
             state["agent_history"]       = state.get("agent_history", []) + [agent_name]
             return state
-        elif has_device_info_kw:
-            # Query asks device info but not explicit matching → answer with CVE info
-            response = (
-                f"ANSWER: Tìm thấy {len(cves)} CVE(s) liên quan:\n"
-                + "\n".join([f"- {c.get('id')}: {c.get('description', '')[:60]}..." for c in cves[:2]])
-                + (f"\n- ... và {len(cves) - 2} CVEs khác" if len(cves) > 2 else "")
-            )
         else:
-            # No device context → simple answer
+            # No device context → simple answer with CVE info
             cve_summary = f"\n\n**{len(cves)} CVE(s) found:**\n"
             for c in cves[:3]:
                 cve_summary += f"- {c.get('id')}: {c.get('description', '')[:80]}... (CVSS: {c.get('cvss_score')})\n"
@@ -405,15 +399,15 @@ def call_agent(state: dict, agent_name: str) -> dict:
                 cve_summary += f"- ... and {len(cves) - 3} more CVEs\n"
             response = f"ANSWER: {cve_summary}"
 
-        print(f"\n{'='*55}")
-        print(f"🤖 {agent_name.upper()} (bước {state['num_steps'] + 1})")
-        print("="*55)
-        print(response[:300] + "...")
-        state["last_agent_response"] = response
-        state["last_agent"]          = agent_name
-        state["num_steps"]           = state.get("num_steps", 0) + 1
-        state["agent_history"]       = state.get("agent_history", []) + [agent_name]
-        return state
+            print(f"\n{'='*55}")
+            print(f"🤖 {agent_name.upper()} (bước {state['num_steps'] + 1})")
+            print("="*55)
+            print(response[:300] + "...")
+            state["last_agent_response"] = response
+            state["last_agent"]          = agent_name
+            state["num_steps"]           = state.get("num_steps", 0) + 1
+            state["agent_history"]       = state.get("agent_history", []) + [agent_name]
+            return state
 
     # agent_matcher: if NO CVEs collected → auto-answer without CVE matching
     if agent_name == "agent_matcher" and not cves:
