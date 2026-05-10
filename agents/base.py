@@ -122,8 +122,8 @@ SAU KHI CO CVE:
 - Nếu query CHỈ hỏi CVE details → ANSWER với CVE info
 
 RULES:
-❌ NEVER: match_cves_with_cmdb, list_all_devices, python code
-✅ ONLY: fetch_cve_by_id, fetch_kb_cves, fetch_nvd_cves""",
+NEVER: match_cves_with_cmdb, list_all_devices, python code
+ONLY: fetch_cve_by_id, fetch_kb_cves, fetch_nvd_cves""",
     },
 
     "agent_ti_extended": {
@@ -276,12 +276,12 @@ def call_tool(state: dict) -> dict:
                     args = json.loads(json_match.group())
                 except json.JSONDecodeError as e:
                     msg = f"[JSON parse error cho '{tool_name}': {e}]"
-                    print(f"  ⚠️  {msg}")
+                    print(f"    {msg}")
                     state.setdefault("tool_observations", []).append(msg)
                     continue
             else:
                 msg = f"[Khong tim thay JSON trong ARGUMENTS: {args_text[:50]}]"
-                print(f"  ⚠️  {msg}")
+                print(f"    {msg}")
                 state.setdefault("tool_observations", []).append(msg)
                 continue
 
@@ -297,24 +297,24 @@ def call_tool(state: dict) -> dict:
         last_agent = state.get("last_agent", "")
         if last_agent == "agent_ti" and tool_name in ["match_cves_with_cmdb", "list_all_devices"]:
             msg = f"[POLICY VIOLATION: agent_ti KHONG DUOC goi '{tool_name}' - day la cua agent_matcher/agent_device]"
-            print(f"  ❌ {msg}")
+            print(f"   {msg}")
             state.setdefault("tool_observations", []).append(msg)
             continue
 
         tool_func = TOOLS_MAPPING.get(tool_name)
         if not tool_func:
             msg = f"[Tool không tồn tại: {tool_name}]"
-            print(f"  ⚠️  {msg}")
+            print(f"    {msg}")
             state.setdefault("tool_observations", []).append(msg)
             continue
 
         try:
             results = tool_func(**args)
             obs = f"[{tool_name} kết quả]: {json.dumps(results.get('context', results), ensure_ascii=False)[:800]}"
-            print(f"  📦 Tool '{tool_name}': {str(results.get('context', ''))[:150]}...")
+            print(f"   Tool '{tool_name}': {str(results.get('context', ''))[:150]}...")
         except Exception as e:
             obs = f"[{tool_name} lỗi]: {e}"
-            print(f"  ❌ Tool error: {e}")
+            print(f"   Tool error: {e}")
             state.setdefault("tool_observations", []).append(obs)
             continue
 
@@ -362,7 +362,7 @@ def call_agent(state: dict, agent_name: str) -> dict:
 
         if current_iter >= MAX_ITERATIONS:
             state[f"{agent_name.split('_')[1]}_completed"] = True
-            print(f"  ⚠️  {agent_name} da dat MAX_ITERATIONS ({MAX_ITERATIONS}). Ket thuc.")
+            print(f"    {agent_name} da dat MAX_ITERATIONS ({MAX_ITERATIONS}). Ket thuc.")
             state["last_agent_response"] = "TASK_COMPLETE"
             return state
 
@@ -382,7 +382,7 @@ def call_agent(state: dict, agent_name: str) -> dict:
             # Query explicitly asks for CVE+device matching → forward to agent_matcher
             response = f"HANDOFF: agent_matcher"
             print(f"\n{'='*55}")
-            print(f"🤖 {agent_name.upper()} (bước {state['num_steps'] + 1})")
+            print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
             print("="*55)
             print(response)
             state["last_agent_response"] = response
@@ -400,7 +400,7 @@ def call_agent(state: dict, agent_name: str) -> dict:
             response = f"ANSWER: {cve_summary}"
 
             print(f"\n{'='*55}")
-            print(f"🤖 {agent_name.upper()} (bước {state['num_steps'] + 1})")
+            print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
             print("="*55)
             print(response[:300] + "...")
             state["last_agent_response"] = response
@@ -419,7 +419,7 @@ def call_agent(state: dict, agent_name: str) -> dict:
             "Hệ thống sẽ tự động so khớp CVE với thiết bị nếu có cả hai thông tin."
         )
         print(f"\n{'='*55}")
-        print(f"🤖 {agent_name.upper()} (bước {state['num_steps'] + 1})")
+        print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
         print("="*55)
         print(response[:300] + "...")
         state["last_agent_response"] = response
@@ -469,7 +469,7 @@ def call_agent(state: dict, agent_name: str) -> dict:
     ]
 
     print(f"\n{'='*55}")
-    print(f"🤖 {agent_name.upper()} (bước {state['num_steps'] + 1})")
+    print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
     print("="*55)
 
     response = ollama_chat(messages, temperature=0.1)

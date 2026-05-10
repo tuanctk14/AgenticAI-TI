@@ -97,7 +97,7 @@ def match_cves_with_cmdb(cve_list: list) -> dict:
     ))
 
     devices_affected = len({m["device_id"] for m in matches})
-    print(f"  [CMDB] ✅ {len(matches)} matches trên {devices_affected} thiết bị")
+    print(f"  [CMDB]  {len(matches)} matches trên {devices_affected} thiết bị")
     return {
         "context":          matches,
         "source":           "CMDB-Matcher",

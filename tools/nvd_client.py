@@ -45,11 +45,11 @@ def fetch_cve_by_id(cve_id: str) -> dict:
                 "published": cve.get("published", "N/A")[:10],
                 "references": [r["url"] for r in cve.get("references", [])[:3]],
             }]
-            print(f"  [NVD] ✅ Tim thay {cve_id}")
+            print(f"  [NVD]  Tim thay {cve_id}")
             return {"context": result, "source": "NVD-LIVE", "total": 1}
 
     except Exception as e:
-        print(f"  [NVD] ❌ API lỗi: {e}")
+        print(f"  [NVD]  API lỗi: {e}")
         print(f"  [NVD] Không thể tìm CVE {cve_id}")
         return {"context": [], "source": "NVD-ERROR", "total": 0}
 
@@ -136,10 +136,10 @@ def fetch_nvd_cves(keyword: str = "", severity: str = "HIGH", days_back: int = 3
             print(f"  [NVD] Đã lấy {fetched}/{total_results}...")
             time.sleep(0.6)
 
-        print(f"  [NVD] ✅ Lấy được {len(all_cves)} CVE từ NVD API (tổng: {total_results})")
+        print(f"  [NVD]  Lấy được {len(all_cves)} CVE từ NVD API (tổng: {total_results})")
         return {"context": all_cves, "source": "NVD-LIVE", "total": total_results}
 
     except Exception as e:
-        print(f"  [NVD] ❌ API lỗi: {e}")
+        print(f"  [NVD]  API lỗi: {e}")
         print(f"  [NVD] Không thể lấy dữ liệu CVE từ NVD API")
         return {"context": [], "source": "NVD-ERROR", "total": 0}

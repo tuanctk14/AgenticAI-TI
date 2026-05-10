@@ -25,21 +25,21 @@ def route_after_agent(state: dict) -> str:
     response = state.get("last_agent_response", "").strip()
 
     if state.get("num_steps", 0) >= MAX_STEPS:
-        print(f"  ⚠️  Đạt {MAX_STEPS} bước → end")
+        print(f"    Đạt {MAX_STEPS} bước → end")
         return "end"
 
     # Check TASK_COMPLETE signal (iteration limit reached)
     if "TASK_COMPLETE" in response:
-        print("  ⚠️  TASK_COMPLETE → end")
+        print("    TASK_COMPLETE → end")
         return "end"
 
     # Check ANSWER FIRST (before ACTION) - agent may write both
     if "ANSWER:" in response and "ACTION:" not in response:
-        print("  ✅ ANSWER → end")
+        print("   ANSWER → end")
         return "end"
 
     if "ACTION:" in response:
-        print("  🔧 ACTION → tools")
+        print("    ACTION → tools")
         return "tools"
 
     if "HANDOFF:" in response:
@@ -47,9 +47,9 @@ def route_after_agent(state: dict) -> str:
         # Prevent self-handoff
         last_agent = state.get("last_agent", "")
         if target == last_agent:
-            print(f"  ⚠️  HANDOFF: {target} (self) → BLOCKED")
+            print(f"    HANDOFF: {target} (self) → BLOCKED")
             return "end"
-        print(f"  ↪️  HANDOFF → {target}")
+        print(f"    HANDOFF → {target}")
         valid_targets = {
             "agent_ti", "agent_ti_extended", "agent_device", "agent_matcher",
             "agent_doc", "agent_reporter", "agent_supervisor",
@@ -143,5 +143,5 @@ def get_graph():
     global _graph
     if _graph is None:
         _graph = build_graph()
-        print("✅ ATI-AgenticThreatIntelligence Graph đã biên dịch")
+        print(" ATI-AgenticThreatIntelligence Graph đã biên dịch")
     return _graph

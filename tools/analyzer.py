@@ -47,7 +47,7 @@ def aggregate_cves_by_device(matched_devices: List[dict], collected_cves: List[d
             "unique_cve_count": len(data["cve_ids"]),
         }
 
-    print(f"  [Analyzer] ✅ Grouped into {len(result)} unique devices")
+    print(f"  [Analyzer]  Grouped into {len(result)} unique devices")
     return {
         "context": result,
         "source": "Analyzer",

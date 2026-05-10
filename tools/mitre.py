@@ -99,6 +99,6 @@ def get_mitre_attack_info(cve_id: str = "", technique: str = "", keyword: str = 
     if not result:
         result = GENERIC_ATTACK
 
-    print(f"  [MITRE] ✅ {len(result.get('techniques', []))} techniques, "
+    print(f"  [MITRE]  {len(result.get('techniques', []))} techniques, "
           f"actors: {result.get('threat_actors', [])}")
     return {"context": result, "source": "MITRE-ATT&CK"}

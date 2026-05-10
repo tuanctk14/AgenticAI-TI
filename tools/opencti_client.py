@@ -30,11 +30,11 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
 
     # Bắt buộc có OPENCTI_TOKEN
     if not OPENCTI_TOKEN:
-        print(f"  [OpenCTI] ❌ OPENCTI_TOKEN không được set")
+        print(f"  [OpenCTI]  OPENCTI_TOKEN không được set")
         return {"context": [], "source": "OpenCTI-ERROR", "error": "Missing OPENCTI_TOKEN"}
 
     if not OPENCTI_URL:
-        print(f"  [OpenCTI] ❌ OPENCTI_URL không được set")
+        print(f"  [OpenCTI]  OPENCTI_URL không được set")
         return {"context": [], "source": "OpenCTI-ERROR", "error": "Missing OPENCTI_URL"}
 
     # Multi-query GraphQL: lấy indicators + malwares + threatActorsGroup + attackPatterns
@@ -75,7 +75,7 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
         data = resp.json()
 
         if "errors" in data:
-            print(f"  [OpenCTI] ❌ GraphQL error: {data['errors']}")
+            print(f"  [OpenCTI]  GraphQL error: {data['errors']}")
             return {"context": [], "source": "OpenCTI-ERROR", "error": str(data['errors'])}
 
         results = []
@@ -185,7 +185,7 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
 
             results = filtered_results
             if len(results) == 0:
-                print(f"  [OpenCTI] ℹ️  No results in date range")
+                print(f"  [OpenCTI]   No results in date range")
 
         if results:
             entity_counts = {}
@@ -193,17 +193,17 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
                 et = r.get("entity_type", "Unknown")
                 entity_counts[et] = entity_counts.get(et, 0) + 1
             breakdown = ", ".join([f"{count} {entity_type}" for entity_type, count in entity_counts.items()])
-            print(f"  [OpenCTI] ✅ {len(results)} results: {breakdown}")
+            print(f"  [OpenCTI]  {len(results)} results: {breakdown}")
         else:
-            print(f"  [OpenCTI] ✅ 0 results found")
+            print(f"  [OpenCTI]  0 results found")
         return {"context": results, "source": "OpenCTI-LIVE"}
 
     except requests.exceptions.Timeout:
-        print(f"  [OpenCTI] ⏱️  Timeout - OpenCTI server không phản hồi")
+        print(f"  [OpenCTI]   Timeout - OpenCTI server không phản hồi")
         return {"context": [], "source": "OpenCTI-ERROR", "error": "Request timeout"}
     except requests.exceptions.ConnectionError as e:
-        print(f"  [OpenCTI] 🔌 Connection error - {e}")
+        print(f"  [OpenCTI]  Connection error - {e}")
         return {"context": [], "source": "OpenCTI-ERROR", "error": f"Connection failed: {e}"}
     except Exception as e:
-        print(f"  [OpenCTI] ❌ Error: {e}")
+        print(f"  [OpenCTI]  Error: {e}")
         return {"context": [], "source": "OpenCTI-ERROR", "error": str(e)}

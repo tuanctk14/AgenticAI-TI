@@ -101,6 +101,6 @@ def get_nist_controls(cve_id: str = "", keyword: str = "") -> dict:
             profile_key = "denial_of_service"
 
     profile = NIST_PROFILES.get(profile_key or "generic")
-    print(f"  [NIST] ✅ Profile: {profile_key or 'generic'}, "
+    print(f"  [NIST]  Profile: {profile_key or 'generic'}, "
           f"priority: {profile['priority']}")
     return {"context": profile, "source": "NIST-SP800-53"}

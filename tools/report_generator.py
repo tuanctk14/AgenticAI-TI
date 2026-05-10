@@ -146,7 +146,7 @@ def generate_report(
         "format":  export_format,
     }
 
-    print(f"  [Report] ✅ Lưu tại: {fpath}")
+    print(f"  [Report]  Lưu tại: {fpath}")
     return {
         "context":   {"report_id": rid, "file": fpath, "type": report_type},
         "source":    "ReportGenerator",
