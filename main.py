@@ -75,12 +75,12 @@ TEST_CASES = [
 
 
 # ── Core run ───────────────────────────────────────────────────────────────
-def run_query(query: str, verbose: bool = True) -> dict:
+def run_query(query: str, verbose: bool = True, chat_mode: bool = False) -> dict:
     """Chạy một câu hỏi qua hệ thống multi-agent."""
     graph = get_graph()
     state = init_state(query)
 
-    if verbose:
+    if verbose and not chat_mode:
         print(f"\n Đang xử lý: {query[:80]}...")
         print("-" * 55)
 
@@ -90,7 +90,7 @@ def run_query(query: str, verbose: bool = True) -> dict:
         print(f" Lỗi hệ thống: {e}")
         return {"error": str(e)}
 
-    if verbose:
+    if verbose and not chat_mode:
         _print_summary(result)
 
     return result
@@ -145,6 +145,18 @@ def _get_remediation_steps(cve_description: str) -> list[str]:
         ])
 
     return steps
+
+
+def _print_chat_response(result: dict):
+    """Extract và print response cho chat mode."""
+    last_response = result.get("last_agent_response", "")
+
+    # Extract ANSWER text nếu có
+    if "ANSWER:" in last_response:
+        answer_text = last_response.split("ANSWER:")[1].strip()
+        print(f"ATI: {answer_text}\n")
+    elif last_response:
+        print(f"ATI: {last_response}\n")
 
 
 def _print_summary(result: dict):
@@ -622,12 +634,25 @@ def interactive_mode():
                         print(f"   {cat_name:10s}: {count:3d} records | Chua upload")
 
         elif choice == "4":
-            # Menu 4: Free query (IOC/Malware/APT/CVE/Device/Report)
-            query = input("\nNhập câu hỏi (CVE, IOC, Malware, APT, device, ...): ").strip()
-            if query:
-                run_query(query)
-            else:
-                print("Câu hỏi trống.")
+            # Menu 4: Free query - Interactive chat mode
+            print("\n╔════════════════════════════════════════════════════════╗")
+            print("║           CHAT MODE - ATI THREAT INTELLIGENCE          ║")
+            print("║  (Gõ 'exit' hoặc 'quit' để quay lại menu chính)       ║")
+            print("╚════════════════════════════════════════════════════════╝\n")
+
+            while True:
+                query = input("Bạn: ").strip()
+
+                if query.lower() in ["exit", "quit", "thoát"]:
+                    print("\nQuay lại menu chính...\n")
+                    break
+
+                if not query:
+                    print("Vui lòng nhập câu hỏi.\n")
+                    continue
+
+                result = run_query(query, verbose=False, chat_mode=True)
+                _print_chat_response(result)
 
         else:
             print("Lựa chọn không hợp lệ.")

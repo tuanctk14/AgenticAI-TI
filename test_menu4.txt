@@ -1,0 +1,4 @@
+4
+bạn biết karina không
+tôi muốn hỏi về log4j vulnerability
+exit

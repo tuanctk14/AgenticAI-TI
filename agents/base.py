@@ -459,7 +459,7 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
             print(f"\n{'='*55}")
             print(f" AGENT_SUPERVISOR (bước {state['num_steps'] + 1})")
             print("="*55)
-            print(response[:300] + ("..." if len(response) > 300 else ""))
+            print(response)
             state["last_agent_response"] = response
             state["last_agent"] = agent_name
             state["num_steps"] = state.get("num_steps", 0) + 1
@@ -617,7 +617,7 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
     print("="*55)
 
     response = ollama_chat(messages, temperature=0.1)
-    print(response[:600] + ("..." if len(response) > 600 else ""))
+    print(response)
 
     state["last_agent_response"] = response
     state["last_agent"]          = agent_name
