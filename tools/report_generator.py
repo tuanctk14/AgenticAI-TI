@@ -637,6 +637,9 @@ def _markdown_to_html(markdown_text: str, title: str = "Report") -> str:
         f'  <title>{title}</title>',
         '  <style>',
         '    body { background: #1a1a2e; color: #e0e0e0; font-family: "Courier New", monospace; margin: 20px; }',
+        '    .toolbar { position: fixed; top: 20px; right: 20px; z-index: 1000; }',
+        '    .print-btn { background: #00d4ff; color: #1a1a2e; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; }',
+        '    .print-btn:hover { background: #00a8cc; }',
         '    .container { max-width: 1000px; margin: 0 auto; }',
         '    h1 { color: #00d4ff; border-bottom: 2px solid #00d4ff; padding-bottom: 10px; }',
         '    h2 { color: #00d4ff; margin-top: 30px; }',
@@ -656,9 +659,13 @@ def _markdown_to_html(markdown_text: str, title: str = "Report") -> str:
         '    a:hover { text-decoration: underline; }',
         '    hr { border: none; border-top: 1px solid #0f3460; }',
         '    footer { margin-top: 40px; text-align: center; color: #666; border-top: 1px solid #0f3460; padding-top: 10px; }',
+        '    @media print { .toolbar { display: none; } body { background: white; color: black; margin: 0; } }',
         '  </style>',
         '</head>',
         '<body>',
+        '<div class="toolbar">',
+        '  <button class="print-btn" onclick="window.print()">📥 In / Tải về PDF</button>',
+        '</div>',
         '<div class="container">',
     ]
 
