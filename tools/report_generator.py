@@ -123,8 +123,8 @@ def generate_report(
     # Thêm footer
     footer = (
         f"\n\n---\n"
-        f"*Tạo bởi ATI-AgenticThreatIntelligence System | {ts.strftime('%d/%m/%Y %H:%M:%S')}*\n"
-        f"*Model: Ollama Local | Report ID: {rid}*\n"
+        f"Tạo bởi ATI-AgenticThreatIntelligence System | {ts.strftime('%d/%m/%Y %H:%M:%S')}\n"
+        f"Model: Ollama Local | Report ID: {rid}\n"
     )
     full_content = content + footer
 
@@ -239,9 +239,9 @@ def _build_report_from_state(
 
         lines += [
             "\n## DASHBOARD",
-            f"\n| Metric | Value |",
+            f"\n| Loại | Số lượng |",
             f"|--------|-------|",
-            f"| Total CVEs | {len(cves)} |",
+            f"| CVEs | {len(cves)} |",
             f"| IOC (Indicators) | {ioc_count} |",
             f"| Malware Families | {malware_count} |",
             f"| Attack Patterns | {attack_pattern_count} |",
@@ -257,11 +257,11 @@ def _build_report_from_state(
         critical_high_cves = [c for c in cves if c.get("severity", "").upper() in ("CRITICAL", "HIGH")]
         if critical_high_cves:
             lines += [f"\n## DANH SÁCH CVE ({len(critical_high_cves)} CVEs CRITICAL/HIGH)", ""]
-            lines.append("| # | CVE ID | CVSS | Mức Độ | Ngày Công Bố |")
+            lines.append("| STT | CVE ID | CVSS | Mức Độ | Ngày Công Bố |")
             lines.append("|---|--------|------|--------|--------------|")
             for i, c in enumerate(critical_high_cves, 1):
                 lines.append(
-                    f"| {i} | **{c.get('id','N/A')}** | {c.get('cvss_score','N/A')} "
+                    f"| {i} | {c.get('id','N/A')} | {c.get('cvss_score','N/A')} "
                     f"| {c.get('severity','N/A')} | {c.get('published','N/A')} |"
                 )
             lines.append("")
@@ -335,7 +335,7 @@ def _build_report_from_state(
         # Indicators of Compromise
         if ioc_list:
             lines += ["\n### Indicators of Compromise (IOC)", ""]
-            lines.append("| # | Loại | Giá Trị/Pattern | CVSS | Threat Actor |")
+            lines.append("| STT | Loại | Giá Trị/Pattern | CVSS | Threat Actor |")
             lines.append("|---|------|-----------------|------|--------------|")
             for i, ioc in enumerate(ioc_list[:10], 1):
                 # Get actual type - use smart detection from pattern if from OpenCTI
@@ -390,7 +390,7 @@ def _build_report_from_state(
         # Malware Families
         if malware_list:
             lines += ["\n### Malware Families", ""]
-            lines.append("| # | Tên Malware | Loại | CVSS | Threat Actor |")
+            lines.append("| STT | Tên Malware | Loại | CVSS | Threat Actor |")
             lines.append("|---|-------------|------|------|--------------|")
             for i, mal in enumerate(malware_list[:10], 1):
                 name = str(mal.get("name", "N/A")).replace("\n", " ")[:50]
@@ -408,7 +408,7 @@ def _build_report_from_state(
         # Attack Patterns
         if pattern_list:
             lines += ["\n### Attack Patterns (MITRE ATT&CK)", ""]
-            lines.append("| # | Technique | Tên | Mô Tả |")
+            lines.append("| STT | Technique | Tên | Mô Tả |")
             lines.append("|---|-----------|-----|-------|")
             for i, pat in enumerate(pattern_list[:10], 1):
                 name = str(pat.get("name", "N/A")).replace("\n", " ")[:50]
@@ -463,14 +463,14 @@ def _build_report_from_state(
                                key=lambda x: risk_order.get(device_risk[x[0]], 4))
 
         # Bảng tóm tắt thiết bị (hiển thị đầy đủ, không giới hạn)
-        lines.append("| # | Thiết Bị | IP | OS | CVE Count | Mức Độ |")
+        lines.append("| STT | Thiết Bị | IP | OS | CVE Count | Mức Độ |")
         lines.append("|---|----------|----|----|-----------|--------|")
         for idx, (dev_id, dev_info) in enumerate(sorted_devices, 1):
             cve_count = len(dev_info["cves"])
             risk = device_risk[dev_id]
             lines.append(
                 f"| {idx} | {dev_info['hostname']} | {dev_info['ip']} | {dev_info['os']} "
-                f"| {cve_count} | **{risk}** |"
+                f"| {cve_count} | {risk} |"
             )
         lines.append("")
 
@@ -480,7 +480,7 @@ def _build_report_from_state(
         # Render each device in sorted order
         for dev_id, dev_info in sorted_devices:
             risk_level = device_risk[dev_id]
-            lines.append(f"\n#### {dev_info['hostname']} ({dev_info['ip']}) - **{risk_level}**")
+            lines.append(f"\n#### {dev_info['hostname']} ({dev_info['ip']}) - {risk_level}")
             lines.append(f"- **OS**: {dev_info['os']}")
             lines.append(f"- **Criticality**: {dev_info['criticality']}")
             lines.append("")
@@ -516,11 +516,11 @@ def _build_report_from_state(
 
             # Timeline priority
             if cvss_float >= 9.0:
-                lines.append("- ⚡ **Ưu tiên CRITICAL**: Xử lý ngay trong 24 giờ")
+                lines.append("-  **Ưu tiên CRITICAL**: Xử lý ngay trong 24 giờ")
             elif cvss_float >= 7.0:
-                lines.append("- 🔴 **Ưu tiên HIGH**: Xử lý trong 72 giờ")
+                lines.append("-  **Ưu tiên HIGH**: Xử lý trong 72 giờ")
             else:
-                lines.append("- 🟡 **Ưu tiên MEDIUM**: Lên lịch xử lý trong 2 tuần")
+                lines.append("-  **Ưu tiên MEDIUM**: Lên lịch xử lý trong 2 tuần")
 
             # Update all affected software
             for software in sorted(all_software):
@@ -593,11 +593,11 @@ def _get_remediation(cve_score: float, affected_software: str, description: str)
 
     # Bước 1: Timeline ưu tiên
     if cve_score >= 9.0:
-        steps.append("⚡ **Ưu tiên CRITICAL**: Xử lý ngay trong 24 giờ")
+        steps.append(" **Ưu tiên CRITICAL**: Xử lý ngay trong 24 giờ")
     elif cve_score >= 7.0:
-        steps.append("🔴 **Ưu tiên HIGH**: Xử lý trong 72 giờ")
+        steps.append(" **Ưu tiên HIGH**: Xử lý trong 72 giờ")
     else:
-        steps.append("🟡 **Ưu tiên MEDIUM**: Lên lịch xử lý trong 2 tuần")
+        steps.append(" **Ưu tiên MEDIUM**: Lên lịch xử lý trong 2 tuần")
 
     # Bước 2: Action cơ bản
     steps.append(f"- **Cập nhật phần mềm**: Nâng cấp {affected_software} lên phiên bản mới nhất")
@@ -637,9 +637,6 @@ def _markdown_to_html(markdown_text: str, title: str = "Report") -> str:
         f'  <title>{title}</title>',
         '  <style>',
         '    body { background: #1a1a2e; color: #e0e0e0; font-family: "Courier New", monospace; margin: 20px; }',
-        '    .toolbar { position: fixed; top: 20px; right: 20px; z-index: 1000; }',
-        '    .print-btn { background: #00d4ff; color: #1a1a2e; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; }',
-        '    .print-btn:hover { background: #00a8cc; }',
         '    .container { max-width: 1000px; margin: 0 auto; }',
         '    h1 { color: #00d4ff; border-bottom: 2px solid #00d4ff; padding-bottom: 10px; }',
         '    h2 { color: #00d4ff; margin-top: 30px; }',
@@ -659,13 +656,9 @@ def _markdown_to_html(markdown_text: str, title: str = "Report") -> str:
         '    a:hover { text-decoration: underline; }',
         '    hr { border: none; border-top: 1px solid #0f3460; }',
         '    footer { margin-top: 40px; text-align: center; color: #666; border-top: 1px solid #0f3460; padding-top: 10px; }',
-        '    @media print { .toolbar { display: none; } body { background: white; color: black; margin: 0; } }',
         '  </style>',
         '</head>',
         '<body>',
-        '<div class="toolbar">',
-        '  <button class="print-btn" onclick="window.print()">📥 In / Tải về PDF</button>',
-        '</div>',
         '<div class="container">',
     ]
 
