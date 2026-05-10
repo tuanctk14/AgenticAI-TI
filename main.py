@@ -158,6 +158,87 @@ def _print_chat_response(result: dict):
     elif last_response:
         print(f"ATI: {last_response}\n")
 
+    # If have device matches, print remediation info
+    devices = result.get("matched_devices") or []
+    if devices:
+        print("\n" + "=" * 70)
+        print(" HƯỚ­NG KHẮC PHỤC CHI TIẾT")
+        print("=" * 70)
+
+        device_dict = {}
+        cves_dict = {}
+        cves_collected = result.get("collected_cves") or []
+        for cve in cves_collected:
+            cves_dict[cve.get("id")] = cve
+
+        for d in devices:
+            dev_id = d["device_id"]
+            if dev_id not in device_dict:
+                device_dict[dev_id] = {
+                    "hostname": d.get("hostname"),
+                    "ip": d.get("ip"),
+                    "os": d.get("os"),
+                    "criticality": d.get("criticality"),
+                    "affected_software": d.get("affected_software"),
+                    "cves": []
+                }
+            device_dict[dev_id]["cves"].append({
+                "cve_id": d.get("cve_id"),
+                "risk_level": d.get("risk_level"),
+                "cvss_score": d.get("cvss_score")
+            })
+
+        for dev_id, info in device_dict.items():
+            hostname = info["hostname"]
+            ip = info["ip"]
+            os = info["os"]
+            criticality = info["criticality"]
+            cves = info["cves"]
+            software = info.get("affected_software", "N/A")
+
+            print(f"\n• Device: {dev_id}")
+            print(f"  Hostname: {hostname}")
+            print(f"  IP: {ip}")
+            print(f"  OS: {os}")
+            print(f"  Criticality: {criticality}")
+            print(f"  Số CVEs: {len(cves)}")
+            print(f"  CVEs cụ thể:")
+            for cve in cves:
+                print(f"    - {cve['cve_id']}: {cve['risk_level']} (CVSS: {cve['cvss_score']})")
+
+            print(f"\n  Hướng khắc phục:")
+
+            # Find highest risk CVE
+            highest_risk_cve = max(cves, key=lambda x: float(x.get("cvss_score", 0)) if isinstance(x.get("cvss_score"), (int, float, str)) and str(x.get("cvss_score")).replace('.', '', 1).isdigit() else 0)
+            cvss = highest_risk_cve.get("cvss_score", 0)
+            try:
+                cvss_float = float(cvss) if cvss and cvss != "N/A" else 0
+            except (ValueError, TypeError):
+                cvss_float = 0
+
+            # Timeline priority
+            if cvss_float >= 9.0:
+                print(f"    -  Ưu tiên CRITICAL: Xử lý ngay trong 24 giờ")
+            elif cvss_float >= 7.0:
+                print(f"    -  Ưu tiên HIGH: Xử lý trong 72 giờ")
+            else:
+                print(f"    -  Ưu tiên MEDIUM: Lên lịch xử lý trong 2 tuần")
+
+            # Update affected software
+            print(f"    - Cập nhật phần mềm: Nâng cấp {software} lên phiên bản mới nhất")
+
+            # Get remediation based on CVE description
+            cve_description = ""
+            highest_cve_id = highest_risk_cve.get("cve_id")
+            if highest_cve_id in cves_dict:
+                cve_description = cves_dict[highest_cve_id].get("description", "")
+
+            remediation_steps = _get_remediation_steps(cve_description)
+            for step in remediation_steps:
+                print(f"    {step}")
+
+        print("\n" + "=" * 70)
+
 
 def _print_summary(result: dict):
     """In tóm tắt kết quả sau khi chạy xong - CHI TIẾT ĐẦY ĐỦ."""
