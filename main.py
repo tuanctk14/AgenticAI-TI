@@ -37,9 +37,9 @@ BANNER = """
 / ___ \ | |  | |
 /_/   \_|_|  |___|
 
-    🔍 AgenticThreatIntelligence 🔍
+    AgenticThreatIntelligence 
     Intelligent Threat Analysis System
-      Ollama Local Edition | Offline Mode
+    Ollama Local Edition | Offline Mode
 """
 
 MENU = """
@@ -81,13 +81,13 @@ def run_query(query: str, verbose: bool = True) -> dict:
     state = init_state(query)
 
     if verbose:
-        print(f"\n🚀 Đang xử lý: {query[:80]}...")
+        print(f"\n Đang xử lý: {query[:80]}...")
         print("-" * 55)
 
     try:
         result = graph.invoke(state, config={"recursion_limit": 30})
     except Exception as e:
-        print(f"❌ Lỗi hệ thống: {e}")
+        print(f" Lỗi hệ thống: {e}")
         return {"error": str(e)}
 
     if verbose:
@@ -107,41 +107,41 @@ def _get_remediation_steps(cve_description: str) -> list[str]:
     # Specific remediation based on vulnerability type
     if "rce" in desc or "remote code execution" in desc:
         steps.extend([
-            "- **RCE Detection**: Scan hệ thống bằng antivirus/EDR để phát hiện backdoor, shell scripts",
-            "- **Firewall rules**: Kiểm tra và tightening inbound connections từ internet",
-            "- **Kiểm tra logs**: Tìm kiếm dấu hiệu bị khai thác (suspicious activities, error patterns)"
+            "- RCE Detection: Scan hệ thống bằng antivirus/EDR để phát hiện backdoor, shell scripts",
+            "- Firewall rules: Kiểm tra và tightening inbound connections từ internet",
+            "- Kiểm tra logs: Tìm kiếm dấu hiệu bị khai thác (suspicious activities, error patterns)"
         ])
     elif "sql" in desc:
         steps.extend([
-            "- **SQL Injection mitigation**: Review và sanitize tất cả SQL queries, dùng parameterized statements",
-            "- **Database audit**: Kiểm tra access logs của database, xóa suspicious accounts"
+            "- SQL Injection mitigation: Review và sanitize tất cả SQL queries, dùng parameterized statements",
+            "- Database audit: Kiểm tra access logs của database, xóa suspicious accounts"
         ])
     elif "auth" in desc or "bypass" in desc:
         steps.extend([
-            "- **Credential reset**: Reset tất cả passwords, invalidate sessions nếu cần",
-            "- **MFA enforcement**: Enable Multi-Factor Authentication nếu chưa có",
-            "- **Kiểm tra logs**: Tìm kiếm dấu hiệu truy cập bất hợp pháp (unauthorized access attempts)"
+            "- Credential reset: Reset tất cả passwords, invalidate sessions nếu cần",
+            "- MFA enforcement: Enable Multi-Factor Authentication nếu chưa có",
+            "- Kiểm tra logs: Tìm kiếm dấu hiệu truy cập bất hợp pháp (unauthorized access attempts)"
         ])
     elif "path traversal" in desc or "directory traversal" in desc:
         steps.extend([
-            "- **File access audit**: Kiểm tra web server logs cho directory traversal attempts",
-            "- **Access control**: Đảm bảo proper file permissions và không expose sensitive directories"
+            "- File access audit: Kiểm tra web server logs cho directory traversal attempts",
+            "- Access control: Đảm bảo proper file permissions và không expose sensitive directories"
         ])
     elif "xss" in desc or "cross-site" in desc:
         steps.extend([
-            "- **Input validation**: Implement proper input sanitization và output encoding",
-            "- **CSP headers**: Thiết lập Content Security Policy headers"
+            "- Input validation: Implement proper input sanitization và output encoding",
+            "- CSP headers: Thiết lập Content Security Policy headers"
         ])
     elif "csrf" in desc or "cross-site request" in desc:
         steps.extend([
-            "- **CSRF tokens**: Implement CSRF protection tokens trên tất cả state-changing operations",
-            "- **SameSite cookies**: Thiết lập SameSite attribute trên cookies"
+            "- CSRF tokens: Implement CSRF protection tokens trên tất cả state-changing operations",
+            "- SameSite cookies: Thiết lập SameSite attribute trên cookies"
         ])
     else:
         # Default remediation for unknown vulnerability types
         steps.extend([
-            "- **Kiểm tra logs**: Tìm kiếm dấu hiệu bị khai thác (suspicious activities)",
-            "- **Network segmentation**: Giới hạn truy cập từ bên ngoài nếu chưa có"
+            "- Kiểm tra logs: Tìm kiếm dấu hiệu bị khai thác (suspicious activities)",
+            "- Network segmentation: Giới hạn truy cập từ bên ngoài nếu chưa có"
         ])
 
     return steps
@@ -150,7 +150,7 @@ def _get_remediation_steps(cve_description: str) -> list[str]:
 def _print_summary(result: dict):
     """In tóm tắt kết quả sau khi chạy xong - CHI TIẾT ĐẦY ĐỦ."""
     print("\n" + "="*70)
-    print("📊 KẾT QUẢ CHI TIẾT ĐẦY ĐỦ")
+    print(" KẾT QUẢ CHI TIẾT ĐẦY ĐỦ")
     print("="*70)
 
     history = result.get("agent_history", [])
@@ -161,7 +161,7 @@ def _print_summary(result: dict):
     cves = result.get("collected_cves") or []
     if cves:
         print("=" * 70)
-        print("📋 CVE DETAILS - TẤT CẢ")
+        print(" CVE DETAILS - TẤT CẢ")
         print("=" * 70)
         print(f"Tổng cộng: {len(cves)} CVEs\n")
         for i, cve in enumerate(cves, 1):
@@ -189,7 +189,7 @@ def _print_summary(result: dict):
     indicators = result.get("collected_indicators") or []
     if indicators:
         print("=" * 70)
-        print("🔍 THREAT INTELLIGENCE DETAILS - TẤT CẢ")
+        print(" THREAT INTELLIGENCE DETAILS - TẤT CẢ")
         print("=" * 70)
         print(f"Tổng cộng: {len(indicators)} Results (Indicators + Malware + Threat Actors + Patterns)\n")
 
@@ -242,7 +242,7 @@ def _print_summary(result: dict):
     devices = result.get("matched_devices") or []
     if devices:
         print("=" * 70)
-        print("💻 DEVICE IMPACT - CỤ THỂ")
+        print(" DEVICE IMPACT - CỤ THỂ")
         print("=" * 70)
         affected = len({d["device_id"] for d in devices})
         print(f"Tổng thiết bị bị ảnh hưởng: {affected}\n")
@@ -290,7 +290,7 @@ def _print_summary(result: dict):
             print()
 
             # Hướng khắc phục
-            print(f"  **Hướng khắc phục:**")
+            print(f"  Hướng khắc phục:")
 
             # Find highest risk CVE
             highest_risk_cve = max(cves, key=lambda x: float(x.get("cvss_score", 0)) if isinstance(x.get("cvss_score"), (int, float, str)) and str(x.get("cvss_score")).replace('.', '', 1).isdigit() else 0)
@@ -302,14 +302,14 @@ def _print_summary(result: dict):
 
             # Timeline priority
             if cvss_float >= 9.0:
-                print(f"    - ⚡ **Ưu tiên CRITICAL**: Xử lý ngay trong 24 giờ")
+                print(f"    -  Ưu tiên CRITICAL: Xử lý ngay trong 24 giờ")
             elif cvss_float >= 7.0:
-                print(f"    - 🔴 **Ưu tiên HIGH**: Xử lý trong 72 giờ")
+                print(f"    -  Ưu tiên HIGH: Xử lý trong 72 giờ")
             else:
-                print(f"    - 🟡 **Ưu tiên MEDIUM**: Lên lịch xử lý trong 2 tuần")
+                print(f"    -  Ưu tiên MEDIUM: Lên lịch xử lý trong 2 tuần")
 
             # Update affected software
-            print(f"    - **Cập nhật phần mềm**: Nâng cấp {software} lên phiên bản mới nhất")
+            print(f"    - Cập nhật phần mềm: Nâng cấp {software} lên phiên bản mới nhất")
 
             # Get remediation based on CVE description
             cve_description = ""
@@ -326,7 +326,7 @@ def _print_summary(result: dict):
     report = result.get("final_report", "")
     if report:
         print("=" * 70)
-        print(f"📄 REPORT: {report}\n")
+        print(f" REPORT: {report}\n")
 
     print("=" * 70)
 
@@ -387,7 +387,7 @@ def _ask_time_range() -> tuple[str, str, int]:
                 end_dt = datetime.now(timezone.utc)
                 days_back = (end_dt.date() - start_dt.date()).days
         except ValueError:
-            print("❌ Format không hợp lệ (dùng DD-MM-YYYY hoặc YYYY-MM-DD), dùng 7 ngày mặc định")
+            print(" Format không hợp lệ (dùng DD-MM-YYYY hoặc YYYY-MM-DD), dùng 7 ngày mặc định")
             end_dt = datetime.now(timezone.utc)
             start_dt = end_dt - timedelta(days=7)
             days_back = 7
@@ -401,7 +401,7 @@ def _ask_time_range() -> tuple[str, str, int]:
     # Display in DD-MM-YYYY format
     start_display = start_dt.strftime("%d-%m-%Y")
     end_display = end_dt.strftime("%d-%m-%Y")
-    print(f"\n✅ Khoảng thời gian: {start_display} → {end_display} ({days_back} ngày)")
+    print(f"\n Khoảng thời gian: {start_display} → {end_display} ({days_back} ngày)")
     return start_date, end_date, days_back
 
 
@@ -411,7 +411,7 @@ def _run_report_pipeline(start_date: str, end_date: str, days_back: int) -> dict
     Returns: state dict với dữ liệu thu thập
     """
     print("\n" + "="*55)
-    print("📡 THU THẬP DỮ LIỆU CHO BÁO CÁO")
+    print("THU THẬP DỮ LIỆU CHO BÁO CÁO")
     print("="*55)
 
     state = {
@@ -423,7 +423,7 @@ def _run_report_pipeline(start_date: str, end_date: str, days_back: int) -> dict
     }
 
     # Bước 1: Lấy CVE từ KB + NVD (merge cả hai)
-    print(f"\n1️⃣  Lấy CVE...")
+    print(f"\n  Lấy CVE...")
     from tools.doc_store import fetch_kb_cves, load_knowledge_base
     from datetime import datetime
 
@@ -465,10 +465,10 @@ def _run_report_pipeline(start_date: str, end_date: str, days_back: int) -> dict
             filtered_kb_cves.append(cve)
 
     state["collected_cves"] = filtered_kb_cves
-    print(f"   ✅ Total: {len(state['collected_cves'])} CVEs collected")
+    print(f"    Total: {len(state['collected_cves'])} CVEs collected")
 
     # Bước 2: Lấy IOC/Malware từ KB trước, sau đó OpenCTI
-    print(f"\n2️⃣  Lấy IOC/Malware...")
+    print(f"\n  Lấy IOC/Malware...")
 
     # Lấy từ KB
     from tools.doc_store import fetch_kb_indicators
@@ -495,20 +495,20 @@ def _run_report_pipeline(start_date: str, end_date: str, days_back: int) -> dict
 
     # Merge results (avoid duplicates by ID)
     state["collected_indicators"] = filtered_kb_indicators + opencti_indicators
-    print(f"   ✅ Total: {len(state['collected_indicators'])} IOC/Malware collected")
+    print(f"    Total: {len(state['collected_indicators'])} IOC/Malware collected")
 
     # Bước 3: So khớp CVE với thiết bị nội bộ
     if state["collected_cves"]:
-        print(f"\n3️⃣  So khớp CVE với thiết bị nội bộ...")
+        print(f"\n  So khớp CVE với thiết bị nội bộ...")
         match_result = match_cves_with_cmdb(cve_list=state["collected_cves"])
         state["matched_devices"] = match_result.get("context", [])
-        print(f"   ✅ Tìm được {len(state['matched_devices'])} device-CVE matches")
+        print(f"    Tìm được {len(state['matched_devices'])} device-CVE matches")
     else:
-        print(f"\n3️⃣  Bỏ qua: không có CVE để match")
+        print(f"\n  Bỏ qua: không có CVE để match")
 
     # Tóm tắt
     print("\n" + "="*55)
-    print("📊 TÓM TẮT DỮ LIỆU")
+    print(" TÓM TẮT DỮ LIỆU")
     print("="*55)
     print(f"CVEs:              {len(state['collected_cves'])}")
     print(f"IOCs/Malware:      {len(state['collected_indicators'])}")
@@ -525,7 +525,7 @@ def _ask_and_export(state: dict, start_date: str, end_date: str):
     Tạo báo cáo HTML.
     """
     print("\n" + "="*55)
-    print("📄 XUẤT BÁO CÁO")
+    print(" XUẤT BÁO CÁO")
     print("="*55)
 
     # Tạo báo cáo với format DD-MM-YYYY
@@ -546,17 +546,17 @@ def _ask_and_export(state: dict, start_date: str, end_date: str):
 
     file_path = result.get("file_path", "")
     if file_path:
-        print(f"\n✅ Báo cáo đã được lưu tại:")
+        print(f"\n Báo cáo đã được lưu tại:")
         print(f"   {file_path}")
 
         # Auto-open report in default browser
         try:
             abs_path = os.path.abspath(file_path)
             webbrowser.open(f"file:///{abs_path}")
-            print(f"📂 Đang mở file trong trình duyệt...")
+            print(f" Đang mở file trong trình duyệt...")
         except Exception as e:
-            print(f"⚠️  Không thể tự động mở file: {e}")
-            print(f"📂 Vui lòng mở file bằng tay (double-click file)")
+            print(f"  Không thể tự động mở file: {e}")
+            print(f" Vui lòng mở file bằng tay (double-click file)")
 
 
 # ── Interactive menu ───────────────────────────────────────────────────────
@@ -566,12 +566,12 @@ def interactive_mode():
     print(f"  Báo cáo sẽ lưu tại: {os.path.abspath(REPORTS_DIR)}")
 
     # Kiểm tra kết nối Ollama
-    print("\n🔍 Kiểm tra kết nối Ollama...")
+    print("\n Kiểm tra kết nối Ollama...")
     ok, msg = check_ollama_connection()
     if not ok:
-        print(f"\n❌ {msg}\n")
+        print(f"\n {msg}\n")
         sys.exit(1)
-    print(f"✅ Ollama sẵn sàng (model: {OLLAMA_MODEL})\n")
+    print(f" Ollama sẵn sàng (model: {OLLAMA_MODEL})\n")
 
     while True:
         print(MENU)
@@ -595,17 +595,17 @@ def interactive_mode():
 
         elif choice == "3":
             # Menu 3: Upload document
-            print("\n📄 UPLOAD DOCUMENT (CVE/IOC/Malware)")
+            print("\n UPLOAD DOCUMENT (CVE/IOC/Malware)")
             print("Hỗ trợ: .json, .txt (chứa CVE IDs), .csv")
             file_path = input("Nhập đường dẫn file: ").strip().strip('"')
             if file_path:
                 from tools.doc_store import upload_document, get_knowledge_base_stats
                 result = upload_document(file_path)
                 if "error" in result:
-                    print(f"❌ {result['error']}")
+                    print(f" {result['error']}")
                 else:
                     saved = result.get("context", {})
-                    print(f"✅ Đã lưu: CVEs={saved.get('cves',0)}, IOCs={saved.get('iocs',0)}, Malwares={saved.get('malwares',0)}")
+                    print(f" Đã lưu: CVEs={saved.get('cves',0)}, IOCs={saved.get('iocs',0)}, Malwares={saved.get('malwares',0)}")
                 stats = get_knowledge_base_stats()
                 s = stats.get("context", {})
 
@@ -647,14 +647,14 @@ def main():
 
     if args.check:
         ok, msg = check_ollama_connection()
-        print("✅" if ok else "❌", msg)
+        print("" if ok else "", msg)
         sys.exit(0 if ok else 1)
 
     if args.query:
         print(BANNER)
         ok, msg = check_ollama_connection()
         if not ok:
-            print(f"❌ {msg}")
+            print(f" {msg}")
             sys.exit(1)
         run_query(args.query)
         return
@@ -663,9 +663,9 @@ def main():
         print(BANNER)
         ok, msg = check_ollama_connection()
         if not ok:
-            print(f"❌ {msg}")
+            print(f" {msg}")
             sys.exit(1)
-        print("\n🧪 Chạy Test Cases\n" + "="*55)
+        print("\n Chạy Test Cases\n" + "="*55)
         for i, q in enumerate(TEST_CASES, 1):
             print(f"\n[TEST {i}] {q}")
             run_query(q)
