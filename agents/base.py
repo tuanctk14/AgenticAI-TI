@@ -402,6 +402,8 @@ def call_agent(state: dict, agent_name: str) -> dict:
 
         # Check for CVE/device pattern even without keywords
         has_cve_pattern = "cve-" in query_lower or "cve " in query_lower
+        has_cve_keyword = any(kw in query_lower for kw in ["log4j", "apache", "exploit", "vulnerability", "lỗi hổng", "loi ho"])
+
         has_device_pattern = ("device" in query_lower or "srv-" in query_lower or
                              "thiet bi" in query_lower or "thiết bị" in query_lower or
                              "thiet" in query_lower or "bị" in query_lower or
@@ -409,6 +411,19 @@ def call_agent(state: dict, agent_name: str) -> dict:
         has_hash_pattern = any(len(w) in [32, 40, 64] and all(c in "0123456789abcdef" for c in w)
                                for w in query_words)
         has_ip_pattern = any("." in w and all(p.isdigit() or p == "." for p in w) for w in query_words)
+
+        # PRIORITY: If has CVE keyword/pattern + device mention → route to agent_ti FIRST (fetch CVE, then agent_ti will handoff to agent_matcher)
+        if (has_cve_pattern or has_cve_keyword) and has_device_pattern:
+            response = "HANDOFF: agent_ti"
+            print(f"\n{'='*55}")
+            print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
+            print("="*55)
+            print(response)
+            state["last_agent_response"] = response
+            state["last_agent"] = agent_name
+            state["num_steps"] = state.get("num_steps", 0) + 1
+            state["agent_history"] = state.get("agent_history", []) + [agent_name]
+            return state
 
         if not has_security_keyword and not has_cve_pattern and not has_device_pattern and not has_hash_pattern and not has_ip_pattern:
             # Off-topic query - respond naturally
