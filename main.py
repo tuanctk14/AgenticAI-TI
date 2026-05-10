@@ -75,10 +75,10 @@ TEST_CASES = [
 
 
 # ── Core run ───────────────────────────────────────────────────────────────
-def run_query(query: str, verbose: bool = True, chat_mode: bool = False) -> dict:
+def run_query(query: str, verbose: bool = True, chat_mode: bool = False, conversation_history: list = None) -> dict:
     """Chạy một câu hỏi qua hệ thống multi-agent."""
     graph = get_graph()
-    state = init_state(query)
+    state = init_state(query, conversation_history=conversation_history or [])
 
     if verbose and not chat_mode:
         print(f"\n Đang xử lý: {query[:80]}...")
@@ -786,11 +786,13 @@ def interactive_mode():
                         print(f"   {cat_name:10s}: {count:3d} records | Chua upload")
 
         elif choice == "4":
-            # Menu 4: Free query - Interactive chat mode
+            # Menu 4: Free query - Interactive chat mode with conversation history
             print("\n╔════════════════════════════════════════════════════════╗")
             print("║           CHAT MODE - ATI THREAT INTELLIGENCE          ║")
             print("║  (Gõ 'exit' hoặc 'quit' để quay lại menu chính)       ║")
             print("╚════════════════════════════════════════════════════════╝\n")
+
+            conversation_history = []  # Maintain history across queries
 
             while True:
                 query = input("Bạn: ").strip()
@@ -803,8 +805,20 @@ def interactive_mode():
                     print("Vui lòng nhập câu hỏi.\n")
                     continue
 
-                result = run_query(query, verbose=False, chat_mode=True)
+                # Add user query to conversation history
+                conversation_history.append({"role": "user", "content": query})
+
+                result = run_query(query, verbose=False, chat_mode=True, conversation_history=conversation_history)
                 _print_chat_response(result)
+
+                # Add assistant response to conversation history
+                last_response = result.get("last_agent_response", "")
+                if "ANSWER:" in last_response:
+                    answer_text = last_response.split("ANSWER:")[1].strip()
+                else:
+                    answer_text = last_response
+
+                conversation_history.append({"role": "assistant", "content": answer_text})
 
         else:
             print("Lựa chọn không hợp lệ.")

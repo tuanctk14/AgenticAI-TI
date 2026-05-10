@@ -6,13 +6,14 @@ from typing import TypedDict, List, Optional
 
 class CyberSecState(TypedDict):
     # Input
-    query:               str
+    query:                  str
+    conversation_history:   List[dict]  # [{role: "user"/"assistant", content: "..."}]
 
     # Agent tracking
-    last_agent_response: str
-    last_agent:          str
-    num_steps:           int
-    agent_history:       List[str]
+    last_agent_response:    str
+    last_agent:             str
+    num_steps:              int
+    agent_history:          List[str]
 
     # Iteration limits (prevent infinite loops)
     ti_iterations:       int
@@ -45,10 +46,14 @@ class CyberSecState(TypedDict):
     uploaded_docs:        Optional[List[dict]]
 
 
-def init_state(query: str) -> CyberSecState:
+def init_state(query: str, conversation_history: List[dict] = None) -> CyberSecState:
     """Khởi tạo state mới cho một câu hỏi."""
+    if conversation_history is None:
+        conversation_history = []
+
     return CyberSecState(
         query=query,
+        conversation_history=conversation_history,
         last_agent_response="",
         last_agent="",
         num_steps=0,

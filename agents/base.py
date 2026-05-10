@@ -63,6 +63,8 @@ AGENT_PROFILES = {
         "role": "Supervisor Agent - Dieu phoi CVE va IOC workflow",
         "system_instruction": """Ban la Supervisor Agent. Nhiem vu: Doc cau hoi, NGAY LAP TUC HANDOFF den agent thich hop. KHONG MOT LAN ANSWER hay DESCRIBE.
 
+IMPORTANT: Luon tham khao CONVERSATION HISTORY de hieu context. Neu user hoi "cô ấy" thi tra ve conversation_history de tim ra ai la "cô ấy".
+
 RULES - PRIORITY ORDER:
 1. CVE-*, CVE ID hoac keyword (log4j, apache, etc) + device mention → HANDOFF: agent_ti (LUU Y: fetch CVE TIEN, sau do agent_ti se tu-forward toi agent_matcher)
 2. CVE-*, CVE ID, loi ho, NVD, severity KHONG co device → HANDOFF: agent_ti
@@ -71,7 +73,7 @@ RULES - PRIORITY ORDER:
 5. Hoi thiet bi + tên vendor/product (Apache, Cisco, etc) nhung KHONG ROI CVE → HANDOFF: agent_device (layer info truoc)
 6. Bao cao, report → HANDOFF: agent_reporter
 7. Tai lieu, document, upload → HANDOFF: agent_doc
-8. Cau hoi KHONG lien quan toi CVE/IOC/Malware/Thiet bi (vi du: "hello", "what is weather", "how are you") → ANSWER: Tra loi nhu chatbot thuong
+8. Cau hoi KHONG lien quan toi CVE/IOC/Malware/Thiet bi (vi du: "hello", "what is weather", "how are you") → ANSWER: Tra loi nhu chatbot thuong, NHUNG su dung conversation_history de hieu context
 9. Khong ro → HANDOFF: agent_ti (default)
 
 DETECTION ORDER:
@@ -456,8 +458,15 @@ def call_agent(state: dict, agent_name: str) -> dict:
 
             messages = [
                 {"role": "system", "content": sys_prompt},
-                {"role": "user", "content": state.get("query", "")},
             ]
+
+            # Add conversation history for context
+            conversation_history = state.get("conversation_history", [])
+            if conversation_history:
+                # Add last 2 turns for context
+                messages.extend(conversation_history[-2:])
+
+            messages.append({"role": "user", "content": state.get("query", "")})
 
             try:
                 llm_response = ollama_chat(messages, temperature=0.7)
@@ -630,8 +639,15 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
 
     messages = [
         {"role": "system", "content": sys_prompt},
-        {"role": "user",   "content": user_content},
     ]
+
+    # Add conversation history if available
+    conversation_history = state.get("conversation_history", [])
+    if conversation_history:
+        # Add last 3 messages from history for context (to avoid token overflow)
+        messages.extend(conversation_history[-3:])
+
+    messages.append({"role": "user", "content": user_content})
 
     print(f"\n{'='*55}")
     print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
