@@ -487,16 +487,18 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
         else:
             # No device context → simple answer with CVE info
             cve_summary = f"\n\n**{len(cves)} CVE(s) found:**\n"
-            for c in cves[:3]:
-                cve_summary += f"- {c.get('id')}: {c.get('description', '')[:80]}... (CVSS: {c.get('cvss_score')})\n"
-            if len(cves) > 3:
-                cve_summary += f"- ... and {len(cves) - 3} more CVEs\n"
+            for c in cves[:10]:  # Show up to 10 CVEs
+                desc = c.get('description', 'N/A')
+                cvss = c.get('cvss_score', 'N/A')
+                cve_summary += f"- **{c.get('id')}**: {desc} (CVSS: {cvss})\n"
+            if len(cves) > 10:
+                cve_summary += f"- ... and {len(cves) - 10} more CVEs\n"
             response = f"ANSWER: {cve_summary}"
 
             print(f"\n{'='*55}")
             print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
             print("="*55)
-            print(response[:300] + "...")
+            print(response)
             state["last_agent_response"] = response
             state["last_agent"]          = agent_name
             state["num_steps"]           = state.get("num_steps", 0) + 1
