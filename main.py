@@ -5,6 +5,7 @@ import sys
 import io
 import argparse
 import os
+import webbrowser
 
 # Fix Unicode encoding cho Windows (cp1252 → utf-8)
 if sys.platform == "win32":
@@ -545,7 +546,15 @@ def _ask_and_export(state: dict, start_date: str, end_date: str):
     if file_path:
         print(f"\n✅ Báo cáo đã được lưu tại:")
         print(f"   {file_path}")
-        print(f"\n📂 Mở file bằng browser (double-click file)")
+
+        # Auto-open report in default browser
+        try:
+            abs_path = os.path.abspath(file_path)
+            webbrowser.open(f"file:///{abs_path}")
+            print(f"📂 Đang mở file trong trình duyệt...")
+        except Exception as e:
+            print(f"⚠️  Không thể tự động mở file: {e}")
+            print(f"📂 Vui lòng mở file bằng tay (double-click file)")
 
 
 # ── Interactive menu ───────────────────────────────────────────────────────
