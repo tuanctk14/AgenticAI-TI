@@ -531,7 +531,7 @@ def _ask_and_export(state: dict, start_date: str, end_date: str):
     start_fmt = f"{start_date[8:10]}-{start_date[5:7]}-{start_date[:4]}"
     end_fmt = f"{end_date[8:10]}-{end_date[5:7]}-{end_date[:4]}"
     date_range_display = f"{start_fmt} đến {end_fmt}"
-    title = f"Security Report - {date_range_display}"
+    title = f"Threat Intelligence Report - {date_range_display}"
 
     result = generate_report(
         report_type="executive_summary",
