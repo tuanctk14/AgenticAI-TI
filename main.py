@@ -538,7 +538,9 @@ def _ask_and_export(state: dict, start_date: str, end_date: str):
         title=title,
         content="",
         state=state,
-        export_format="html"
+        export_format="html",
+        start_date=start_date,
+        end_date=end_date
     )
 
     file_path = result.get("file_path", "")

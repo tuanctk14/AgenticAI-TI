@@ -111,7 +111,7 @@ def generate_report(
 
     # ── Xây dựng nội dung báo cáo từ state nếu có ──────────────────────
     if state and not content:
-        content = _build_report_from_state(report_type, title, state, ts)
+        content = _build_report_from_state(report_type, title, state, ts, start_date, end_date)
 
     if not content:
         content = f"# {title or report_type.replace('_', ' ').title()}\n\nBáo cáo trống."
@@ -156,7 +156,7 @@ def generate_report(
 
 
 def _build_report_from_state(
-    report_type: str, title: str, state: dict, ts: datetime
+    report_type: str, title: str, state: dict, ts: datetime, start_date: str = "", end_date: str = ""
 ) -> str:
     """Tự động tạo nội dung báo cáo từ state của hệ thống."""
     lines = []
@@ -177,13 +177,13 @@ def _build_report_from_state(
         devices = state.get("matched_devices") or []
         device_cve_map = state.get("device_cve_map") or {}
 
-        # If no indicators collected, try to load from KB
-        if not indicators:
+        # If no indicators collected AND no date range, load from KB
+        # (date range means pipeline already did proper filtering)
+        if not indicators and not start_date and not end_date:
             kb = load_knowledge_base("all")
             kb_iocs = kb.get("context", {}).get("iocs", [])
             kb_malwares = kb.get("context", {}).get("malwares", [])
 
-            # Convert KB format to indicator format
             for ioc in kb_iocs:
                 indicators.append({
                     "entity_type": "Indicator",
@@ -204,8 +204,8 @@ def _build_report_from_state(
                     "source": "KB",
                 })
 
-        # If no CVEs collected, try to load from KB
-        if not cves:
+        # If no CVEs collected AND no date range, load from KB
+        if not cves and not start_date and not end_date:
             kb = load_knowledge_base("cves")
             cves = kb.get("context", {}).get("cves", [])
 
@@ -290,8 +290,8 @@ def _build_report_from_state(
     # IOC / Malware / Threat Intelligence
     indicators: list = state.get("collected_indicators") or []
 
-    # If no indicators, load from KB
-    if not indicators:
+    # Only load KB fallback if no date range was specified
+    if not indicators and not start_date and not end_date:
         kb = load_knowledge_base("all")
         kb_iocs = kb.get("context", {}).get("iocs", [])
         kb_malwares = kb.get("context", {}).get("malwares", [])
