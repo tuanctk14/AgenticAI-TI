@@ -426,22 +426,40 @@ def call_agent(state: dict, agent_name: str) -> dict:
             return state
 
         if not has_security_keyword and not has_cve_pattern and not has_device_pattern and not has_hash_pattern and not has_ip_pattern:
-            # Off-topic query - respond naturally
-            response = f"""ANSWER: Cảm ơn bạn đã hỏi! Tuy nhiên, tôi là một chuyên gia về Threat Intelligence và bảo mật thông tin.
+            # Off-topic query - use LLM to respond naturally while staying polite
+            sys_prompt = (
+                "Bạn là một trợ lý AI thân thiện và hữu ích.\n\n"
+                "Câu hỏi dưới đây không liên quan đến bảo mật thông tin hoặc Threat Intelligence. "
+                "Hãy trả lời một cách tự nhiên và thân thiện, sau đó gợi ý người dùng có thể hỏi về các chủ đề liên quan đến bảo mật như: "
+                "CVE, lỗ hổng, IOC, Malware, APT, thiết bị, báo cáo bảo mật.\n\n"
+                "Giới hạn phản hồi dưới 200 từ để ngắn gọn."
+            )
 
-Tôi có thể giúp bạn với các vấn đề sau:
-- Tìm kiếm CVE (lỗ hổng bảo mật)
-- Phân tích IOC, Malware và APT
-- Tìm thông tin thiết bị
-- So khớp CVE với thiết bị ảnh hưởng
-- Tạo báo cáo bảo mật
-- Quét lỗ hổng
+            messages = [
+                {"role": "system", "content": sys_prompt},
+                {"role": "user", "content": state.get("query", "")},
+            ]
+
+            try:
+                llm_response = ollama_chat(messages, temperature=0.7)
+                response = f"ANSWER: {llm_response}"
+            except Exception as e:
+                # Fallback if LLM fails
+                response = f"""ANSWER: Cảm ơn bạn đã hỏi! Tuy nhiên, tôi là một chuyên gia về Threat Intelligence và bảo mật thông tin.
+
+Tôi có thể giúp bạn với:
+- CVE (lỗ hổng bảo mật)
+- IOC, Malware, APT
+- Thông tin thiết bị
+- So khớp CVE với thiết bị
+- Báo cáo bảo mật
 
 Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
+
             print(f"\n{'='*55}")
             print(f" AGENT_SUPERVISOR (bước {state['num_steps'] + 1})")
             print("="*55)
-            print(response[:300] + "...")
+            print(response[:300] + ("..." if len(response) > 300 else ""))
             state["last_agent_response"] = response
             state["last_agent"] = agent_name
             state["num_steps"] = state.get("num_steps", 0) + 1
