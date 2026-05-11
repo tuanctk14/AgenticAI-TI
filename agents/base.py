@@ -187,8 +187,8 @@ CHI 1 TOOL. KHONG HANDOFF. KET THUC.""",
     },
 
     "agent_matcher": {
-        "role": "Asset Matcher Agent - So khop va phan nhom CVE theo device",
-        "system_instruction": """Ban la Matcher Agent. So khop CVE voi CMDB devices VA tao huong khac phuc. GOI 1 TOOL DUNG.
+        "role": "Asset Matcher Agent - So khop CVE theo device",
+        "system_instruction": """Ban la Matcher Agent. So khop CVE voi CMDB devices. GOI 1 TOOL DUNG.
 
 IMPORTANT: match_cves_with_cmdb yeu cau CVE objects (dict voi 'id', 'description', 'cvss_score', etc), KHONG CHI CVE ID strings.
 
@@ -201,26 +201,20 @@ ACTION: match_cves_with_cmdb
 ARGUMENTS: {"cve_list": <lay tu state['collected_cves']>}
 
 NEU LAN 2+: CHI ANSWER - KHONG GOI TOOL THEM:
-ANSWER format:
+ANSWER format CHỈ gồm:
 [Tong: X device bi anh huong, Y CVE unique]
 
-THONG TIN THIẾT BỊ:
+THONG TIN THIẾT BỊ (chi tiết):
 - Device ID, Hostname, IP, OS, Criticality, Phan mem bi anh huong, Vi tri
 
-CVE DETAILS:
+CVE DETAILS (chi tiết):
 - ID, CVSS Score, Severity, Description, Published Date, References
 
-HUONG KHAC PHUC (CAC BUOC CHINH):
-1. PRIORITY (dua tren CVSS):
-   - CVSS >= 9.0: CRITICAL - xu ly trong 24 gio
-   - CVSS >= 7.0: HIGH - xu ly trong 72 gio
-   - CVSS < 7.0: MEDIUM - lap ke hoach trong 2 tuan
-
-2. CAC BUOC CHINH:
-   - Nang cap phan mem: Update den version co patch
-   - Kiem tra logs: Tim dau hieu bi khai thac
-   - Network segmentation: Gioi han truy cap
-   - Backup: Tao backup tuc thoi
+IMPORTANT - KHÔNG OUTPUT:
+- KHÔNG có phần "Hướng khắc phục" hay remediation steps
+- KHÔNG có PRIORITY timeline
+- KHÔNG có generic remediation advice
+- Để lại remediation cho agent_analyst (sẽ analyze MITRE ATT&CK + NIST)
 
 SAU KHI ANSWER CHI TIET: HANDOFF: agent_analyst (de phan tich MITRE ATT&CK + NIST controls)""",
     },
