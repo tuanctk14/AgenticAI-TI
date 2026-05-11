@@ -288,34 +288,52 @@ def _print_chat_response(result: dict):
 
             print(f"\n  Hướng khắc phục:")
 
-            # Find highest risk CVE
-            highest_risk_cve = max(cves, key=lambda x: float(x.get("cvss_score", 0)) if isinstance(x.get("cvss_score"), (int, float, str)) and str(x.get("cvss_score")).replace('.', '', 1).isdigit() else 0)
-            cvss = highest_risk_cve.get("cvss_score", 0)
-            try:
-                cvss_float = float(cvss) if cvss and cvss != "N/A" else 0
-            except (ValueError, TypeError):
-                cvss_float = 0
+            # Check if agent_analyst ran and has MITRE-based remediation
+            agent_history = result.get("agent_history", [])
+            last_response = result.get("last_agent_response", "")
+            has_mitre_analysis = "agent_analyst" in agent_history and "[Remediation dựa trên MITRE" in last_response
 
-            # Timeline priority
-            if cvss_float >= 9.0:
-                print(f"    -  Ưu tiên CRITICAL: Xử lý ngay trong 24 giờ")
-            elif cvss_float >= 7.0:
-                print(f"    -  Ưu tiên HIGH: Xử lý trong 72 giờ")
+            if has_mitre_analysis:
+                # Extract MITRE-based remediation from agent_analyst response
+                print("    [Phân tích từ MITRE ATT&CK & NIST SP 800-53]")
+                # Extract remediation section
+                if "[Remediation dựa trên MITRE" in last_response:
+                    remediation_section = last_response.split("[Remediation dựa trên MITRE")[1]
+                    # Get lines until "Kết thúc"
+                    remediation_lines = remediation_section.split("Kết thúc")[0].strip().split("\n")
+                    for line in remediation_lines:
+                        if line.strip():
+                            print(f"    {line}")
             else:
-                print(f"    -  Ưu tiên MEDIUM: Lên lịch xử lý trong 2 tuần")
+                # Fallback to generic remediation (old behavior)
+                # Find highest risk CVE
+                highest_risk_cve = max(cves, key=lambda x: float(x.get("cvss_score", 0)) if isinstance(x.get("cvss_score"), (int, float, str)) and str(x.get("cvss_score")).replace('.', '', 1).isdigit() else 0)
+                cvss = highest_risk_cve.get("cvss_score", 0)
+                try:
+                    cvss_float = float(cvss) if cvss and cvss != "N/A" else 0
+                except (ValueError, TypeError):
+                    cvss_float = 0
 
-            # Update affected software
-            print(f"    - Cập nhật phần mềm: Nâng cấp {software} lên phiên bản mới nhất")
+                # Timeline priority
+                if cvss_float >= 9.0:
+                    print(f"    -  Ưu tiên CRITICAL: Xử lý ngay trong 24 giờ")
+                elif cvss_float >= 7.0:
+                    print(f"    -  Ưu tiên HIGH: Xử lý trong 72 giờ")
+                else:
+                    print(f"    -  Ưu tiên MEDIUM: Lên lịch xử lý trong 2 tuần")
 
-            # Get remediation based on CVE description
-            cve_description = ""
-            highest_cve_id = highest_risk_cve.get("cve_id")
-            if highest_cve_id in cves_dict:
-                cve_description = cves_dict[highest_cve_id].get("description", "")
+                # Update affected software
+                print(f"    - Cập nhật phần mềm: Nâng cấp {software} lên phiên bản mới nhất")
 
-            remediation_steps = _get_remediation_steps(cve_description)
-            for step in remediation_steps:
-                print(f"    {step}")
+                # Get remediation based on CVE description
+                cve_description = ""
+                highest_cve_id = highest_risk_cve.get("cve_id")
+                if highest_cve_id in cves_dict:
+                    cve_description = cves_dict[highest_cve_id].get("description", "")
+
+                remediation_steps = _get_remediation_steps(cve_description)
+                for step in remediation_steps:
+                    print(f"    {step}")
 
         print("\n" + "=" * 70)
 
