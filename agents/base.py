@@ -240,61 +240,29 @@ ARGUMENTS: {"cve_id": "<lấy từ CVE>"}
 
 LAN 2: ANSWER CHỈ TIẾT (KHÔNG lặp lại thiết bị - đã có ở trên)
 
-ANSWER FORMAT:
+ANSWER FORMAT - TÓM TẮT:
 
 [MITRE ATT&CK Techniques]
 - Technique ID: T####
 - Tactic: <tactic>
-- Description: <mô tả technique>
-- Threat Actors: <danh sách APT/actors>
-- Kill Chain Phase: <phase>
-- Mitigations: M####, M####
+- Description: <mô tả>
+- Threat Actors: <list>
 
 [NIST SP 800-53 Controls]
-- Control IDs: SI-2, RA-5, CM-8, ...
-- Control Names & Actions:
-  - SI-2 Flaw Remediation: <chi tiết action>
-  - RA-5 Vulnerability Scanning: <chi tiết action>
-  - CM-8 System Component Inventory: <chi tiết action>
-- Priority Level: <CRITICAL/HIGH/MEDIUM>
-- Implementation Timeframe: <24h/72h/7 ngày>
+- Control IDs: <list>
+- Names & Actions: <brief list>
 
 [Remediation dựa trên MITRE Techniques]
-Dựa vào technique (T####) đã xác định, áp dụng remediation CHI TIẾT CỤ THỂ:
-
-Nếu T1190 (Exploit Public-Facing Application / Initial Access):
-1. Ngăn chặn truy cập bên ngoài:
-   - Vô hiệu hóa các tính năng cũ hoặc không sử dụng (ví dụ: import feature)
-   - Triển khai xác thực nhập liệu và mã hóa đầu ra để ngăn chặn JNDI injection
-   - Triển khai WAF (Tường lửa ứng dụng web) với các quy tắc cho known exploits
-
-2. Hạn chế quyền truy cập:
-   - Áp dụng nguyên tắc quyền hạn chế tối thiểu
-   - Hạn chế các chức năng quản trị trên các hệ thống bị ảnh hưởng
-   - Sử dụng các cơ chế xác thực mạnh như OAuth
-
-3. Cập nhật bản vá:
-   - Nâng cấp lên phiên bản được vá
-   - Áp dụng tất cả các bản vá bảo mật có sẵn
-   - Kiểm tra bản vá trong staging trước production
-
-4. Giám sát và Phát hiện:
-   - Giám sát nhật ký ứng dụng để phát hiện các nỗ lực truy cập trái phép
-   - Triển khai cảnh báo cho các hoạt động đáng ngờ
-   - Sử dụng IDS/IPS để phát hiện các mẫu khai thác
-
-Nếu T1059 (Command & Scripting Interpreter): Vô hiệu hóa thực thi script, kiểm soát tạo quy trình, giám sát shell activity
-Nếu T1048 (Exfiltration Over Alternative Protocol): Giám sát lưu lượng mạng, hạn chế kết nối outbound, triển khai DLP
-Nếu T1078 (Valid Accounts): Đặt lại thông tin xác thực, bắt buộc MFA, vô hiệu hóa tài khoản không sử dụng
-Nếu T1005 (Data Acquisition): Mã hóa dữ liệu nhạy cảm, hạn chế quyền truy cập file, giám sát truy cập dữ liệu
-- Tương tự cho các techniques khác - luôn EXPAND remediation với 3-4 specific actions
+Dựa vào T#### technique:
+1. <4 action categories - SHORT form>
+2. <action>
+3. <action>
+4. <action>
 
 IMPORTANT:
-- KHÔNG lặp lại "Thiết bị bị ảnh hưởng" - đã có ở section trên
-- KHÔNG dùng generic remediation - PHẢI chi tiết với 4+ specific actions cho technique
-- Kết thúc bằng "Kết thúc." rõ ràng
-- OUTPUT PHẢI RỰC RỌ CHI TIẾT - không tóm gọn
-- KHÔNG HANDOFF. KẾT THÚC.""",
+- OUTPUT NGẮN - không chi tiết quá
+- Kết thúc "Kết thúc."
+- KHÔNG HANDOFF.""",
     },
 
     "agent_doc": {
