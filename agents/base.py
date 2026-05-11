@@ -234,7 +234,7 @@ RULES:
 4. LAN 2: CHỈ ANSWER với MITRE + NIST + Remediation dựa trên techniques
 
 WORKFLOW:
-LAN 1: GỌI TOOLS (cho mỗi CVE)
+LAN 1: GỌI TOOLS DÙNG (cho mỗi CVE) - CHỈ OUTPUT ACTION, KHÔNG OUTPUT ANSWER
 
 ACTION: get_mitre_attack_info
 ARGUMENTS: {"cve_id": "<lấy từ CVE>"}
@@ -242,7 +242,9 @@ ARGUMENTS: {"cve_id": "<lấy từ CVE>"}
 ACTION: get_nist_controls
 ARGUMENTS: {"cve_id": "<lấy từ CVE>"}
 
-LAN 2: ANSWER CHỈ TIẾT (KHÔNG lặp lại thiết bị - đã có ở trên)
+[QUAN TRỌNG: LAN 1 CHỈ GỌI TOOLS. KHÔNG OUTPUT REMEDIATION Ở LAN NÀY]
+
+LAN 2: ANSWER CHỈ TIẾT (KHÔNG lặp lại thiết bị - đã có ở trên) - DÙNG TOOL RESULTS TỪ LAN 1
 
 ANSWER FORMAT - TÓM TẮT:
 
@@ -851,6 +853,17 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
     if state.get("tool_observations"):
         observations_text = "\n\nKet qua tools:\n" + "\n".join(state["tool_observations"][-3:])
 
+    # For agent_analyst, add iteration signal (LAN 1 vs LAN 2)
+    iteration_signal = ""
+    if agent_name == "agent_analyst":
+        analyst_iters = state.get("analyst_iterations", 0)
+        if analyst_iters == 0:
+            iteration_signal = "\n\n[LAN 1 - CHỈ GỌI TOOLS]: Gọi get_mitre_attack_info và get_nist_controls. KHÔNG OUTPUT REMEDIATION BƯỚC NÀY."
+        elif analyst_iters == 1:
+            iteration_signal = "\n\n[LAN 2 - OUTPUT REMEDIATION]: Sử dụng kết quả tools từ lần 1. OUTPUT remediation dựa trên MITRE + NIST data."
+        else:
+            iteration_signal = "\n\n[STOP]: Đã hoàn thành. Kết thúc."
+
     prev_response = ""
     if state.get("last_agent_response") and state.get("last_agent") != agent_name:
         prev_response = f"\n\nAgent truoc ({state['last_agent']}) da tra loi:\n{state['last_agent_response'][:500]}"
@@ -876,6 +889,7 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
         f"{context_text}"
         f"{prev_response}"
         f"{observations_text}"
+        f"{iteration_signal}"
     )
 
     messages = [
