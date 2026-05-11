@@ -191,5 +191,29 @@
     "description": "Test IOC from CLI",
     "threat_actor": "APT-TEST",
     "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
+  },
+  {
+    "cves": [
+      {
+        "id": "CVE-2024-12345",
+        "description": "Test vulnerability from Menu 3 test",
+        "cvss_score": 8.5,
+        "severity": "HIGH"
+      },
+      {
+        "id": "CVE-2024-54321",
+        "description": "Another test vulnerability",
+        "cvss_score": 7.2,
+        "severity": "HIGH"
+      }
+    ],
+    "indicators": [
+      {
+        "value": "menu3test.example.com",
+        "type": "domain",
+        "malware_family": "TestMalware"
+      }
+    ],
+    "uploaded_date": "2026-05-11T06:50:07.573105+00:00"
   }
 ]

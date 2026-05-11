@@ -435,9 +435,35 @@ def call_agent(state: dict, agent_name: str) -> dict:
                                for w in query_words)
         has_ip_pattern = any("." in w and all(p.isdigit() or p == "." for p in w) for w in query_words)
 
-        # PRIORITY: If has CVE keyword/pattern + device mention → route to agent_ti FIRST (fetch CVE, then agent_ti will handoff to agent_matcher)
-        if (has_cve_pattern or has_cve_keyword) and has_device_pattern:
+        # PRIORITY 1: CVE pattern or CVE keyword (with or without device) → route to agent_ti
+        if has_cve_pattern or has_cve_keyword:
             response = "HANDOFF: agent_ti"
+            print(f"\n{'='*55}")
+            print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
+            print("="*55)
+            print(response)
+            state["last_agent_response"] = response
+            state["last_agent"] = agent_name
+            state["num_steps"] = state.get("num_steps", 0) + 1
+            state["agent_history"] = state.get("agent_history", []) + [agent_name]
+            return state
+
+        # PRIORITY 2: Device-only query (no CVE) → route to agent_device
+        if has_device_pattern and not (has_cve_pattern or has_cve_keyword):
+            response = "HANDOFF: agent_device"
+            print(f"\n{'='*55}")
+            print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
+            print("="*55)
+            print(response)
+            state["last_agent_response"] = response
+            state["last_agent"] = agent_name
+            state["num_steps"] = state.get("num_steps", 0) + 1
+            state["agent_history"] = state.get("agent_history", []) + [agent_name]
+            return state
+
+        # PRIORITY 3: IOC/Malware/Hash patterns → route to agent_ti_extended
+        if has_hash_pattern or has_ip_pattern:
+            response = "HANDOFF: agent_ti_extended"
             print(f"\n{'='*55}")
             print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
             print("="*55)
