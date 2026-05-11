@@ -201,14 +201,48 @@ def infer_mitre_attack_info(cve_id: str, description: str = "") -> dict:
     """
     mitre_techniques, vuln_types = CVEInference.infer_mitre_techniques(description)
 
+    # MITRE technique names mapping (short list for inference)
+    technique_names = {
+        "T1190": "Exploit Public-Facing Application",
+        "T1505.003": "Web Shell",
+        "T1059": "Command and Scripting Interpreter",
+        "T1059.004": "Unix Shell",
+        "T1078": "Valid Accounts",
+        "T1110": "Brute Force",
+        "T1003": "OS Credential Dumping",
+        "T1087": "Account Discovery",
+        "T1598": "Phishing for Information",
+        "T1598.003": "Spearphishing Link",
+        "T1204.001": "Malicious Link",
+        "T1005": "Data from Local System",
+        "T1083": "File and Directory Discovery",
+        "T1134": "Access Token Manipulation",
+        "T1548": "Abuse Elevation Control Mechanism",
+        "T1134.004": "Process Injection",
+        "T1134.005": "DLL Injection",
+        "T1499": "Endpoint Denial of Service",
+        "T1499.001": "HTTP Flood",
+        "T1499.002": "SYN Flood",
+        "T1499.004": "Application Exhaustion Flood",
+        "T1040": "Traffic Sniffing",
+        "T1557": "On-Path Attack",
+        "T1070": "Indicator Removal",
+        "T1136": "Create Account",
+        "T1098": "Account Manipulation",
+        "T1547.013": "Port Monitors",
+        "T1203": "Exploitation for Client Execution",
+        "T1562.004": "Disable or Modify System Firewall",
+    }
+
     # Tạo technique objects
     techniques = []
     for tech_id in mitre_techniques:
+        tech_name = technique_names.get(tech_id, f"Technique {tech_id}")
         techniques.append({
             "id": tech_id,
-            "name": f"Inferred from vulnerability type: {', '.join(vuln_types)}",
+            "name": tech_name,
             "tactic": "Multiple",
-            "description": f"Inferred for {cve_id}",
+            "description": f"Inferred from {', '.join(vuln_types)} vulnerability type(s)",
             "mitigations": [],
         })
 
@@ -229,13 +263,36 @@ def infer_nist_controls(cve_id: str, description: str = "") -> dict:
     """
     nist_controls, vuln_types = CVEInference.infer_nist_controls(description)
 
+    # NIST control names mapping
+    control_names = {
+        "AC-3": "Access Enforcement",
+        "AC-6": "Least Privilege",
+        "AC-8": "System Use Notification",
+        "CM-6": "Configuration Settings",
+        "CM-9": "Configuration Management Plan",
+        "IA-2": "Authentication",
+        "IA-5": "Password Management",
+        "IA-8": "User Authentication",
+        "SI-2": "Flaw Remediation",
+        "SI-3": "Malicious Code Protection",
+        "SI-7": "Software, Firmware, and Information Integrity",
+        "SI-10": "Information and Communication Protection",
+        "SC-7": "Boundary Protection",
+        "SC-8": "Transmission Confidentiality and Integrity",
+        "SC-11": "Trusted Path",
+        "SC-13": "Cryptographic Protection",
+        "RA-5": "Vulnerability Scanning",
+    }
+
     # Tạo control objects
     controls = []
     for ctrl_id in nist_controls:
+        ctrl_name = control_names.get(ctrl_id, f"Control {ctrl_id}")
         controls.append({
             "id": ctrl_id,
-            "name": f"Inferred control for {cve_id}",
+            "title": ctrl_name,
             "description": f"Recommended for vulnerability type: {', '.join(vuln_types)}",
+            "family": ctrl_id.split("-")[0],
         })
 
     return {
