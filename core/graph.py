@@ -13,7 +13,7 @@ def node_ti(state):         return call_agent(state, "agent_ti")
 def node_ti_extended(state):return call_agent(state, "agent_ti_extended")
 def node_device(state):     return call_agent(state, "agent_device")
 def node_matcher(state):    return call_agent(state, "agent_matcher")
-# REMOVED: agent_analyst (CVE-only, no MITRE/NIST)
+def node_analyst(state):    return call_agent(state, "agent_analyst")
 def node_doc(state):        return call_agent(state, "agent_doc")
 def node_reporter(state):   return call_agent(state, "agent_reporter")
 def node_tools(state):      return call_tool(state)
@@ -52,8 +52,8 @@ def route_after_agent(state: dict) -> str:
         print(f"    HANDOFF → {target}")
         valid_targets = {
             "agent_ti", "agent_ti_extended", "agent_device", "agent_matcher",
-            "agent_doc", "agent_reporter", "agent_supervisor",
-        }  # Added agent_ti_extended for IOC/Malware, agent_device for device info
+            "agent_analyst", "agent_doc", "agent_reporter", "agent_supervisor",
+        }
         if target in valid_targets:
             return f"handoff_{target}"
 
@@ -75,7 +75,7 @@ def build_graph() -> StateGraph:
     graph.add_node("agent_ti_extended", node_ti_extended)
     graph.add_node("agent_device",      node_device)
     graph.add_node("agent_matcher",     node_matcher)
-    # REMOVED: graph.add_node("agent_analyst", node_analyst)
+    graph.add_node("agent_analyst",     node_analyst)
     graph.add_node("agent_doc",         node_doc)
     graph.add_node("agent_reporter",    node_reporter)
     graph.add_node("tools",             node_tools)
@@ -92,7 +92,7 @@ def build_graph() -> StateGraph:
             "handoff_agent_ti_extended":   "agent_ti_extended",
             "handoff_agent_device":        "agent_device",
             "handoff_agent_matcher":       "agent_matcher",
-            # "handoff_agent_analyst":      removed (CVE-only)
+            "handoff_agent_analyst":       "agent_analyst",
             "handoff_agent_doc":           "agent_doc",
             "handoff_agent_reporter":      "agent_reporter",
             "tools":                       "tools",
@@ -100,7 +100,7 @@ def build_graph() -> StateGraph:
         },
     )
 
-    # Specialist agents routing (CVE + IOC/Malware + Device, no analyst)
+    # Specialist agents routing (CVE + IOC/Malware + Device + Analyst)
     specialist_routing = {
         "tools":                       "tools",
         "handoff_agent_supervisor":    "agent_supervisor",
@@ -108,13 +108,13 @@ def build_graph() -> StateGraph:
         "handoff_agent_ti_extended":   "agent_ti_extended",
         "handoff_agent_device":        "agent_device",
         "handoff_agent_matcher":       "agent_matcher",
-        # "handoff_agent_analyst":       removed
+        "handoff_agent_analyst":       "agent_analyst",
         "handoff_agent_doc":           "agent_doc",
         "handoff_agent_reporter":      "agent_reporter",
         "end":                         END,
     }
     for agent_node in ["agent_ti", "agent_ti_extended", "agent_device", "agent_matcher",
-                       "agent_doc", "agent_reporter"]:
+                       "agent_analyst", "agent_doc", "agent_reporter"]:
         graph.add_conditional_edges(agent_node, route_after_agent, specialist_routing)
 
     # Tools → về agent đã gọi (CVE + IOC/Malware + Device)
@@ -127,7 +127,7 @@ def build_graph() -> StateGraph:
             "agent_ti_extended":  "agent_ti_extended",
             "agent_device":       "agent_device",
             "agent_matcher":      "agent_matcher",
-            # "agent_analyst":      removed
+            "agent_analyst":      "agent_analyst",
             "agent_doc":          "agent_doc",
             "agent_reporter":     "agent_reporter",
         },

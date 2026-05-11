@@ -31,15 +31,15 @@ from datetime import datetime, timedelta, timezone
 
 # ── Banner ─────────────────────────────────────────────────────────────────
 BANNER = """
-   _   _____ ___
-  / \ |_   _|_ _|
- / _ \  | |  | |
-/ ___ \ | |  | |
-/_/   \_|_|  |___|
+    _   _____ ___
+   / \ |_   _|_ _|
+  / _ \  | |  | |
+ / ___ \ | |  | |
+/_/   \_\|_| |___|
 
-    AgenticThreatIntelligence 
-    Intelligent Threat Analysis System
-    Ollama Local Edition | Offline Mode
+AgenticThreatIntelligence 
+Intelligent Threat Analysis System
+Ollama Local Edition | Offline Mode
 """
 
 MENU = """

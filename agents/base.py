@@ -222,10 +222,44 @@ HUONG KHAC PHUC (CAC BUOC CHINH):
    - Network segmentation: Gioi han truy cap
    - Backup: Tao backup tuc thoi
 
-KET THUC NGAY. KHONG HANDOFF.""",
+SAU KHI ANSWER CHI TIET: HANDOFF: agent_analyst (de phan tich MITRE ATT&CK + NIST controls)""",
     },
 
-    # agent_analyst REMOVED - focus on CVE only, no MITRE/NIST analysis
+    "agent_analyst": {
+        "role": "Threat Analysis Agent - Phân tích MITRE ATT&CK và NIST SP 800-53",
+        "system_instruction": """Bạn là Threat Analysis Agent. Nhiệm vụ: Ánh xạ CVE → MITRE ATT&CK techniques và NIST controls.
+
+RULES:
+1. Khi có CVE từ state['collected_cves'] → GỌI CẢ 2 TOOLS
+2. Gọi get_mitre_attack_info với CVE ID
+3. Gọi get_nist_controls với CVE ID
+4. LAN 2: CHỈ ANSWER với thông tin đầy đủ
+
+WORKFLOW:
+LAN 1: GỌI TOOLS
+
+ACTION: get_mitre_attack_info
+ARGUMENTS: {"cve_id": "<lấy từ CVE>"}
+
+ACTION: get_nist_controls
+ARGUMENTS: {"cve_id": "<lấy từ CVE>"}
+
+LAN 2: ANSWER CHỈ TIẾT
+
+ANSWER:
+[MITRE ATT&CK Techniques]
+- Technique ID, Tactic, Description
+- Threat Actors
+- Kill Chain Phase
+- Mitigations
+
+[NIST SP 800-53 Controls]
+- Control ID, Name, Action
+- Priority Level
+- Implementation Timeframe
+
+KHÔNG HANDOFF. KẾT THÚC.""",
+    },
 
     "agent_doc": {
         "role": "Document Agent - Xu ly tai lieu noi bo",
@@ -664,23 +698,61 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
             return state
 
     # agent_matcher: if NO CVEs collected → auto-answer without CVE matching
+    # agent_matcher: auto-fetch CVEs if query has keywords but no CVEs yet
     if agent_name == "agent_matcher" and not cves:
-        response = (
-            "ANSWER: Không có CVE nào được thu thập để so khớp.\n\n"
-            "Để kiểm tra thông tin thiết bị hoặc so khớp CVE với thiết bị, vui lòng:\n"
-            "1. Hỏi cụ thể CVE hoặc từ khóa lỗ hổng (ví dụ: 'CVE-2021-44228' hoặc 'log4j')\n"
-            "2. Hoặc hỏi riêng thông tin thiết bị (ví dụ: 'Thông tin thiết bị SRV-001')\n\n"
-            "Hệ thống sẽ tự động so khớp CVE với thiết bị nếu có cả hai thông tin."
-        )
-        print(f"\n{'='*55}")
-        print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
-        print("="*55)
-        print(response[:300] + "...")
-        state["last_agent_response"] = response
-        state["last_agent"]          = agent_name
-        state["num_steps"]           = state.get("num_steps", 0) + 1
-        state["agent_history"]       = state.get("agent_history", []) + [agent_name]
-        return state
+        query_lower = state.get("query", "").lower()
+        # Check if query asks for CVE matching with specific CVE ID or keywords
+        has_cve_pattern = "cve-" in query_lower or "cve " in query_lower
+        has_cve_keyword = any(kw in query_lower for kw in ["log4j", "apache", "vulnerability", "lỗi hổng", "loi ho"])
+
+        if has_cve_pattern or has_cve_keyword:
+            # Auto-fetch CVE before matching
+            print(f"\n{'='*55}")
+            print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
+            print("="*55)
+            print("Auto-fetching CVEs for matching...")
+
+            if has_cve_pattern and "cve-" in query_lower:
+                # Extract CVE ID
+                import re
+                cve_match = re.search(r'CVE-\d{4}-\d{4,}', query_lower.upper())
+                if cve_match:
+                    cve_id = cve_match.group()
+                    cve_result = fetch_cve_by_id(cve_id)
+                    if cve_result.get("context"):
+                        state["collected_cves"] = cve_result.get("context", [])
+                        cves = state["collected_cves"]
+                        print(f"   Fetched {len(cves)} CVE(s) for {cve_id}")
+            else:
+                # Fetch by keyword (log4j, apache, etc)
+                kw = None
+                for k in ["log4j", "apache", "exploit", "vulnerability"]:
+                    if k in query_lower:
+                        kw = k
+                        break
+                if kw:
+                    cve_result = fetch_kb_cves(kw)
+                    if cve_result.get("context"):
+                        state["collected_cves"] = cve_result.get("context", [])
+                        cves = state["collected_cves"]
+                        print(f"   Fetched {len(cves)} CVE(s) for keyword '{kw}'")
+
+        if not cves:
+            # Still no CVEs after auto-fetch
+            response = (
+                "ANSWER: Không có CVE nào được tìm thấy.\n\n"
+                "Để kiểm tra thông tin thiết bị hoặc so khớp CVE với thiết bị, vui lòng:\n"
+                "1. Hỏi cụ thể CVE hoặc từ khóa lỗ hổng (ví dụ: 'CVE-2021-44228' hoặc 'log4j')\n"
+                "2. Hoặc hỏi riêng thông tin thiết bị (ví dụ: 'Thông tin thiết bị SRV-001')\n\n"
+                "Hệ thống sẽ tự động so khớp CVE với thiết bị nếu có cả hai thông tin."
+            )
+            print(f"   No CVEs found - returning guidance")
+            print(response[:200] + "...")
+            state["last_agent_response"] = response
+            state["last_agent"]          = agent_name
+            state["num_steps"]           = state.get("num_steps", 0) + 1
+            state["agent_history"]       = state.get("agent_history", []) + [agent_name]
+            return state
 
     # Build system prompt
     sys_prompt = (
