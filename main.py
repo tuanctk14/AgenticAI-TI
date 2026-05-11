@@ -238,82 +238,59 @@ def _print_chat_response(result: dict):
 
             print()
 
-    # If have device matches, print remediation info
+    # If have device matches, print remediation from agent_analyst
     devices = result.get("matched_devices") or []
     if devices:
         print("\n" + "=" * 70)
-        print(" HƯỚ­NG KHẮC PHỤC CHI TIẾT")
+        print(" REMEDIATION - TU AGENT_ANALYST")
         print("=" * 70)
 
-        device_dict = {}
-        cves_dict = {}
-        cves_collected = result.get("collected_cves") or []
-        for cve in cves_collected:
-            cves_dict[cve.get("id")] = cve
+        # Get remediation from agent_analyst
+        agent_history = result.get("agent_history", [])
+        remediation_from_agent = result.get("remediation_from_agent", "")
 
-        for d in devices:
-            dev_id = d["device_id"]
-            if dev_id not in device_dict:
-                device_dict[dev_id] = {
-                    "hostname": d.get("hostname"),
-                    "ip": d.get("ip"),
-                    "os": d.get("os"),
-                    "criticality": d.get("criticality"),
-                    "affected_software": d.get("affected_software"),
-                    "cves": []
-                }
-            device_dict[dev_id]["cves"].append({
-                "cve_id": d.get("cve_id"),
-                "risk_level": d.get("risk_level"),
-                "cvss_score": d.get("cvss_score")
-            })
-
-        for dev_id, info in device_dict.items():
-            hostname = info["hostname"]
-            ip = info["ip"]
-            os = info["os"]
-            criticality = info["criticality"]
-            cves = info["cves"]
-            software = info.get("affected_software", "N/A")
-
-            print(f"\n• Device: {dev_id}")
-            print(f"  Hostname: {hostname}")
-            print(f"  IP: {ip}")
-            print(f"  OS: {os}")
-            print(f"  Criticality: {criticality}")
-            print(f"  Số CVEs: {len(cves)}")
-            print(f"  CVEs cụ thể:")
-            for cve in cves:
-                print(f"    - {cve['cve_id']}: {cve['risk_level']} (CVSS: {cve['cvss_score']})")
-
-            # Check if agent_analyst ran and has MITRE-based remediation
-            agent_history = result.get("agent_history", [])
+        if "agent_analyst" in agent_history:
             last_response = result.get("last_agent_response", "")
-            has_mitre_analysis = "agent_analyst" in agent_history and ("[Remediation dựa trên MITRE" in last_response or "T1" in last_response)
 
-            if has_mitre_analysis and "[Remediation" in last_response:
-                # Extract and display MITRE-based remediation directly (no "Hướng khắc phục:" header)
-                if "Remediation" in last_response:
-                    try:
-                        # Find start of remediation section
-                        rem_start_idx = last_response.find("[Remediation")
-                        if rem_start_idx == -1:
-                            rem_start_idx = last_response.find("Remediation dựa trên")
+            # Extract remediation from agent_analyst response
+            if last_response:
+                try:
+                    # Look for MITRE-based remediation section
+                    if "Remediation" in last_response or "Khac phuc" in last_response or "khac phuc" in last_response:
+                        # Find the remediation section
+                        lines = last_response.split("\n")
+                        in_remediation = False
+                        remediation_lines = []
 
-                        if rem_start_idx != -1:
-                            # Get from start to "Kết thúc" or end of response
-                            remediation_full = last_response[rem_start_idx:]
-                            if "Kết thúc" in remediation_full:
-                                remediation_full = remediation_full.split("Kết thúc")[0]
+                        for line in lines:
+                            # Start capturing when we see Remediation or section header
+                            if ("Remediation" in line or "REMEDIATION" in line or
+                                "Khac phuc" in line or "KHAC PHUC" in line or
+                                "T1" in line[:5] or line.startswith("1.") or line.startswith("2.") or line.startswith("3.") or line.startswith("4.")):
+                                in_remediation = True
 
-                            # Print remediation lines directly
-                            lines = remediation_full.split("\n")
-                            for line in lines:
-                                # Skip empty lines and closing
-                                if line.strip() and line.strip() != "Kết thúc." and not line.strip().startswith("["):
-                                    print(f"{line}")
-                    except Exception as e:
-                        pass  # Silent fail - don't show error if MITRE not available
+                            # Stop if we hit another major section or ANSWER:
+                            if in_remediation and line.strip() and ("ANSWER:" in line or "ACTION:" in line or line.startswith("---")):
+                                if not ("Remediation" in line or "Khac phuc" in line):
+                                    break
+
+                            # Add line if in remediation section and not empty
+                            if in_remediation and line.strip():
+                                remediation_lines.append(line)
+
+                        if remediation_lines:
+                            for line in remediation_lines:
+                                print(line)
+                        else:
+                            print("(Khong co thong tin khac phuc tu agent_analyst)")
+                    else:
+                        print("(Khong co thong tin khac phuc tu agent_analyst)")
+                except Exception as e:
+                    print("(Loi khi trich xuat remediation)")
+            else:
+                print("(Khong co thong tin khac phuc tu agent_analyst)")
+        else:
+            print("(Agent_analyst chua chay)")
 
         print("\n" + "=" * 70)
 
