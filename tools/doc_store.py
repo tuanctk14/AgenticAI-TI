@@ -1,6 +1,6 @@
 """
-tools/doc_store.py - Document upload and knowledge base management
-Supports .json, .txt (CVE ID extraction), .csv formats
+tools/doc_store.py - Quản lý tài liệu và cơ sở tri thức
+Hỗ trợ định dạng .json, .txt (trích xuất CVE ID), .csv
 """
 import json
 import csv
@@ -17,10 +17,10 @@ KB_FILES = {
 
 
 def upload_document(file_path: str) -> dict:
-    """Parse file and save to KB. Supports .json, .txt, .csv"""
+    """Phân tích file và lưu vào KB. Hỗ trợ .json, .txt, .csv"""
     path = Path(file_path)
     if not path.exists():
-        return {"error": f"File not found: {file_path}"}
+        return {"error": f"File không tồn tại: {file_path}"}
 
     KB_DIR.mkdir(parents=True, exist_ok=True)
     ext = path.suffix.lower()
@@ -33,14 +33,14 @@ def upload_document(file_path: str) -> dict:
         elif ext == ".csv":
             records = _parse_csv(path)
         else:
-            return {"error": f"Unsupported format: {ext}. Use .json, .txt, or .csv"}
+            return {"error": f"Định dạng không hỗ trợ: {ext}. Dùng .json, .txt, hoặc .csv"}
     except Exception as e:
-        return {"error": f"Parse error: {e}"}
+        return {"error": f"Lỗi phân tích: {e}"}
 
     if not records:
-        return {"error": "No valid records found in file"}
+        return {"error": "Không tìm thấy bản ghi hợp lệ trong file"}
 
-    # Classify and save
+    # Phân loại và lưu
     saved = {"cves": 0, "iocs": 0, "malwares": 0}
     for r in records:
         category = _classify(r)
@@ -51,20 +51,20 @@ def upload_document(file_path: str) -> dict:
 
 
 def _parse_json(path: Path) -> list:
-    """Parse JSON file (array or single object)"""
+    """Phân tích file JSON (mảng hoặc object đơn)"""
     data = json.loads(path.read_text(encoding="utf-8"))
     return data if isinstance(data, list) else [data]
 
 
 def _parse_txt(path: Path) -> list:
-    """Extract CVE IDs from text file"""
+    """Trích xuất CVE IDs từ file text"""
     text = path.read_text(encoding="utf-8")
     cve_ids = re.findall(r'CVE-\d{4}-\d+', text)
     return [{"id": cid, "source": "txt_upload"} for cid in set(cve_ids)]
 
 
 def _parse_csv(path: Path) -> list:
-    """Parse CSV file into records"""
+    """Phân tích file CSV thành bản ghi"""
     rows = []
     with open(path, encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -75,7 +75,7 @@ def _parse_csv(path: Path) -> list:
 
 
 def _classify(record: dict) -> str:
-    """Classify record as cves, iocs, or malwares"""
+    """Phân loại bản ghi thành cves, iocs, hoặc malwares"""
     rid = str(record.get("id", "")).upper()
     if rid.startswith("CVE-"):
         return "cves"
@@ -115,7 +115,7 @@ def _classify(record: dict) -> str:
 
 
 def _merge_and_save(category: str, record: dict):
-    """Merge record into KB file (dedup by id) and add upload timestamp"""
+    """Gộp bản ghi vào file KB (khử trùng theo id) và thêm timestamp tải lên"""
     kb_file = KB_FILES[category]
     existing = []
     if kb_file.exists():
@@ -128,7 +128,7 @@ def _merge_and_save(category: str, record: dict):
 
     ids = {r.get("id") for r in existing if r.get("id")}
     if record.get("id") not in ids:
-        # Add upload timestamp if not already present
+        # Thêm timestamp tải lên nếu chưa có
         if "uploaded_date" not in record:
             record["uploaded_date"] = datetime.now(timezone.utc).isoformat()
         existing.append(record)
@@ -137,7 +137,7 @@ def _merge_and_save(category: str, record: dict):
 
 
 def load_knowledge_base(category: str = "all") -> dict:
-    """Load KB records. category: 'all', 'cves', 'iocs', 'malwares'"""
+    """Tải bản ghi KB. category: 'all', 'cves', 'iocs', 'malwares'"""
     result = {}
     cats = list(KB_FILES.keys()) if category == "all" else [category]
 
@@ -152,27 +152,27 @@ def load_knowledge_base(category: str = "all") -> dict:
 
 
 def get_knowledge_base_stats() -> dict:
-    """Get count of records per category and latest upload date"""
+    """Lấy số lượng bản ghi per category và ngày tải lên mới nhất"""
     stats = {}
     for cat, f in KB_FILES.items():
         if f.exists():
             try:
                 data = json.loads(f.read_text(encoding="utf-8"))
-                # Get count
+                # Lấy số lượng
                 stats[cat] = {
                     "count": len(data),
                     "latest_upload": None
                 }
-                # Get latest upload date
+                # Lấy ngày tải lên mới nhất
                 if data:
                     dates = []
                     for record in data:
                         if record.get("uploaded_date"):
                             dates.append(record.get("uploaded_date"))
                     if dates:
-                        # Sort and get the latest date
+                        # Sắp xếp và lấy ngày mới nhất
                         dates.sort(reverse=True)
-                        # Format the date nicely (ISO format → DD-MM-YYYY HH:MM)
+                        # Định dạng ngày tốt (ISO → DD-MM-YYYY HH:MM)
                         latest_iso = dates[0]
                         try:
                             dt = datetime.fromisoformat(latest_iso.replace('Z', '+00:00'))
@@ -189,19 +189,19 @@ def get_knowledge_base_stats() -> dict:
 
 def fetch_kb_indicators(search_term: str = "", indicator_type: str = "all") -> dict:
     """
-    Fetch IOCs and Malwares from Knowledge Base (local storage)
-    Compatible with OpenCTI interface for agent integration
+    Lấy IOC và Malware từ Knowledge Base (lưu trữ cục bộ)
+    Tương thích với giao diện OpenCTI để tích hợp agent
 
     Args:
-        search_term: keyword to search in description/id/malware_family
-        indicator_type: "all" (both IOC and Malware), "ioc", or "malware"
+        search_term: từ khóa tìm kiếm trong description/id/malware_family
+        indicator_type: "all" (cả IOC và Malware), "ioc", hoặc "malware"
 
-    Returns: dict with context containing list of indicators
+    Trả về: dict với context chứa danh sách indicators
     """
     results = []
     search_lower = search_term.lower() if search_term else ""
 
-    # Load IOCs if requested
+    # Tải IOC nếu được yêu cầu
     if indicator_type in ["all", "ioc"]:
         iocs_file = KB_FILES["iocs"]
         if iocs_file.exists():
@@ -213,7 +213,7 @@ def fetch_kb_indicators(search_term: str = "", indicator_type: str = "all") -> d
                     search_lower in str(ioc.get("value", "")).lower() or
                     search_lower in str(ioc.get("threat_actor", "")).lower()
                 ):
-                    # Transform to match OpenCTI format
+                    # Chuyển đổi để khớp với định dạng OpenCTI
                     result = {
                         "entity_type": "Indicator",
                         "id": ioc.get("id"),
@@ -232,7 +232,7 @@ def fetch_kb_indicators(search_term: str = "", indicator_type: str = "all") -> d
                     }
                     results.append(result)
 
-    # Load Malwares if requested
+    # Tải Malware nếu được yêu cầu
     if indicator_type in ["all", "malware"]:
         malwares_file = KB_FILES["malwares"]
         if malwares_file.exists():
@@ -265,12 +265,12 @@ def fetch_kb_indicators(search_term: str = "", indicator_type: str = "all") -> d
 
 def fetch_kb_cves(search_term: str = "") -> dict:
     """
-    Fetch CVEs from Knowledge Base
+    Lấy CVE từ Knowledge Base
 
     Args:
-        search_term: keyword to search in id or description
+        search_term: từ khóa tìm kiếm trong id hoặc description
 
-    Returns: dict with context containing list of CVEs
+    Trả về: dict với context chứa danh sách CVE
     """
     results = []
     search_lower = search_term.lower() if search_term else ""
@@ -301,7 +301,7 @@ def fetch_kb_cves(search_term: str = "") -> dict:
 
 
 def enrich_cmdb_keywords() -> dict:
-    """Extract keywords from KB CVEs for CMDB matching enrichment"""
+    """Trích xuất từ khóa từ KB CVE để làm phong phú khớp CMDB"""
     cves_file = KB_FILES["cves"]
     if not cves_file.exists():
         return {"context": {}, "source": "KB"}

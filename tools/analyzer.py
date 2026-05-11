@@ -1,5 +1,5 @@
 """
-tools/analyzer.py - Device-level analysis to avoid duplication
+tools/analyzer.py - Phân tích cấp thiết bị để tránh trùng lặp
 """
 import json
 from typing import Dict, List, Optional
@@ -7,11 +7,11 @@ from typing import Dict, List, Optional
 
 def aggregate_cves_by_device(matched_devices: List[dict], collected_cves: List[dict]) -> Dict:
     """
-    Group CVEs by device to identify unique CVEs per device.
+    Nhóm CVEs theo thiết bị để xác định CVEs duy nhất cho mỗi thiết bị.
 
-    Returns: {device_id: {"device_info": {...}, "cve_ids": [...], "unique_cve_count": N}}
+    Trả về: {device_id: {"device_info": {...}, "cve_ids": [...], "unique_cve_count": N}}
     """
-    print(f"  [Analyzer] Aggregating {len(matched_devices)} device matches...")
+    print(f"  [Analyzer] Nhóm {len(matched_devices)} kết quả khớp thiết bị...")
 
     device_map = {}
 
@@ -37,7 +37,7 @@ def aggregate_cves_by_device(matched_devices: List[dict], collected_cves: List[d
         device_map[device_id]["cve_ids"].add(cve_id)
         device_map[device_id]["risk_levels"][cve_id] = match.get("risk_level")
 
-    # Convert sets to lists for JSON serialization
+    # Chuyển sets thành lists để serialize JSON
     result = {}
     for device_id, data in device_map.items():
         result[device_id] = {
@@ -47,7 +47,7 @@ def aggregate_cves_by_device(matched_devices: List[dict], collected_cves: List[d
             "unique_cve_count": len(data["cve_ids"]),
         }
 
-    print(f"  [Analyzer]  Grouped into {len(result)} unique devices")
+    print(f"  [Analyzer]  Nhóm thành {len(result)} thiết bị duy nhất")
     return {
         "context": result,
         "source": "Analyzer",
@@ -57,9 +57,9 @@ def aggregate_cves_by_device(matched_devices: List[dict], collected_cves: List[d
 
 def get_unique_cves_per_device(device_cve_map: Dict) -> Dict[str, List[str]]:
     """
-    Extract unique CVEs per device for streamlined analysis.
+    Trích xuất CVEs duy nhất cho mỗi thiết bị để phân tích hợp lý.
 
-    Returns: {device_id: [cve_id, ...]}
+    Trả về: {device_id: [cve_id, ...]}
     """
     result = {}
     for device_id, data in device_cve_map.items():
@@ -69,7 +69,7 @@ def get_unique_cves_per_device(device_cve_map: Dict) -> Dict[str, List[str]]:
 
 def get_critical_devices(device_cve_map: Dict) -> List[str]:
     """
-    Identify critical devices (with CRITICAL or HIGH risk CVEs).
+    Xác định các thiết bị tới hạn (có CVEs ở mức CRITICAL hoặc HIGH).
     """
     critical_devices = []
     for device_id, data in device_cve_map.items():
@@ -81,7 +81,7 @@ def get_critical_devices(device_cve_map: Dict) -> List[str]:
 
 def summarize_device_risks(device_cve_map: Dict) -> Dict:
     """
-    Create summary of device risks for quick assessment.
+    Tạo tóm tắt rủi ro thiết bị để đánh giá nhanh.
     """
     summary = {
         "total_devices": len(device_cve_map),

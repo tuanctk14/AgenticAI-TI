@@ -38,8 +38,8 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
         return {"context": [], "source": "OpenCTI-ERROR", "error": "Missing OPENCTI_URL"}
 
     # Multi-query GraphQL: lấy indicators + malwares + threatActorsGroup + attackPatterns
-    # Với ordering theo created_at desc (mới nhất trước)
-    # Lấy created_at field để lọc theo date range (client-side)
+    # Sắp xếp theo created_at desc (mới nhất trước)
+    # Lấy created_at field để lọc theo date range (phía client)
     gql = """
     query GetThreatIntel($search: String, $first: Int) {
       indicators(search: $search, first: $first, orderBy: created_at, orderMode: desc) {
@@ -75,13 +75,13 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
         data = resp.json()
 
         if "errors" in data:
-            print(f"  [OpenCTI]  GraphQL error: {data['errors']}")
+            print(f"  [OpenCTI]  Lỗi GraphQL: {data['errors']}")
             return {"context": [], "source": "OpenCTI-ERROR", "error": str(data['errors'])}
 
         results = []
         data_obj = data.get("data", {})
 
-        # Process indicators - handle potential None values
+        # Xử lý indicators - xử lý các giá trị None tiềm ẩn
         indicators_data = data_obj.get("indicators")
         if indicators_data and isinstance(indicators_data, dict):
             for edge in indicators_data.get("edges", []):
@@ -98,7 +98,7 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
                         "created_at": n.get("created_at"),
                     })
 
-        # Process malwares
+        # Xử lý malware
         malwares_data = data_obj.get("malwares")
         if malwares_data and isinstance(malwares_data, dict):
             for edge in malwares_data.get("edges", []):
@@ -114,7 +114,7 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
                         "created_at": n.get("created_at"),
                     })
 
-        # Process threat actors
+        # Xử lý threat actors
         threat_actors_data = data_obj.get("threatActorsGroup")
         if threat_actors_data and isinstance(threat_actors_data, dict):
             for edge in threat_actors_data.get("edges", []):
@@ -129,7 +129,7 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
                         "created_at": n.get("created_at"),
                     })
 
-        # Process attack patterns
+        # Xử lý attack patterns
         attack_patterns_data = data_obj.get("attackPatterns")
         if attack_patterns_data and isinstance(attack_patterns_data, dict):
             for edge in attack_patterns_data.get("edges", []):
@@ -144,21 +144,21 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
                         "created_at": n.get("created_at"),
                     })
 
-        # Client-side date filtering dùng created_at field
+        # Lọc ngày phía client sử dụng created_at field
         if start_date or end_date:
             from datetime import datetime, timezone
             filtered_results = []
             for r in results:
                 created_at_str = r.get("created_at")
                 if not created_at_str:
-                    # Nếu không có created_at, skip entity này vì lọc theo date
+                    # Nếu không có created_at, bỏ qua entity này khi lọc theo date
                     continue
 
                 try:
-                    # Parse created_at (format: 2026-05-05T06:05:18.797Z) - luôn có timezone
+                    # Phân tích created_at (định dạng: 2026-05-05T06:05:18.797Z) - luôn có timezone
                     created_at = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
 
-                    # Lọc theo start_date - ensure timezone aware
+                    # Lọc theo start_date - đảm bảo timezone-aware
                     if start_date:
                         # start_date từ main.py không có Z suffix, nên thêm +00:00
                         start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
@@ -168,7 +168,7 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
                         if created_at < start_dt:
                             continue
 
-                    # Lọc theo end_date - ensure timezone aware
+                    # Lọc theo end_date - đảm bảo timezone-aware
                     if end_date:
                         # end_date từ main.py không có Z suffix, nên thêm +00:00
                         end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
@@ -180,12 +180,12 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
 
                     filtered_results.append(r)
                 except (ValueError, AttributeError, TypeError) as e:
-                    # Nếu parse fail, skip entity này
+                    # Nếu phân tích fail, bỏ qua entity này
                     continue
 
             results = filtered_results
             if len(results) == 0:
-                print(f"  [OpenCTI]   No results in date range")
+                print(f"  [OpenCTI]   Không có kết quả trong khoảng ngày")
 
         if results:
             entity_counts = {}
@@ -193,17 +193,17 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
                 et = r.get("entity_type", "Unknown")
                 entity_counts[et] = entity_counts.get(et, 0) + 1
             breakdown = ", ".join([f"{count} {entity_type}" for entity_type, count in entity_counts.items()])
-            print(f"  [OpenCTI]  {len(results)} results: {breakdown}")
+            print(f"  [OpenCTI]  {len(results)} kết quả: {breakdown}")
         else:
-            print(f"  [OpenCTI]  0 results found")
+            print(f"  [OpenCTI]  0 kết quả tìm thấy")
         return {"context": results, "source": "OpenCTI-LIVE"}
 
     except requests.exceptions.Timeout:
-        print(f"  [OpenCTI]   Timeout - OpenCTI server không phản hồi")
+        print(f"  [OpenCTI]   Timeout - Server OpenCTI không phản hồi")
         return {"context": [], "source": "OpenCTI-ERROR", "error": "Request timeout"}
     except requests.exceptions.ConnectionError as e:
-        print(f"  [OpenCTI]  Connection error - {e}")
-        return {"context": [], "source": "OpenCTI-ERROR", "error": f"Connection failed: {e}"}
+        print(f"  [OpenCTI]  Lỗi kết nối - {e}")
+        return {"context": [], "source": "OpenCTI-ERROR", "error": f"Kết nối thất bại: {e}"}
     except Exception as e:
-        print(f"  [OpenCTI]  Error: {e}")
+        print(f"  [OpenCTI]  Lỗi: {e}")
         return {"context": [], "source": "OpenCTI-ERROR", "error": str(e)}

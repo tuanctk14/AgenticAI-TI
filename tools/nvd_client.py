@@ -1,10 +1,10 @@
 """
-tools/nvd_client.py - Lấy CVE từ NVD API (với mock fallback)
+tools/nvd_client.py - Lấy CVE từ NVD API (với fallback mock)
 """
 import requests
 from config import NVD_API_KEY
 
-# ── Mock data dự phòng (hiện tại không dùng - chỉ lấy dữ liệu từ API thực) ──
+# Dữ liệu mock dự phòng (hiện tại không dùng - chỉ lấy từ API thực)
 MOCK_CVES = []
 
 
@@ -13,7 +13,7 @@ def fetch_cve_by_id(cve_id: str) -> dict:
     Tra cứu một CVE cụ thể từ NVD API.
     Fallback sang mock data nếu không có internet.
     """
-    print(f"  [NVD] Tra cuu: CVE={cve_id}")
+    print(f"  [NVD] Tra cứu: CVE={cve_id}")
 
     base_url = f"https://services.nvd.nist.gov/rest/json/cves/2.0"
     headers  = {"apiKey": NVD_API_KEY} if NVD_API_KEY else {}
@@ -45,18 +45,18 @@ def fetch_cve_by_id(cve_id: str) -> dict:
                 "published": cve.get("published", "N/A")[:10],
                 "references": [r["url"] for r in cve.get("references", [])[:3]],
             }]
-            print(f"  [NVD]  Tim thay {cve_id}")
+            print(f"  [NVD]  Tìm thấy {cve_id}")
             return {"context": result, "source": "NVD-LIVE", "total": 1}
 
     except Exception as e:
-        print(f"  [NVD]  API lỗi: {e}")
+        print(f"  [NVD]  Lỗi API: {e}")
         print(f"  [NVD] Không thể tìm CVE {cve_id}")
         return {"context": [], "source": "NVD-ERROR", "total": 0}
 
 
 def fetch_nvd_cves(keyword: str = "", severity: str = "HIGH", days_back: int = 30, start_date: str = None, end_date: str = None) -> dict:
     """
-    Truy vấn NVD API để lấy tất cả CVE mới nhất (full pagination).
+    Truy vấn NVD API để lấy tất cả CVE mới nhất (với phân trang đầy đủ).
 
     Args:
         keyword: Từ khóa tìm kiếm CVE
@@ -104,7 +104,7 @@ def fetch_nvd_cves(keyword: str = "", severity: str = "HIGH", days_back: int = 3
 
             if total_results is None:
                 total_results = data.get("totalResults", 0)
-                print(f"  [NVD] Tổng: {total_results} CVEs, fetching all pages...")
+                print(f"  [NVD] Tổng: {total_results} CVE, đang lấy tất cả trang...")
 
             for item in data.get("vulnerabilities", []):
                 cve = item["cve"]
@@ -140,6 +140,6 @@ def fetch_nvd_cves(keyword: str = "", severity: str = "HIGH", days_back: int = 3
         return {"context": all_cves, "source": "NVD-LIVE", "total": total_results}
 
     except Exception as e:
-        print(f"  [NVD]  API lỗi: {e}")
+        print(f"  [NVD]  Lỗi API: {e}")
         print(f"  [NVD] Không thể lấy dữ liệu CVE từ NVD API")
         return {"context": [], "source": "NVD-ERROR", "total": 0}
