@@ -233,10 +233,10 @@ RULES:
 1. Khi có CVE từ state['collected_cves'] → GỌI CẢ 2 TOOLS
 2. Gọi get_mitre_attack_info với CVE ID
 3. Gọi get_nist_controls với CVE ID
-4. LAN 2: CHỈ ANSWER với thông tin đầy đủ
+4. LAN 2: CHỈ ANSWER với MITRE + NIST + Remediation dựa trên techniques
 
 WORKFLOW:
-LAN 1: GỌI TOOLS
+LAN 1: GỌI TOOLS (cho mỗi CVE)
 
 ACTION: get_mitre_attack_info
 ARGUMENTS: {"cve_id": "<lấy từ CVE>"}
@@ -244,21 +244,41 @@ ARGUMENTS: {"cve_id": "<lấy từ CVE>"}
 ACTION: get_nist_controls
 ARGUMENTS: {"cve_id": "<lấy từ CVE>"}
 
-LAN 2: ANSWER CHỈ TIẾT
+LAN 2: ANSWER CHỈ TIẾT (KHÔNG lặp lại thiết bị - đã có ở trên)
 
-ANSWER:
+ANSWER FORMAT:
+
 [MITRE ATT&CK Techniques]
-- Technique ID, Tactic, Description
-- Threat Actors
-- Kill Chain Phase
-- Mitigations
+- Technique ID: T####
+- Tactic: <tactic>
+- Description: <mô tả technique>
+- Threat Actors: <danh sách APT/actors>
+- Kill Chain Phase: <phase>
+- Mitigations: M####, M####
 
 [NIST SP 800-53 Controls]
-- Control ID, Name, Action
-- Priority Level
-- Implementation Timeframe
+- Control IDs: SI-2, RA-5, CM-8, ...
+- Control Names & Actions:
+  - SI-2 Flaw Remediation: <chi tiết action>
+  - RA-5 Vulnerability Scanning: <chi tiết action>
+  - CM-8 System Component Inventory: <chi tiết action>
+- Priority Level: <CRITICAL/HIGH/MEDIUM>
+- Implementation Timeframe: <24h/72h/7 ngày>
 
-KHÔNG HANDOFF. KẾT THÚC.""",
+[Remediation dựa trên MITRE Techniques]
+Dựa vào technique (T####) đã xác định, áp dụng remediation CỤ THỂ:
+- Nếu T1190 (Initial Access): Ngăn chặn truy cập bên ngoài, validate input, hạn chế permission
+- Nếu T1059 (Command & Scripting): Disable script execution, control process creation, monitor shell activity
+- Nếu T1048 (Exfiltration): Monitor network traffic, restrict outbound connections, data loss prevention
+- Nếu T1078 (Valid Accounts): Reset credentials, enforce MFA, disable unused accounts, audit access logs
+- Nếu T1005 (Data Acquisition): Encrypt sensitive data, limit file access, monitor data access patterns
+- Tương tự cho các techniques khác - luôn dùng MITRE mitigation IDs + NIST controls để hướng dẫn
+
+IMPORTANT:
+- KHÔNG lặp lại "Thiết bị bị ảnh hưởng" - đã có ở section trên
+- KHÔNG dùng generic remediation - chỉ dùng remediation dựa trên MITRE technique cụ thể
+- Kết thúc bằng "Kết thúc." rõ ràng
+- KHÔNG HANDOFF. KẾT THÚC.""",
     },
 
     "agent_doc": {
