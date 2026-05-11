@@ -1,6 +1,7 @@
 """
 tools/mitre.py - Tra cuu anh xa MITRE ATT&CK cho CVE tu co so du lieu cu bo
 Su dung co so du lieu MITRE chinh thuc voi 858 ky thuat
+Fallback den cve_inference khi CVE khong co trong database
 """
 import json
 from pathlib import Path
@@ -8,6 +9,12 @@ from typing import Dict, List, Optional
 
 # Database path
 MITRE_DB_PATH = Path(__file__).parent.parent / "data" / "mitre_attack.json"
+
+# Import inference module as fallback
+try:
+    from tools.cve_inference import infer_mitre_attack_info
+except ImportError:
+    infer_mitre_attack_info = None
 
 def load_mitre_database() -> Optional[dict]:
     """Tai co so du lieu MITRE ATT&CK cu bo"""
@@ -21,12 +28,14 @@ def load_mitre_database() -> Optional[dict]:
         print(f"Khong the tai co so du lieu MITRE: {e}")
         raise
 
-def get_mitre_attack_info(cve_id: str) -> dict:
+def get_mitre_attack_info(cve_id: str, cve_description: str = "") -> dict:
     """
     Lay anh xa ky thuat MITRE ATT&CK cho CVE
 
     Tra ve:
         dict voi keys: techniques (danh sach), threat_actors (danh sach), metadata
+
+    Fallback: Neu CVE khong co trong database, su dung inference tu description
     """
     # Tai co so du lieu
     db = load_mitre_database()
@@ -58,6 +67,18 @@ def get_mitre_attack_info(cve_id: str) -> dict:
                     "source": "csdl_mitre_dia_phuong",
                 }
             }
+
+    # Khong tim thay - su dung inference neu co description
+    if cve_description and infer_mitre_attack_info:
+        inferred = infer_mitre_attack_info(cve_id, cve_description)
+        return {
+            "context": {
+                "techniques": inferred.get("techniques", []),
+                "threat_actors": [],
+                "vulnerability_types": inferred.get("vulnerability_types", []),
+                "source": "inference_tu_description",
+            }
+        }
 
     # Khong tim thay du lieu
     return {

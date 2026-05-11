@@ -399,6 +399,16 @@ def call_tool(state: dict) -> dict:
         elif tool_name == "match_cves_with_cmdb" and not args:
             collected = state.get("collected_cves", [])
             args["cve_list"] = collected if collected else []
+        # Special: get_mitre_attack_info và get_nist_controls cần CVE description cho inference
+        elif tool_name == "get_mitre_attack_info" or tool_name == "get_nist_controls":
+            # Lấy CVE description từ collected_cves hoặc state
+            cve_id = args.get("cve_id", "")
+            if not args.get("cve_description"):
+                collected = state.get("collected_cves", [])
+                for cve in collected:
+                    if cve.get("id", "") == cve_id:
+                        args["cve_description"] = cve.get("description", "")
+                        break
 
         # Agent-specific validation: prevent unauthorized tool calls
         last_agent = state.get("last_agent", "")

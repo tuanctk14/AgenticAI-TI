@@ -1,6 +1,7 @@
 """
 tools/nist.py - Tra cuu NIST SP 800-53 controls tu co so du lieu cu bo
 Su dung co so du lieu NIST chinh thuc voi day du 800-53 controls
+Fallback den cve_inference khi CVE khong co trong database
 """
 import json
 from pathlib import Path
@@ -8,6 +9,12 @@ from typing import Dict, List, Optional
 
 # Duong dan database
 NIST_DB_PATH = Path(__file__).parent.parent / "data" / "nist_controls.json"
+
+# Import inference module as fallback
+try:
+    from tools.cve_inference import infer_nist_controls as infer_nist_controls_from_cve
+except ImportError:
+    infer_nist_controls_from_cve = None
 
 
 def load_nist_database() -> Optional[dict]:
@@ -23,12 +30,14 @@ def load_nist_database() -> Optional[dict]:
         raise
 
 
-def get_nist_controls(cve_id: str = "", keyword: str = "") -> dict:
+def get_nist_controls(cve_id: str = "", keyword: str = "", cve_description: str = "") -> dict:
     """
     Tra cuu NIST SP 800-53 controls cho CVE
 
     Tra ve:
         dict voi keys: controls (danh sach), priority, timeframe
+
+    Fallback: Neu CVE khong co trong database, su dung inference tu description
     """
     print(f"  [NIST] Tra cuu: cve='{cve_id}', keyword='{keyword}'")
 
@@ -62,6 +71,20 @@ def get_nist_controls(cve_id: str = "", keyword: str = "") -> dict:
                     "source": "csdl_nist_dia_phuong",
                 }
             }
+
+    # Khong tim thay - su dung inference neu co description
+    if cve_description and infer_nist_controls_from_cve:
+        inferred = infer_nist_controls_from_cve(cve_id, cve_description)
+        ctrl_ids = [c["id"] for c in inferred.get("controls", [])]
+        return {
+            "context": {
+                "controls": inferred.get("controls", []),
+                "priority": _get_priority_from_controls(ctrl_ids) if ctrl_ids else "MEDIUM",
+                "timeframe": _get_timeframe_from_priority(_get_priority_from_controls(ctrl_ids)) if ctrl_ids else "7 ngay",
+                "vulnerability_types": inferred.get("vulnerability_types", []),
+                "source": "inference_tu_description",
+            }
+        }
 
     # Khong tim thay du lieu
     return {
