@@ -260,7 +260,8 @@ ANSWER FORMAT - TÓM TẮT:
 LUÔN OUTPUT CỤ THỂ MAPPING với dữ liệu từ tools. Format:
 
 BƯỚC 0 (GENERIC):
-0. Patch <product_name> to latest version with security fixes.
+0. Extract product name từ CVE description (ví dụ: "WordPress MStore API 2.0.6", "Apache Log4j 2.x", "OpenSSL 1.x")
+   Patch <product_name> to latest version with security fixes.
 
 BƯỚC 1+ (CỤ THỂ CHO TỪNG TECHNIQUE):
 Liệt kê TẤT CẢ techniques từ tool result:
