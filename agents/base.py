@@ -198,9 +198,17 @@ ACTION: match_cves_with_cmdb
 ARGUMENTS: {"cve_list": [CVE objects tu state]}
 
 ==== LAN 2+ (AFTER TOOL RUN) ====
-KHI CO MATCHED DEVICES: PHAI HANDOFF sang agent_analyst
+HAI TRUONG HOP:
+
+TRUONG HOP 1: CO MATCHED_DEVICES
+PHAI HANDOFF sang agent_analyst:
 OUTPUT:
 HANDOFF: agent_analyst
+
+TRUONG HOP 2: KHONG CO MATCHED_DEVICES (Tool return empty list)
+PHAI ANSWER NGAY LAP TUC - KHONG GOI TOOL LAI:
+OUTPUT:
+ANSWER: Khong co thiet bi nao trong CMDB bi anh huong boi CVE nay. CVE <CVE_ID> khong ket hop voi bat ky phan mem nao da cai dat tren cac thiet bi noi bo.
 
 ==== KHONG BOA TUONG SAU ====
 - KHONG OUTPUT "Huong khac phuc" hay remediation
@@ -209,9 +217,10 @@ HANDOFF: agent_analyst
 - CHI CO: device info va cve details
 
 MANDATORY RULES:
-1. NEU LAN 1 + CO CVE → PHAI GOI match_cves_with_cmdb (KHONG DUOC skip)
+1. NEU LAN 1 + CO CVE → PHAI GOI match_cves_with_cmdb DUNG 1 LAN (KHONG DUOC skip)
 2. NEU LAN 2+ + CO MATCHED_DEVICES → PHAI HANDOFF agent_analyst
-3. KHONG BAO GIO ANSWER - CHI ACTION hoac HANDOFF""",
+3. NEU LAN 2+ + KHONG CO MATCHED_DEVICES → PHAI ANSWER NGAY LAP TUC (KHONG GOI TOOL LAI)
+4. KHONG DUOC LOOP - Chi goi tool 1 lan""",
     },
 
     "agent_analyst": {
@@ -731,14 +740,31 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
             state["agent_history"] = state.get("agent_history", []) + [agent_name]
             return state
 
-    # agent_matcher: 2nd iteration - after tool ran, only HANDOFF to agent_analyst
+    # agent_matcher: 2nd iteration - after tool ran
     if agent_name == "agent_matcher" and state.get("last_agent") == "agent_matcher":
-        # Already matched CVEs - now handoff to analyst
+        # Check if matched any devices
         if state.get("matched_devices"):
+            # Case 1: CO matched devices → HANDOFF to agent_analyst
             response = "HANDOFF: agent_analyst"
             print(f"\n{'='*55}")
             print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
             print("="*55)
+            print(response)
+            state["last_agent_response"] = response
+            state["last_agent"]          = agent_name
+            state["num_steps"]           = state.get("num_steps", 0) + 1
+            state["agent_history"]       = state.get("agent_history", []) + [agent_name]
+            return state
+        else:
+            # Case 2: KHONG CO matched devices → ANSWER no devices and STOP
+            cve_id = ""
+            if cves:
+                cve_id = cves[0].get("id", "")
+            response = f"ANSWER: Khong co thiet bi nao trong CMDB bi anh huong boi CVE {cve_id}. CVE nay khong ket hop voi bat ky phan mem nao da cai dat tren cac thiet bi noi bo."
+            print(f"\n{'='*55}")
+            print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
+            print("="*55)
+            print(f"==== KHONG CO MATCHED_DEVICES ====")
             print(response)
             state["last_agent_response"] = response
             state["last_agent"]          = agent_name
