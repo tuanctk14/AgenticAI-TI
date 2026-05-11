@@ -437,39 +437,6 @@ def _print_summary(result: dict):
                 print(f"    - {cve['cve_id']}: {cve['risk_level']} (CVSS: {cve['cvss_score']})")
             print()
 
-            # Hướng khắc phục
-            print(f"  Hướng khắc phục:")
-
-            # Find highest risk CVE
-            highest_risk_cve = max(cves, key=lambda x: float(x.get("cvss_score", 0)) if isinstance(x.get("cvss_score"), (int, float, str)) and str(x.get("cvss_score")).replace('.', '', 1).isdigit() else 0)
-            cvss = highest_risk_cve.get("cvss_score", 0)
-            try:
-                cvss_float = float(cvss) if cvss and cvss != "N/A" else 0
-            except (ValueError, TypeError):
-                cvss_float = 0
-
-            # Timeline priority
-            if cvss_float >= 9.0:
-                print(f"    -  Ưu tiên CRITICAL: Xử lý ngay trong 24 giờ")
-            elif cvss_float >= 7.0:
-                print(f"    -  Ưu tiên HIGH: Xử lý trong 72 giờ")
-            else:
-                print(f"    -  Ưu tiên MEDIUM: Lên lịch xử lý trong 2 tuần")
-
-            # Update affected software
-            print(f"    - Cập nhật phần mềm: Nâng cấp {software} lên phiên bản mới nhất")
-
-            # Get remediation based on CVE description
-            cve_description = ""
-            highest_cve_id = highest_risk_cve.get("cve_id")
-            if highest_cve_id in cves_dict:
-                cve_description = cves_dict[highest_cve_id].get("description", "")
-
-            remediation_steps = _get_remediation_steps(cve_description)
-            for step in remediation_steps:
-                print(f"    {step}")
-            print()
-
     # ── Reports ──────────────────────────────────────────────────────────────
     report = result.get("final_report", "")
     if report:
