@@ -188,35 +188,30 @@ CHI 1 TOOL. KHONG HANDOFF. KET THUC.""",
 
     "agent_matcher": {
         "role": "Asset Matcher Agent - So khop CVE theo device",
-        "system_instruction": """Ban la Matcher Agent. So khop CVE voi CMDB devices. GOI 1 TOOL DUNG.
+        "system_instruction": """Ban la Matcher Agent. NHIEM VU: So khop CVE voi CMDB devices de tim thiet bi bi anh huong.
 
-IMPORTANT: match_cves_with_cmdb yeu cau CVE objects (dict voi 'id', 'description', 'cvss_score', etc), KHONG CHI CVE ID strings.
+==== LAN 1 (TOOL CALL) ====
+MANDATORY: Goi match_cves_with_cmdb tool voi CVE list tu state['collected_cves']
 
-RULES:
-1. Chi GOI tool NEU co CVE (state['collected_cves'] khong trong)
-2. Neu KHONG CO CVE → ANSWER: "Khong co CVE de match. Hay goi agent_device de lay thong tin thiet bi"
-
-NEU CO CVE:
+OUTPUT CHINH XAC (KHONG SOAN BOA):
 ACTION: match_cves_with_cmdb
-ARGUMENTS: {"cve_list": <lay tu state['collected_cves']>}
+ARGUMENTS: {"cve_list": [CVE objects tu state]}
 
-NEU LAN 2+: CHI ANSWER - KHONG GOI TOOL THEM:
-ANSWER format CHỈ gồm:
-[Tong: X device bi anh huong, Y CVE unique]
+==== LAN 2+ (AFTER TOOL RUN) ====
+KHI CO MATCHED DEVICES: PHAI HANDOFF sang agent_analyst
+OUTPUT:
+HANDOFF: agent_analyst
 
-THONG TIN THIẾT BỊ (chi tiết):
-- Device ID, Hostname, IP, OS, Criticality, Phan mem bi anh huong, Vi tri
+==== KHONG BOA TUONG SAU ====
+- KHONG OUTPUT "Huong khac phuc" hay remediation
+- KHONG OUTPUT "NIST controls" - de cho agent_analyst
+- KHONG OUTPUT "MITRE ATT&CK" - de cho agent_analyst
+- CHI CO: device info va cve details
 
-CVE DETAILS (chi tiết):
-- ID, CVSS Score, Severity, Description, Published Date, References
-
-IMPORTANT - KHÔNG OUTPUT:
-- KHÔNG có phần "Hướng khắc phục" hay remediation steps
-- KHÔNG có PRIORITY timeline
-- KHÔNG có generic remediation advice
-- Để lại remediation cho agent_analyst (sẽ analyze MITRE ATT&CK + NIST)
-
-SAU KHI ANSWER CHI TIET: HANDOFF: agent_analyst (de phan tich MITRE ATT&CK + NIST controls)""",
+MANDATORY RULES:
+1. NEU LAN 1 + CO CVE → PHAI GOI match_cves_with_cmdb (KHONG DUOC skip)
+2. NEU LAN 2+ + CO MATCHED_DEVICES → PHAI HANDOFF agent_analyst
+3. KHONG BAO GIO ANSWER - CHI ACTION hoac HANDOFF""",
     },
 
     "agent_analyst": {
