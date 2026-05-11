@@ -1,6 +1,6 @@
 """
-tools/mitre_builder.py - Build local MITRE ATT&CK database from official STIX data
-Downloads MITRE ATT&CK JSON and builds indexed database for fast lookups
+tools/mitre_builder.py - Xây dựng cơ sở dữ liệu MITRE ATT&CK cục bộ từ dữ liệu STIX chính thức
+Tải xuống MITRE ATT&CK JSON và xây dựng cơ sở dữ liệu được đánh chỉ mục để tra cứu nhanh
 """
 import json
 import os
@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.request import urlopen
 from typing import Dict, List, Optional
 
-# MITRE ATT&CK datasets
+# Datasets MITRE ATT&CK
 MITRE_DATASETS = {
     "enterprise": "https://raw.githubusercontent.com/mitre/cti/master/enterprise-attack/enterprise-attack.json",
 }
@@ -16,30 +16,30 @@ MITRE_DATASETS = {
 MITRE_DB_PATH = Path(__file__).parent.parent / "data" / "mitre_attack.json"
 
 def download_mitre_data(dataset: str = "enterprise") -> dict:
-    """Download MITRE ATT&CK STIX data from GitHub"""
+    """Tải xuống dữ liệu MITRE ATT&CK STIX từ GitHub"""
     url = MITRE_DATASETS.get(dataset)
     if not url:
-        raise ValueError(f"Unknown dataset: {dataset}")
+        raise ValueError(f"Dataset không biết: {dataset}")
 
-    print(f"Downloading MITRE ATT&CK {dataset} dataset...")
+    print(f"Đang tải xuống dataset MITRE ATT&CK {dataset}...")
     try:
         with urlopen(url, timeout=30) as response:
             data = json.loads(response.read().decode())
-        print(f"[OK] Downloaded {len(data.get('objects', []))} STIX objects")
+        print(f"[OK] Đã tải {len(data.get('objects', []))} đối tượng STIX")
         return data
     except Exception as e:
-        print(f"[ERROR] Failed to download: {e}")
+        print(f"[LỖI] Không thể tải xuống: {e}")
         return None
 
 def build_technique_index(stix_data: dict) -> Dict[str, dict]:
-    """Extract and index MITRE ATT&CK techniques from STIX data"""
+    """Trích xuất và đánh chỉ mục các kỹ thuật MITRE ATT&CK từ dữ liệu STIX"""
     techniques = {}
 
     for obj in stix_data.get("objects", []):
         if obj.get("type") != "attack-pattern":
             continue
 
-        # Extract technique ID (e.g., "T1190" from "attack-pattern--...")
+        # Trích xuất ID kỹ thuật (ví dụ: "T1190" từ "attack-pattern--...")
         external_refs = obj.get("external_references", [])
         tech_id = None
         for ref in external_refs:
@@ -50,7 +50,7 @@ def build_technique_index(stix_data: dict) -> Dict[str, dict]:
         if not tech_id:
             continue
 
-        # Extract tactic (x-mitre-platforms, kill-chain-phases)
+        # Trích xuất tactic (x-mitre-platforms, kill-chain-phases)
         kill_chain = obj.get("kill_chain_phases", [])
         tactics = [kc.get("phase_name", "").replace("-", " ").title() for kc in kill_chain]
 
