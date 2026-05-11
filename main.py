@@ -291,19 +291,36 @@ def _print_chat_response(result: dict):
             # Check if agent_analyst ran and has MITRE-based remediation
             agent_history = result.get("agent_history", [])
             last_response = result.get("last_agent_response", "")
-            has_mitre_analysis = "agent_analyst" in agent_history and "[Remediation dựa trên MITRE" in last_response
+            has_mitre_analysis = "agent_analyst" in agent_history and ("[Remediation dựa trên MITRE" in last_response or "T1" in last_response)
 
-            if has_mitre_analysis:
+            if has_mitre_analysis and "[Remediation" in last_response:
                 # Extract MITRE-based remediation from agent_analyst response
                 print("    [Phân tích từ MITRE ATT&CK & NIST SP 800-53]")
-                # Extract remediation section
-                if "[Remediation dựa trên MITRE" in last_response:
-                    remediation_section = last_response.split("[Remediation dựa trên MITRE")[1]
-                    # Get lines until "Kết thúc"
-                    remediation_lines = remediation_section.split("Kết thúc")[0].strip().split("\n")
-                    for line in remediation_lines:
-                        if line.strip():
-                            print(f"    {line}")
+                # Extract remediation section - look for any format of remediation block
+                if "Remediation" in last_response:
+                    try:
+                        # Find start of remediation section
+                        rem_start_idx = last_response.find("[Remediation")
+                        if rem_start_idx == -1:
+                            rem_start_idx = last_response.find("Remediation dựa trên")
+
+                        if rem_start_idx != -1:
+                            # Get from start to "Kết thúc" or end of response
+                            remediation_full = last_response[rem_start_idx:]
+                            if "Kết thúc" in remediation_full:
+                                remediation_full = remediation_full.split("Kết thúc")[0]
+
+                            # Print lines, skip the header line
+                            lines = remediation_full.split("\n")
+                            skip_first = True
+                            for line in lines:
+                                if skip_first and "[" in line:
+                                    skip_first = False
+                                    continue
+                                if line.strip() and line.strip() != "Kết thúc.":
+                                    print(f"    {line}")
+                    except Exception as e:
+                        print(f"    [Error parsing remediation: {e}]")
             else:
                 # Fallback to generic remediation (old behavior)
                 # Find highest risk CVE
