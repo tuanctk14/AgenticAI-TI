@@ -437,6 +437,61 @@ def _print_summary(result: dict):
                 print(f"    - {cve['cve_id']}: {cve['risk_level']} (CVSS: {cve['cvss_score']})")
             print()
 
+    # ── REMEDIATION from agent_analyst ──────────────────────────────────────
+    devices = result.get("matched_devices") or []
+    if devices:
+        print("=" * 70)
+        print(" REMEDIATION - TU AGENT_ANALYST")
+        print("=" * 70)
+
+        # Get remediation from agent_analyst
+        agent_history = result.get("agent_history", [])
+
+        if "agent_analyst" in agent_history:
+            last_response = result.get("last_agent_response", "")
+
+            # Extract remediation from agent_analyst response
+            if last_response:
+                try:
+                    # Look for MITRE-based remediation section
+                    if "Remediation" in last_response or "Khac phuc" in last_response or "khac phuc" in last_response:
+                        # Find the remediation section
+                        lines = last_response.split("\n")
+                        in_remediation = False
+                        remediation_lines = []
+
+                        for line in lines:
+                            # Start capturing when we see Remediation or section header
+                            if ("Remediation" in line or "REMEDIATION" in line or
+                                "Khac phuc" in line or "KHAC PHUC" in line or
+                                "T1" in line[:5] or line.startswith("1.") or line.startswith("2.") or line.startswith("3.") or line.startswith("4.")):
+                                in_remediation = True
+
+                            # Stop if we hit another major section or ANSWER:
+                            if in_remediation and line.strip() and ("ANSWER:" in line or "ACTION:" in line or line.startswith("---")):
+                                if not ("Remediation" in line or "Khac phuc" in line):
+                                    break
+
+                            # Add line if in remediation section and not empty
+                            if in_remediation and line.strip():
+                                remediation_lines.append(line)
+
+                        if remediation_lines:
+                            for line in remediation_lines:
+                                print(line)
+                        else:
+                            print("(Khong co thong tin khac phuc tu agent_analyst)")
+                    else:
+                        print("(Khong co thong tin khac phuc tu agent_analyst)")
+                except Exception as e:
+                    print("(Loi khi trich xuat remediation)")
+            else:
+                print("(Khong co thong tin khac phuc tu agent_analyst)")
+        else:
+            print("(Agent_analyst chua chay)")
+
+        print()
+
     # ── Reports ──────────────────────────────────────────────────────────────
     report = result.get("final_report", "")
     if report:

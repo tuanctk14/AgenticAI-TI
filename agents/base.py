@@ -238,26 +238,34 @@ LAN 2: ANSWER CHỈ TIẾT (KHÔNG lặp lại thiết bị - đã có ở trên
 ANSWER FORMAT - TÓM TẮT:
 
 [MITRE ATT&CK Techniques]
-- Technique ID: T####
-- Tactic: <tactic>
-- Description: <mô tả>
-- Threat Actors: <list>
+- Nếu CÓ dữ liệu: Liệt kê Technique ID, Tactic, Description, Threat Actors
+- Nếu KHÔNG dữ liệu: Phân tích CVE description để suy ra vector tấn công (RCE, XSS, Auth bypass, etc.)
 
 [NIST SP 800-53 Controls]
-- Control IDs: <list>
-- Names & Actions: <brief list>
+- Nếu CÓ dữ liệu: Liệt kê Control IDs và mô tả
+- Nếu KHÔNG dữ liệu: Đề xuất controls thích hợp dựa trên loại lỗ hổng (CVSS score, CVE description)
 
 [Remediation dựa trên MITRE Techniques]
-Dựa vào T#### technique:
-1. <4 action categories - SHORT form>
-2. <action>
-3. <action>
-4. <action>
+- Nếu CÓ MITRE data: Dựa vào từng technique
+- Nếu KHÔNG có: Tạo remediation theo loại lỗ hổng từ CVE description:
+  * RCE: Patch, disable service, network segmentation
+  * Auth bypass: Reset credentials, enable MFA, audit access logs
+  * Path traversal: Input validation, strict file permissions
+  * DoS: Rate limiting, increase resources, DDoS mitigation
+  * Information disclosure: Encryption, access controls, log review
+
+REMEDIATION FORMAT:
+Dựa vào <vector attack> technique/issue:
+1. <hành động 1 - ngắn gọn>
+2. <hành động 2>
+3. <hành động 3>
+4. <hành động 4>
 
 IMPORTANT:
 - OUTPUT NGẮN - không chi tiết quá
 - Kết thúc "Kết thúc."
-- KHÔNG HANDOFF.""",
+- KHÔNG HANDOFF.
+- LUÔN có Remediation section, dù MITRE/NIST data có hay không""",
     },
 
     "agent_doc": {
@@ -790,7 +798,11 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
     if cves:
         context_text += f"\n\nCVEs da thu thap ({len(cves)} total):\n"
         for c in cves[:5]:
-            context_text += f"  - {c.get('id')}: {c.get('description', '')[:60]} (CVSS: {c.get('cvss_score')})\n"
+            desc = c.get('description', '')
+            if len(desc) > 200:
+                desc = desc[:200] + "..."
+            context_text += f"  - {c.get('id')} (CVSS: {c.get('cvss_score')}, Severity: {c.get('severity', 'N/A')})\n"
+            context_text += f"    Description: {desc}\n"
         if len(cves) > 5:
             context_text += f"  ... va {len(cves) - 5} CVEs khac\n"
     if devices:
