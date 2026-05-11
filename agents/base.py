@@ -264,29 +264,29 @@ Dựa vào technique (T####) đã xác định, áp dụng remediation CHI TIẾ
 
 Nếu T1190 (Exploit Public-Facing Application / Initial Access):
 1. Ngăn chặn truy cập bên ngoài:
-   - Disable legacy/unused features (ví dụ: import feature)
-   - Implement strict input validation và output encoding
-   - Deploy WAF (Web Application Firewall) với rules cho known exploits
+   - Vô hiệu hóa các tính năng cũ hoặc không sử dụng (ví dụ: import feature)
+   - Triển khai xác thực nhập liệu và mã hóa đầu ra để ngăn chặn JNDI injection
+   - Triển khai WAF (Tường lửa ứng dụng web) với các quy tắc cho known exploits
 
 2. Hạn chế quyền truy cập:
-   - Apply principle of least privilege
-   - Restrict administrative functions to authorized personnel
-   - Use strong authentication mechanisms (API keys, OAuth)
+   - Áp dụng nguyên tắc quyền hạn chế tối thiểu
+   - Hạn chế các chức năng quản trị trên các hệ thống bị ảnh hưởng
+   - Sử dụng các cơ chế xác thực mạnh như OAuth
 
-3. Patch & Update:
-   - Upgrade to patched version
-   - Apply all available security patches
-   - Test patches in staging trước production
+3. Cập nhật bản vá:
+   - Nâng cấp lên phiên bản được vá
+   - Áp dụng tất cả các bản vá bảo mật có sẵn
+   - Kiểm tra bản vá trong staging trước production
 
-4. Monitoring & Detection:
-   - Monitor application logs for unauthorized attempts
-   - Implement alerting for suspicious activities
-   - Use IDS/IPS to detect exploitation patterns
+4. Giám sát và Phát hiện:
+   - Giám sát nhật ký ứng dụng để phát hiện các nỗ lực truy cập trái phép
+   - Triển khai cảnh báo cho các hoạt động đáng ngờ
+   - Sử dụng IDS/IPS để phát hiện các mẫu khai thác
 
-Nếu T1059 (Command & Scripting Interpreter): Disable script execution, control process creation, monitor shell activity, restrict command line usage
-Nếu T1048 (Exfiltration Over Alternative Protocol): Monitor network traffic, restrict outbound connections, implement data loss prevention (DLP)
-Nếu T1078 (Valid Accounts): Reset credentials, enforce MFA, disable unused accounts, audit access logs
-Nếu T1005 (Data Acquisition): Encrypt sensitive data, limit file access, monitor data access patterns
+Nếu T1059 (Command & Scripting Interpreter): Vô hiệu hóa thực thi script, kiểm soát tạo quy trình, giám sát shell activity
+Nếu T1048 (Exfiltration Over Alternative Protocol): Giám sát lưu lượng mạng, hạn chế kết nối outbound, triển khai DLP
+Nếu T1078 (Valid Accounts): Đặt lại thông tin xác thực, bắt buộc MFA, vô hiệu hóa tài khoản không sử dụng
+Nếu T1005 (Data Acquisition): Mã hóa dữ liệu nhạy cảm, hạn chế quyền truy cập file, giám sát truy cập dữ liệu
 - Tương tự cho các techniques khác - luôn EXPAND remediation với 3-4 specific actions
 
 IMPORTANT:
