@@ -3,7 +3,7 @@ tools/cmdb.py - So khớp CVE với inventory thiết bị nội bộ (CMDB)
 """
 import json
 import os
-from cve_parser import parse_cve_metadata, compare_versions, match_app_in_device
+from tools.cve_parser import parse_cve_metadata, compare_versions, match_app_in_device
 
 # Load CMDB từ file JSON
 _DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "cmdb_devices.json")
