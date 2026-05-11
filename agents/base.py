@@ -697,6 +697,21 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
             state["agent_history"] = state.get("agent_history", []) + [agent_name]
             return state
 
+    # agent_matcher: 2nd iteration - after tool ran, only HANDOFF to agent_analyst
+    if agent_name == "agent_matcher" and state.get("last_agent") == "agent_matcher":
+        # Already matched CVEs - now handoff to analyst
+        if state.get("matched_devices"):
+            response = "HANDOFF: agent_analyst"
+            print(f"\n{'='*55}")
+            print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
+            print("="*55)
+            print(response)
+            state["last_agent_response"] = response
+            state["last_agent"]          = agent_name
+            state["num_steps"]           = state.get("num_steps", 0) + 1
+            state["agent_history"]       = state.get("agent_history", []) + [agent_name]
+            return state
+
     # agent_matcher: if NO CVEs collected → auto-answer without CVE matching
     # agent_matcher: auto-fetch CVEs if query has keywords but no CVEs yet
     if agent_name == "agent_matcher" and not cves:
