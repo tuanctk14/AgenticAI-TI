@@ -266,18 +266,40 @@ ANSWER FORMAT:
 - Implementation Timeframe: <24h/72h/7 ngày>
 
 [Remediation dựa trên MITRE Techniques]
-Dựa vào technique (T####) đã xác định, áp dụng remediation CỤ THỂ:
-- Nếu T1190 (Initial Access): Ngăn chặn truy cập bên ngoài, validate input, hạn chế permission
-- Nếu T1059 (Command & Scripting): Disable script execution, control process creation, monitor shell activity
-- Nếu T1048 (Exfiltration): Monitor network traffic, restrict outbound connections, data loss prevention
-- Nếu T1078 (Valid Accounts): Reset credentials, enforce MFA, disable unused accounts, audit access logs
-- Nếu T1005 (Data Acquisition): Encrypt sensitive data, limit file access, monitor data access patterns
-- Tương tự cho các techniques khác - luôn dùng MITRE mitigation IDs + NIST controls để hướng dẫn
+Dựa vào technique (T####) đã xác định, áp dụng remediation CHI TIẾT CỤ THỂ:
+
+Nếu T1190 (Exploit Public-Facing Application / Initial Access):
+1. Ngăn chặn truy cập bên ngoài:
+   - Disable legacy/unused features (ví dụ: import feature)
+   - Implement strict input validation và output encoding
+   - Deploy WAF (Web Application Firewall) với rules cho known exploits
+
+2. Hạn chế quyền truy cập:
+   - Apply principle of least privilege
+   - Restrict administrative functions to authorized personnel
+   - Use strong authentication mechanisms (API keys, OAuth)
+
+3. Patch & Update:
+   - Upgrade to patched version
+   - Apply all available security patches
+   - Test patches in staging trước production
+
+4. Monitoring & Detection:
+   - Monitor application logs for unauthorized attempts
+   - Implement alerting for suspicious activities
+   - Use IDS/IPS to detect exploitation patterns
+
+Nếu T1059 (Command & Scripting Interpreter): Disable script execution, control process creation, monitor shell activity, restrict command line usage
+Nếu T1048 (Exfiltration Over Alternative Protocol): Monitor network traffic, restrict outbound connections, implement data loss prevention (DLP)
+Nếu T1078 (Valid Accounts): Reset credentials, enforce MFA, disable unused accounts, audit access logs
+Nếu T1005 (Data Acquisition): Encrypt sensitive data, limit file access, monitor data access patterns
+- Tương tự cho các techniques khác - luôn EXPAND remediation với 3-4 specific actions
 
 IMPORTANT:
 - KHÔNG lặp lại "Thiết bị bị ảnh hưởng" - đã có ở section trên
-- KHÔNG dùng generic remediation - chỉ dùng remediation dựa trên MITRE technique cụ thể
+- KHÔNG dùng generic remediation - PHẢI chi tiết với 4+ specific actions cho technique
 - Kết thúc bằng "Kết thúc." rõ ràng
+- OUTPUT PHẢI RỰC RỌ CHI TIẾT - không tóm gọn
 - KHÔNG HANDOFF. KẾT THÚC.""",
     },
 
