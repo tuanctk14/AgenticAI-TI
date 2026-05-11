@@ -245,27 +245,54 @@ ANSWER FORMAT - TÓM TẮT:
 - Nếu CÓ dữ liệu: Liệt kê Control IDs và mô tả
 - Nếu KHÔNG dữ liệu: Đề xuất controls thích hợp dựa trên loại lỗ hổng (CVSS score, CVE description)
 
-[Remediation dựa trên MITRE Techniques]
-- Nếu CÓ MITRE data: Dựa vào từng technique
-- Nếu KHÔNG có: Tạo remediation theo loại lỗ hổng từ CVE description:
-  * RCE: Patch, disable service, network segmentation
-  * Auth bypass: Reset credentials, enable MFA, audit access logs
-  * Path traversal: Input validation, strict file permissions
-  * DoS: Rate limiting, increase resources, DDoS mitigation
-  * Information disclosure: Encryption, access controls, log review
+[Remediation dựa trên MITRE Techniques và NIST Controls]
+LUÔN OUTPUT CỤ THỂ MAPPING với dữ liệu từ tools. Format:
 
-REMEDIATION FORMAT:
-Dựa vào <vector attack> technique/issue:
-1. <hành động 1 - ngắn gọn>
-2. <hành động 2>
-3. <hành động 3>
-4. <hành động 4>
+BƯỚC 0 (GENERIC):
+0. Patch <product_name> to latest version with security fixes.
+
+BƯỚC 1+ (CỤ THỂ CHO TỪNG TECHNIQUE):
+Liệt kê TẤT CẢ techniques từ tool result:
+<Technique ID> - <Technique Name>:
+1. <action cụ thể mapping đến technique này>
+2. <action cụ thể mapping đến technique này>
+
+BƯỚC CUỐI (CỤ THỂ CHO TỪNG NIST CONTROL):
+Liệt kê TẤT CẢ controls từ tool result:
+<Control ID> - <Control Name>:
+1. <action cụ thể mapping đến control này>
+2. <action cụ thể mapping đến control này>
+
+VÍ DỤ ĐÚNG (CVE RCE file upload - OpenCATS):
+[Remediation dựa trên MITRE Techniques và NIST Controls]
+0. Patch OpenCATS to latest version with security fixes.
+
+T1203 - Exploitation of Remote Services:
+1. Restrict file upload endpoints to authenticated users only
+2. Validate and sanitize all uploaded files for malicious code
+3. Store uploaded files outside web-accessible directories
+
+T1553.010 - External Remote Services:
+1. Configure firewall rules to restrict external access to upload endpoints
+2. Implement WAF rules for file upload validation
+
+AC-3(4) - Access Control:
+1. Implement role-based access control for file upload functionality
+
+CM-6(2) - Configuration Settings:
+1. Disable script execution in upload directories
+2. Set proper file permissions (755 or equivalent)
+
+SC-21 - Data Integrity:
+1. Implement integrity checking for uploaded files (hash verification)
 
 IMPORTANT:
-- OUTPUT NGẮN - không chi tiết quá
+- LUÔN liệt kê ID + Name của technique/control
+- LUÔN CÓ bước 0 (Patch...)
+- Mỗi action PHẢI cụ thể map đến technique/control cụ thể
+- Nếu tool return empty → phân tích CVE để suy ra likely techniques/controls
 - Kết thúc "Kết thúc."
-- KHÔNG HANDOFF.
-- LUÔN có Remediation section, dù MITRE/NIST data có hay không""",
+- KHÔNG HANDOFF.""",
     },
 
     "agent_doc": {
