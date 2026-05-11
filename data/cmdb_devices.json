@@ -76,5 +76,23 @@
     "criticality": "HIGH",
     "department": "Development",
     "location": "HaNoi-DC2"
+  },
+  {
+    "device_id": "SRV-004",
+    "hostname": "wordpress-01",
+    "ip": "192.168.1.40",
+    "type": "Server",
+    "os": "Ubuntu",
+    "os_version": "20.04",
+    "software": [
+      {"name": "WordPress",                        "version": "6.0"},
+      {"name": "WordPress Plugin Download From Files", "version": "1.48"},
+      {"name": "Apache HTTP Server",               "version": "2.4.41"},
+      {"name": "PHP",                              "version": "7.4.3"},
+      {"name": "MySQL",                            "version": "8.0.28"}
+    ],
+    "criticality": "HIGH",
+    "department": "Marketing",
+    "location": "HaNoi-Office"
   }
 ]
