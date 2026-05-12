@@ -379,16 +379,27 @@ def call_tool(state: dict) -> dict:
         args = {}
         if "ARGUMENTS:" in action_text:
             args_text = action_text.split("ARGUMENTS:")[1].strip()
-            # Find first JSON object/array using regex
+            # Find first JSON object/array using regex - try multiple patterns
             json_match = re.search(r'\{.*\}|\[.*\]', args_text, re.DOTALL)
             if json_match:
                 try:
                     args = json.loads(json_match.group())
                 except json.JSONDecodeError as e:
-                    msg = f"[JSON parse error cho '{tool_name}': {e}]"
-                    print(f"    {msg}")
-                    state.setdefault("tool_observations", []).append(msg)
-                    continue
+                    # Fallback: try cleanup with balanced brace counting
+                    raw_text = json_match.group()
+                    # Find balanced braces/brackets
+                    for i in range(len(raw_text) - 1, -1, -1):
+                        test_json = raw_text[:i+1]
+                        try:
+                            args = json.loads(test_json)
+                            break
+                        except:
+                            continue
+                    else:
+                        msg = f"[JSON parse error cho '{tool_name}': {str(e)[:100]}]"
+                        print(f"    {msg}")
+                        state.setdefault("tool_observations", []).append(msg)
+                        continue
             else:
                 msg = f"[Khong tim thay JSON trong ARGUMENTS: {args_text[:50]}]"
                 print(f"    {msg}")

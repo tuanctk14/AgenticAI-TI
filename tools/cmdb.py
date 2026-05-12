@@ -1,119 +1,81 @@
 """
 tools/cmdb.py - So khớp CVE với inventory thiết bị nội bộ (CMDB)
+
+Analyst-grade asset vulnerability correlation using:
+1. CPE-first architecture (gold source)
+2. Software normalization (handle aliases)
+3. Normalized ID matching (avoid false positives from keyword matching)
+4. Description parsing fallback (when CPE unavailable)
 """
 import json
 import os
-from tools.cve_parser import parse_cve_metadata, compare_versions, match_app_in_device
+from tools.cve_parser import parse_cve_metadata, match_app_in_device
 
 # Load CMDB từ file JSON
 _DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "cmdb_devices.json")
 with open(_DATA_PATH, encoding="utf-8") as f:
     CMDB_DEVICES = json.load(f)
 
-# ── Keyword mapping: CVE / sản phẩm → tên phần mềm ───────────────────────
-VULN_KEYWORDS: dict[str, list[str]] = {
-    "CVE-2021-44228": ["log4j", "log4j2"],
-    "CVE-2021-41773": ["apache", "apache http", "httpd"],
-    "CVE-2022-22965": ["spring", "springframework"],
-    "CVE-2014-0160":  ["openssl"],
-    "CVE-2021-26855": ["exchange", "microsoft exchange"],
-    "CVE-2023-44487": ["apache", "nginx", "tomcat", "http"],
-    "CVE-2021-47940": ["wordpress", "download from files"],
-    "log4j":          ["log4j", "log4j2"],
-    "apache":         ["apache", "httpd"],
-    "openssl":        ["openssl"],
-    "mysql":          ["mysql"],
-    "ssh":            ["openssh"],
-    "spring":         ["spring", "springframework"],
-    "tomcat":         ["tomcat"],
-    "cisco":          ["cisco"],
-    "wordpress":      ["wordpress"],
-    "php":            ["php"],
-    "chrome":         ["chrome"],
-    "adobe":          ["adobe"],
-}
-
 RISK_ORDER = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
 
 
 def match_cves_with_cmdb(cve_list: list) -> dict:
     """
-    So khớp danh sách CVE với CMDB dựa trên:
-    1. Parse CVE description để extract app name + version range
-    2. Match app name với device software
-    3. Compare version: device_version <= vulnerable_max_version?
+    ANALYST-GRADE CVE-to-device matching using CPE-first architecture.
 
-    Trả về các thiết bị có nguy cơ bị ảnh hưởng, sắp xếp theo mức độ nguy hiểm.
+    Process:
+    1. Parse CVE with parse_cve_metadata (CPE-first → normalized software ID)
+    2. Match normalized ID against device software (via match_app_in_device)
+    3. Return structured matches with confidence metrics
+
+    Returns: {
+        context: [
+            {cve_id, cvss_score, risk_level, device_id, hostname, ip,
+             affected_software, match_type, ...}
+        ],
+        source: "CMDB-Matcher",
+        total_matches: int,
+        devices_affected: int
+    }
     """
-    print(f"  [CMDB] So khớp {len(cve_list)} CVEs với {len(CMDB_DEVICES)} thiết bị")
+    print(f"  [CMDB] Matching {len(cve_list)} CVEs with {len(CMDB_DEVICES)} devices (analyst-grade)")
 
     matches: list[dict] = []
 
     for cve in cve_list:
-        # Parse CVE metadata (app name, version, keywords)
+        # PHASE 1: Parse CVE metadata (CPE-first architecture)
         cve_metadata = parse_cve_metadata(cve)
 
         cve_id = cve.get("id", "").upper()
-        cve_keywords = cve_metadata.get("keywords", [])
-        affected_app = cve_metadata.get("affected_app", "Unknown")
-        max_version = cve_metadata.get("max_version")
-        min_version = cve_metadata.get("min_version")
+        normalized_sw_id = cve_metadata.get("normalized_software_id")
+        cve_source = cve_metadata.get("source")
 
-        # Handle N/A or None cvss_score
+        # Skip if no software identified
+        if not normalized_sw_id:
+            continue
+
+        # Handle CVSS score
         cvss_raw = cve.get("cvss_score", 0)
         try:
             cve_score = float(cvss_raw) if cvss_raw and cvss_raw != "N/A" else 0.0
         except (ValueError, TypeError):
             cve_score = 0.0
 
-        # Nếu không tìm được keywords → skip
-        if not cve_keywords and not affected_app:
-            continue
-
-        # Duyệt qua các thiết bị để matching
+        # PHASE 2: Match against device inventory
         for device in CMDB_DEVICES:
-            matched_software = None
+            device_software = device.get("software", [])
 
-            # Kiểm tra mỗi phần mềm trên device
-            for sw in device["software"]:
-                sw_name = sw.get("name", "")
-                sw_version = sw.get("version", "")
-                sw_lower = sw_name.lower()
+            # Use analyst-grade matching function
+            match_result = match_app_in_device(cve_metadata, device_software)
 
-                # Check 1: Có trong keywords không?
-                keyword_match = any(kw.lower() in sw_lower for kw in cve_keywords)
-
-                # Check 2: App name match không?
-                app_match = affected_app.lower() in sw_lower if affected_app else False
-
-                # Nếu match theo keyword hoặc app name
-                if keyword_match or app_match:
-                    # Check 3: Version comparison (nếu có max_version)
-                    if max_version:
-                        if compare_versions(sw_version, max_version, min_version):
-                            # Device version <= vulnerable version → MATCH!
-                            matched_software = {
-                                "name": sw_name,
-                                "version": sw_version,
-                                "vulnerable": True
-                            }
-                            break
-                    else:
-                        # Nếu không có version info từ CVE, match theo app name/keyword
-                        matched_software = {
-                            "name": sw_name,
-                            "version": sw_version,
-                            "vulnerable": True
-                        }
-                        break
-
-            # Nếu tìm được phần mềm bị ảnh hưởng
-            if matched_software:
+            if match_result.get("matched"):
                 risk = (
                     "CRITICAL" if cve_score >= 9.0 else
                     "HIGH"     if cve_score >= 7.0 else
-                    "MEDIUM"
+                    "MEDIUM"   if cve_score >= 4.0 else
+                    "LOW"
                 )
+
                 matches.append({
                     "cve_id":            cve_id,
                     "cvss_score":        cve_score,
@@ -123,10 +85,12 @@ def match_cves_with_cmdb(cve_list: list) -> dict:
                     "ip":                device["ip"],
                     "department":        device["department"],
                     "criticality":       device["criticality"],
-                    "affected_software": f"{matched_software['name']} {matched_software['version']}",
+                    "affected_software": match_result.get("software_name", "Unknown"),
+                    "device_version":    match_result.get("device_version", "Unknown"),
                     "os":                f"{device['os']} {device['os_version']}",
                     "location":          device["location"],
-                    "vulnerable_version": max_version,  # Vulnerable up to this version
+                    "match_type":        match_result.get("match_type", "unknown"),
+                    "cve_source":        cve_source,  # gold_cpe or description_inference
                 })
 
     # Sắp xếp theo nguy cơ
@@ -136,7 +100,7 @@ def match_cves_with_cmdb(cve_list: list) -> dict:
     ))
 
     devices_affected = len({m["device_id"] for m in matches})
-    print(f"  [CMDB]  {len(matches)} matches trên {devices_affected} thiết bị")
+    print(f"  [CMDB]  {len(matches)} matches on {devices_affected} devices")
     return {
         "context":          matches,
         "source":           "CMDB-Matcher",
