@@ -37,6 +37,18 @@ def fetch_cve_by_id(cve_id: str) -> dict:
                     score = m["cvssData"]["baseScore"]
                     sev = m["cvssData"].get("baseSeverity", sev)
                     break
+            # Extract CWE from weaknesses
+            cwe_ids = []
+            weaknesses = cve.get("weaknesses", [])
+            for weakness in weaknesses:
+                descriptions = weakness.get("description", [])
+                for desc_obj in descriptions:
+                    value = desc_obj.get("value", "")
+                    if value.startswith("CWE-"):
+                        cwe_id = value.replace("CWE-", "")
+                        if cwe_id not in cwe_ids:
+                            cwe_ids.append(cwe_id)
+
             result = [{
                 "id": cve["id"],
                 "description": desc[:400],
@@ -45,6 +57,7 @@ def fetch_cve_by_id(cve_id: str) -> dict:
                 "published": cve.get("published", "N/A")[:10],
                 "references": [r["url"] for r in cve.get("references", [])[:3]],
                 "configurations": cve.get("configurations", []),
+                "cwe_ids": cwe_ids,
             }]
             print(f"  [NVD]  Found {cve_id}")
             return {"context": result, "source": "NVD-LIVE", "total": 1}
@@ -119,6 +132,19 @@ def fetch_nvd_cves(keyword: str = "", severity: str = "HIGH", days_back: int = 3
                         score = m["cvssData"]["baseScore"]
                         sev   = m["cvssData"].get("baseSeverity", sev)
                         break
+
+                # Extract CWE from weaknesses
+                cwe_ids = []
+                weaknesses = cve.get("weaknesses", [])
+                for weakness in weaknesses:
+                    descriptions = weakness.get("description", [])
+                    for desc_obj in descriptions:
+                        value = desc_obj.get("value", "")
+                        if value.startswith("CWE-"):
+                            cwe_id = value.replace("CWE-", "")
+                            if cwe_id not in cwe_ids:
+                                cwe_ids.append(cwe_id)
+
                 all_cves.append({
                     "id":          cve["id"],
                     "description": desc[:400],
@@ -127,6 +153,7 @@ def fetch_nvd_cves(keyword: str = "", severity: str = "HIGH", days_back: int = 3
                     "published":   cve.get("published", "N/A")[:10],
                     "references":  [r["url"] for r in cve.get("references", [])[:2]],
                     "configurations": cve.get("configurations", []),
+                    "cwe_ids":     cwe_ids,
                 })
 
             start_index += PAGE_SIZE

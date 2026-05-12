@@ -249,6 +249,7 @@ def parse_cve_metadata(cve_dict: dict) -> dict:
     cve_id = cve_dict.get("id", "").upper()
     description = cve_dict.get("description", "").strip()
     configurations = cve_dict.get("configurations", [])
+    cwe_ids = cve_dict.get("cwe_ids", [])
 
     result = {
         "cve_id": cve_id,
@@ -257,6 +258,7 @@ def parse_cve_metadata(cve_dict: dict) -> dict:
         "version": None,
         "normalized_software_id": None,
         "affected_os": None,
+        "cwe_ids": cwe_ids,
         "source": "none",  # gold_cpe, inference, fallback
     }
 
@@ -265,7 +267,27 @@ def parse_cve_metadata(cve_dict: dict) -> dict:
     # ────────────────────────────────────────────────────────────
     cpes = CPEParser.extract_cpe_from_configurations(configurations)
     if cpes:
-        cpe_parsed = CPEParser.parse_cpe_uri(cpes[0])
+        # For CVEs with multiple CPEs (e.g., library vulnerabilities),
+        # try to find the primary/library CPE by matching description keywords
+        selected_cpe = None
+        desc_lower = description.lower()
+
+        # Priority 1: Try to match description keywords to find the vulnerable component
+        for cpe in cpes:
+            parsed = CPEParser.parse_cpe_uri(cpe)
+            product = parsed.get("product", "").lower().replace("_", " ")
+            vendor = parsed.get("vendor", "").lower()
+
+            # Check if product name appears prominently in description
+            if product in desc_lower or vendor in desc_lower:
+                selected_cpe = cpe
+                break
+
+        # Priority 2: Fall back to first CPE if no match found
+        if not selected_cpe:
+            selected_cpe = cpes[0]
+
+        cpe_parsed = CPEParser.parse_cpe_uri(selected_cpe)
         if cpe_parsed:
             result["vendor"] = cpe_parsed.get("vendor")
             result["product"] = cpe_parsed.get("product")

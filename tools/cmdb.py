@@ -10,6 +10,7 @@ Analyst-grade asset vulnerability correlation using:
 import json
 import os
 from tools.cve_parser import parse_cve_metadata, match_app_in_device
+from tools.cwe_mapper import get_cwe_analysis
 
 # Load CMDB từ file JSON
 _DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "cmdb_devices.json")
@@ -61,6 +62,9 @@ def match_cves_with_cmdb(cve_list: list) -> dict:
         except (ValueError, TypeError):
             cve_score = 0.0
 
+        # PHASE 1.5: Extract CWE and map to MITRE/NIST
+        cwe_analysis = get_cwe_analysis(cve)
+
         # PHASE 2: Match against device inventory
         for device in CMDB_DEVICES:
             device_software = device.get("software", [])
@@ -91,6 +95,9 @@ def match_cves_with_cmdb(cve_list: list) -> dict:
                     "location":          device["location"],
                     "match_type":        match_result.get("match_type", "unknown"),
                     "cve_source":        cve_source,  # gold_cpe or description_inference
+                    "cwe_ids":           cwe_analysis.get("cwe_ids", []),
+                    "mitre_techniques":  cwe_analysis.get("mitre_techniques", []),
+                    "nist_controls":     cwe_analysis.get("nist_controls", []),
                 })
 
     # Sắp xếp theo nguy cơ
