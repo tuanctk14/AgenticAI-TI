@@ -28,6 +28,11 @@ SOFTWARE_NORMALIZATION = {
     "activemq": "apache:activemq",
     # Tomcat family
     "tomcat": "apache:tomcat",
+    # Tenda Router
+    "tenda ac6": "tenda:ac6",
+    "tenda ac 6": "tenda:ac6",
+    "tenda router": "tenda:router",
+    "tenda": "tenda:router",
     # PHP
     "php": "php:php",
     # MySQL & Databases
@@ -141,8 +146,12 @@ class DescriptionParser:
         # Apache products (specific first - MORE RESTRICTIVE to avoid false positives)
         "apache:log4j": r'apache\s+log4j2?|^log4j|log4j\s+library',
         "apache:activemq": r'apache\s+activemq|activemq\s+broker|activemq\s+message',
-        "apache:http_server": r'apache\s+(?:http|web|server)|httpd|apache2',
+        "apache:http_server": r'apache\s+(?:http|web|server)|apache(?:\s+)?httpd|apache2\b',
         "apache:tomcat": r'apache\s+tomcat|tomcat\s+server',
+
+        # Router & Network Hardware
+        "tenda:ac6": r'tenda\s+(?:ac6|ac\s*6)',
+        "tenda:router": r'tenda\s+(?:router|gateway)',
 
         # Middleware & Frameworks
         "spring:framework": r'spring\s+(?:framework|boot|data)',
