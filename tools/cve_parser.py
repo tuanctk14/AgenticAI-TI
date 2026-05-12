@@ -19,28 +19,41 @@ SOFTWARE_NORMALIZATION = {
     "httpd": "apache:http_server",
     "apache http server": "apache:http_server",
     "apache httpd": "apache:http_server",
+    "apache": "apache:http_server",
+    # Apache products
+    "apache log4j": "apache:log4j",
+    "log4j": "apache:log4j",
+    "log4j2": "apache:log4j",
+    "apache activemq": "apache:activemq",
+    "activemq": "apache:activemq",
     # Tomcat family
     "tomcat": "apache:tomcat",
     # PHP
     "php": "php:php",
-    # MySQL
+    # MySQL & Databases
     "mysql": "mysql:mysql",
+    "mysql server": "mysql:mysql",
     "mariadb": "mariadb:mariadb",
-    # OpenSSL
+    # OpenSSL & SSH
     "openssl": "openssl:openssl",
+    "openssh": "openssh:openssh",
     # WordPress
     "wordpress": "wordpress:wordpress",
+    "wordpress plugin download from files": "wordpress:wordpress",
     "wordpress plugin": "wordpress:wordpress",
-    # Spring
+    # Spring Framework
     "spring framework": "pivotal:spring_framework",
     "spring boot": "pivotal:spring_boot",
+    "spring data": "pivotal:spring_framework",
+    "spring": "pivotal:spring_framework",
     # Cisco
-    "cisco asa": "cisco:adaptive_security_appliance",
+    "cisco asa": "cisco:asa",
     "cisco ios": "cisco:ios",
     "cisco ios-xe": "cisco:ios_xe",
     # Fortinet
     "fortios": "fortinet:fortios",
     "fortigate": "fortinet:fortigate",
+    "fortinet": "fortinet:fortios",
     # VMware
     "vmware esxi": "vmware:esxi",
     "esxi": "vmware:esxi",
@@ -48,7 +61,20 @@ SOFTWARE_NORMALIZATION = {
     # Microsoft
     "microsoft exchange": "microsoft:exchange_server",
     "exchange server": "microsoft:exchange_server",
+    "exchange": "microsoft:exchange_server",
     "microsoft windows": "microsoft:windows",
+    "microsoft office": "microsoft:office",
+    # Java & Infra
+    "jenkins": "jenkins:jenkins",
+    "jenkins ci": "jenkins:jenkins",
+    "atlassian confluence": "atlassian:confluence",
+    "confluence": "atlassian:confluence",
+    "atlassian jira": "atlassian:jira",
+    "jira": "atlassian:jira",
+    # Browser & Desktop
+    "chrome": "google:chrome",
+    "adobe acrobat": "adobe:acrobat",
+    "openjdk": "openjdk:openjdk",
 }
 
 class CPEParser:
@@ -110,19 +136,36 @@ class DescriptionParser:
     """Parse CVE description (fallback when CPE unavailable - less reliable)"""
 
     # Application patterns with normalized software IDs
+    # Ordered by priority (more specific patterns first)
     APP_PATTERNS = {
-        "apache:http_server": r'apache\s+(?:http\s+)?server|httpd|apache2',
-        "apache:log4j": r'apache\s+log4j|log4j[2-9]?',
+        # Apache products (specific first)
+        "apache:log4j": r'apache\s+log4j2?|log4j2?(?:\s+log4j)?',
+        "apache:activemq": r'apache\s+activemq|activemq(?:\s+broker)?',
+        "apache:http_server": r'apache\s+(?:http\s+)?server|httpd|apache2|apache(?:\s+web)?',
         "apache:tomcat": r'apache\s+tomcat|tomcat',
-        "mysql:mysql": r'mysql',
-        "openssl:openssl": r'openssl',
-        "wordpress:wordpress": r'wordpress',
-        "spring:framework": r'spring\s+(?:framework|boot)',
-        "cisco:ios": r'cisco\s+ios',
+
+        # Middleware & Frameworks
+        "spring:framework": r'spring\s+(?:framework|boot|data)',
+        "pivotal:spring": r'spring\s+(?:framework|boot)',
+
+        # Databases
+        "mysql:mysql": r'mysql(?:\s+server)?',
+        "openssl:openssl": r'openssl(?:\s+ssl)?',
+
+        # CMS & Content
+        "wordpress:wordpress": r'wordpress(?:\s+plugin)?|wordpress\s+core',
+
+        # Network & Security
+        "cisco:ios": r'cisco\s+ios(?:-?xe)?',
         "cisco:asa": r'cisco\s+(?:adaptive\s+security\s+)?appliance|cisco\s+asa',
-        "fortinet:fortios": r'fortinet\s+fortios|fortigate|fortigate',
-        "vmware:esxi": r'vmware\s+esxi|esxi',
+        "fortinet:fortios": r'fortinet\s+fortios|fortigate|fortios',
+        "vmware:esxi": r'vmware\s+esxi|esxi(?:\s+hypervisor)?',
         "microsoft:exchange": r'microsoft\s+exchange|exchange\s+server',
+
+        # Java/Infra
+        "jenkins:jenkins": r'jenkins(?:\s+ci)?|jenkins(?:\s+automation)?',
+        "atlassian:confluence": r'atlassian\s+confluence|confluence',
+        "atlassian:jira": r'atlassian\s+jira|jira',
     }
 
     @staticmethod
