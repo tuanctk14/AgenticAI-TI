@@ -4,13 +4,14 @@ tools/cve_parser.py - CPE-first architecture for analyst-grade CVE asset matchin
 Hierarchy:
 1. CPE extraction (gold source - structured, machine-readable)
 2. Software normalization (handle aliases: apache2 → apache:http_server)
-3. Fuzzy semantic matching (for internal asset correlation)
-4. NER/LLM fallback (for CVEs without CPE)
+3. Product extraction (regex patterns + entity matching when CPE unavailable)
+4. Confidence scoring (high/medium/low with manual review flags)
 5. Description parsing (last resort - noisy, inconsistent)
 """
 import re
 from typing import Dict, List, Optional, Tuple
 from packaging import version as pkg_version
+from tools.product_extractor import extract_product_metadata, match_confidence_score
 
 # Software normalization layer (ANALYST-GRADE)
 SOFTWARE_NORMALIZATION = {
@@ -300,7 +301,23 @@ def parse_cve_metadata(cve_dict: dict) -> dict:
             return result
 
     # ────────────────────────────────────────────────────────────
-    # PHASE 2: DESCRIPTION PARSING (FALLBACK)
+    # PHASE 2: PRODUCT EXTRACTION (ANALYST-GRADE INFERENCE)
+    # ────────────────────────────────────────────────────────────
+    if description:
+        extracted = extract_product_metadata(cve_dict)
+        if extracted.get("vendor") and extracted.get("product"):
+            result["vendor"] = extracted["vendor"]
+            result["product"] = extracted["product"]
+            result["version"] = extracted.get("version")
+            result["normalized_software_id"] = f"{extracted['vendor']}:{extracted['product']}"
+            result["source"] = f"product_extraction_{extracted['source']}"
+            result["extraction_confidence"] = extracted["confidence"]
+            result["needs_analyst_review"] = extracted["needs_review"]
+            result["extraction_aliases"] = extracted["aliases"]
+            return result
+
+    # ────────────────────────────────────────────────────────────
+    # PHASE 3: LEGACY DESCRIPTION PARSING (FALLBACK)
     # ────────────────────────────────────────────────────────────
     if description:
         product_info = DescriptionParser.extract_product_info(description)
@@ -318,7 +335,7 @@ def parse_cve_metadata(cve_dict: dict) -> dict:
             result["version"] = version_match.group(1)
 
     # ────────────────────────────────────────────────────────────
-    # PHASE 3: OS/PLATFORM DETECTION
+    # PHASE 4: OS/PLATFORM DETECTION
     # ────────────────────────────────────────────────────────────
     if description:
         desc_lower = description.lower()
