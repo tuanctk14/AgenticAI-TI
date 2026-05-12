@@ -138,11 +138,11 @@ class DescriptionParser:
     # Application patterns with normalized software IDs
     # Ordered by priority (more specific patterns first)
     APP_PATTERNS = {
-        # Apache products (specific first)
-        "apache:log4j": r'apache\s+log4j2?|log4j2?(?:\s+log4j)?',
-        "apache:activemq": r'apache\s+activemq|activemq(?:\s+broker)?',
-        "apache:http_server": r'apache\s+(?:http\s+)?server|httpd|apache2|apache(?:\s+web)?',
-        "apache:tomcat": r'apache\s+tomcat|tomcat',
+        # Apache products (specific first - MORE RESTRICTIVE to avoid false positives)
+        "apache:log4j": r'apache\s+log4j2?|^log4j|log4j\s+library',
+        "apache:activemq": r'apache\s+activemq|activemq\s+broker|activemq\s+message',
+        "apache:http_server": r'apache\s+(?:http|web|server)|httpd|apache2',
+        "apache:tomcat": r'apache\s+tomcat|tomcat\s+server',
 
         # Middleware & Frameworks
         "spring:framework": r'spring\s+(?:framework|boot|data)',
@@ -374,25 +374,32 @@ def match_app_in_device(
                 }
 
     # ────────────────────────────────────────────────────────────
-    # PHASE 2: KEYWORD FALLBACK
+    # PHASE 2: KEYWORD FALLBACK (MORE RESTRICTIVE)
+    # Only match if vendor+product keywords both appear or product appears prominently
     # ────────────────────────────────────────────────────────────
-    keywords = [cve_vendor, cve_metadata.get("product")]
-    keywords = [k for k in keywords if k]
+    cve_product = cve_metadata.get("product", "").lower()
+    cve_vendor_lower = cve_vendor.lower() if cve_vendor else ""
 
-    for keyword in keywords:
-        if not keyword:
-            continue
+    for software in device_software:
+        sw_name_lower = software.get("name", "").lower()
+        sw_normalized = normalize_software_name(software.get("name", ""))
 
-        for software in device_software:
-            sw_name = software.get("name", "").lower()
-            if keyword.lower() in sw_name:
-                return {
-                    "matched": True,
-                    "software_name": software.get("name"),
-                    "device_version": software.get("version"),
-                    "normalized_id": None,
-                    "match_type": "keyword_fallback",
-                }
+        # Only do keyword fallback if we have high confidence:
+        # 1. Product keyword clearly appears (not just vendor)
+        # 2. OR product keyword + vendor keyword both appear
+        product_in_name = cve_product and cve_product in sw_name_lower
+        both_in_name = cve_vendor_lower and cve_product and (cve_vendor_lower in sw_name_lower and cve_product in sw_name_lower)
+
+        # Avoid false positives: if vendor matches but product doesn't, skip
+        # e.g., "apache" vendor + "log4j" product should NOT match "Apache HTTP Server"
+        if both_in_name or (product_in_name and len(cve_product) > 2):
+            return {
+                "matched": True,
+                "software_name": software.get("name"),
+                "device_version": software.get("version"),
+                "normalized_id": None,
+                "match_type": "keyword_fallback",
+            }
 
     return {
         "matched": False,
