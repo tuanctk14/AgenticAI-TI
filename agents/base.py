@@ -221,53 +221,68 @@ MANDATORY RULES:
 
     "agent_analyst": {
         "role": "Threat Analysis Agent - Phân tích MITRE ATT&CK và NIST SP 800-53",
-        "system_instruction": """Bạn là Threat Analysis Agent. Nhiệm vụ: Phân tích CVE → MITRE ATT&CK techniques và NIST controls từ dữ liệu đã có.
+        "system_instruction": """Bạn là Threat Analysis Agent. Nhiệm vụ: Phân tích CVE → MITRE ATT&CK techniques và NIST controls từ matched_devices.
 
-RULES:
-1. KHÔNG gọi tools - dữ liệu MITRE + NIST ĐANG CÓ trong state['matched_devices']
-2. Mỗi device match có: mitre_techniques[], nist_controls[]
-3. Trích xuất + tổng hợp + OUTPUT ANSWER
+DỮ LIỆU ĐẦU VÀO:
+- state['matched_devices'] = danh sách device bị ảnh hưởng
+- Mỗi device trong matched_devices CÓ:
+  * device_id, hostname
+  * cwe_ids: ["20", "400", "502", ...]
+  * mitre_techniques: [{id: "T1190", name: "Exploit...", description: "...", tactics: ["Initial Access"]}, ...]
+  * nist_controls: [{id: "SI-10", name: "Control SI-10", description: "...", family: "SI"}, ...]
 
-WORKFLOW - CHỈ 1 LAN (KHÔNG GỌI TOOLS):
+WORKFLOW: Chỉ 1 pass, KHÔNG gọi tools
 
-ANSWER FORMAT:
+STEP 1: LẤY DỮ LIỆU TỪNG DEVICE
+Với MỖI device trong matched_devices, trích xuất:
+- Device info: device_id, hostname, affected_software
+- CWE IDs list
+- MITRE techniques list (từ mitre_techniques array)
+- NIST controls list (từ nist_controls array)
+
+STEP 2: TỔNG HỢP VÀ LIỆT KÊ
 
 [MITRE ATT&CK Techniques từ CWE Analysis]
-Liệt kê từ state['matched_devices'][x]['mitre_techniques']:
-- Technique ID: <ID> - <Name>
-  Tactic: <tactic>
-  Description: <description>
+Nếu HAS techniques (mitre_techniques NOT empty):
+  Với MỖI technique trong mitre_techniques:
+  - <ID>: <Name>
+    Tactic: <tactic từ tactics array>
+    Description: <description>
+Nếu NO techniques (rỗng):
+  Không có MITRE mapping cho CWE này, inference từ CVE description...
 
 [NIST SP 800-53 Controls từ CWE Analysis]
-Liệt kê từ state['matched_devices'][x]['nist_controls']:
-- Control ID: <ID> - <Name>
-  Family: <family>
-  Description: <description>
+Nếu HAS controls (nist_controls NOT empty):
+  Với MỖI control trong nist_controls:
+  - <ID>: <Name>
+    Family: <family>
+    Description: <description>
+Nếu NO controls (rỗng):
+  Không có NIST mapping cho CWE này, propose general controls...
 
 [Remediation dựa trên MITRE Techniques và NIST Controls]
 
 BƯỚC 0 (GENERIC):
 0. Patch <product_name> to latest version with security fixes.
-   (Extract product từ CVE description hoặc affected_software từ device match)
+   (Lấy product từ affected_software của device)
 
-BƯỚC 1+ (CỤ THỂ CHO TỪNG TECHNIQUE):
-Với MỖI technique từ mitre_techniques:
-<Technique ID> - <Technique Name>:
-1. <action cụ thể để mitigate technique này>
-2. <action cụ thể để mitigate technique này>
+BƯỚC 1+ (CỤ THỂ):
+Với MỖI technique có trong mitre_techniques:
+<TechID> - <TechName>:
+1. <action mitigate cụ thể>
+2. <action mitigate cụ thể>
 
-BƯỚC CUỐI (CỤ THỂ CHO TỪNG NIST CONTROL):
-Với MỖI control từ nist_controls:
-<Control ID> - <Control Name>:
-1. <action cụ thể để implement control này>
-2. <action cụ thể để implement control này>
+Với MỖI control có trong nist_controls:
+<ControlID> - <ControlName>:
+1. <action implement cụ thể>
+2. <action implement cụ thể>
 
-IMPORTANT:
-- LUÔN liệt kê ID + Name từ dữ liệu state
-- LUÔN CÓ bước 0 (Patch...)
-- Mỗi action PHẢI cụ thể + mapping đến technique/control
+CRITICAL:
+- EXTRACT VÀ IN RA DỮ LIỆU THỰC từ mitre_techniques[] và nist_controls[]
+- KHÔNG VIẾT "Liệt kê từ state[...]" - đó là HƯỚNG DẪN, không phải output
+- LUÔN có MITRE + NIST + Remediation
 - Kết thúc "Kết thúc."
-- KHÔNG HANDOFF, KHÔNG GỌI TOOLS""",
+- KHÔNG GỌI TOOLS, KHÔNG HANDOFF""",
     },
 
     "agent_doc": {
@@ -841,7 +856,40 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
         if len(cves) > 5:
             context_text += f"  ... va {len(cves) - 5} CVEs khac\n"
     if devices:
-        context_text += f"\n\nThiet bi bi anh huong ({len(devices)} total)"
+        context_text += f"\n\nThiet bi bi anh huong ({len(devices)} total):\n"
+        for device in devices:
+            context_text += f"\n  Device: {device.get('device_id')} ({device.get('hostname')})\n"
+            context_text += f"    Software: {device.get('affected_software')} {device.get('device_version', '')}\n"
+            context_text += f"    CWE IDs: {device.get('cwe_ids', [])}\n"
+
+            # MITRE data
+            mitre_techs = device.get('mitre_techniques', [])
+            if mitre_techs:
+                context_text += f"    MITRE Techniques ({len(mitre_techs)}):\n"
+                for t in mitre_techs:
+                    tactics_str = ', '.join(t.get('tactics', []))
+                    context_text += f"      - {t.get('id')}: {t.get('name')} (Tactic: {tactics_str})\n"
+                    if t.get('description'):
+                        desc = t.get('description')
+                        if len(desc) > 100:
+                            desc = desc[:100] + "..."
+                        context_text += f"        Description: {desc}\n"
+            else:
+                context_text += f"    MITRE Techniques: None\n"
+
+            # NIST data
+            nist_ctrls = device.get('nist_controls', [])
+            if nist_ctrls:
+                context_text += f"    NIST Controls ({len(nist_ctrls)}):\n"
+                for n in nist_ctrls:
+                    context_text += f"      - {n.get('id')}: {n.get('name')} (Family: {n.get('family')})\n"
+                    if n.get('description'):
+                        desc = n.get('description')
+                        if len(desc) > 100:
+                            desc = desc[:100] + "..."
+                        context_text += f"        Description: {desc}\n"
+            else:
+                context_text += f"    NIST Controls: None\n"
 
     user_content = (
         f"Yeu cau: {state.get('query', '')}"
