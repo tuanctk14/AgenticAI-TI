@@ -313,7 +313,11 @@ def parse_cve_metadata(cve_dict: dict) -> dict:
             result["component"] = extracted.get("component")
             result["component_type"] = extracted.get("component_type")
             result["version"] = extracted.get("version")
-            result["normalized_software_id"] = f"{extracted['vendor']}:{extracted['product']}"
+            # For components, use vendor:component as normalized ID; otherwise vendor:product
+            if extracted.get("component"):
+                result["normalized_software_id"] = f"{extracted['vendor']}:{extracted['component']}"
+            else:
+                result["normalized_software_id"] = f"{extracted['vendor']}:{extracted['product']}"
             result["source"] = f"product_extraction_{extracted['source']}"
             result["extraction_confidence"] = extracted["confidence"]
             result["needs_analyst_review"] = extracted["needs_review"]
@@ -389,27 +393,95 @@ def compare_versions(device_version: str, vulnerable_max: str, vulnerable_min: s
 
 def match_app_in_device(
     cve_metadata: dict,
-    device_software: list
+    device_software: list,
+    device: dict = None
 ) -> Dict[str, any]:
     """
-    ANALYST-GRADE asset matching using normalized software IDs
+    ANALYST-GRADE asset matching using normalized software IDs + component detection
 
-    Uses software normalization layer to handle aliases:
-    - "apache2" → "apache:http_server"
-    - "httpd" → "apache:http_server"
-    - "Exchange Server" → "microsoft:exchange_server"
+    Hierarchy:
+    1. Component matching (exact plugin/module version match: 95% confidence)
+    2. Platform matching (WordPress core version match: 70% confidence)
+    3. Normalized ID matching (e.g., apache:http_server: 80% confidence)
+    4. Keyword fallback (e.g., partial name match: 50% confidence)
 
     Returns: {
         matched: bool,
         software_name: str or None,
         device_version: str or None,
         normalized_id: str or None,
-        match_type: "exact_normalized", "keyword_fallback", "none"
+        match_type: "exact_component", "platform_match", "exact_normalized", "keyword_fallback", "none",
+        confidence: 0-100,
+        component: str or None,
+        component_type: str or None
     }
     """
     normalized_cve_id = cve_metadata.get("normalized_software_id")
     cve_vendor = cve_metadata.get("vendor")
     cve_version = cve_metadata.get("version")
+    cve_component = cve_metadata.get("component")
+    cve_component_type = cve_metadata.get("component_type")
+
+    # ────────────────────────────────────────────────────────────
+    # PHASE 0: COMPONENT MATCHING (HIGHEST CONFIDENCE)
+    # For CMS plugins/modules (WordPress, Drupal, Joomla)
+    # ────────────────────────────────────────────────────────────
+    if device and cve_component and cve_component_type == "plugin":
+        # Check platform first
+        platform = device.get("platform", {})
+        platform_name = platform.get("name", "").lower() if platform else ""
+
+        if platform_name == cve_vendor.lower():
+            # Check plugins array
+            plugins = device.get("plugins", [])
+            for plugin in plugins:
+                plugin_name = plugin.get("name", "").lower()
+                plugin_version = plugin.get("version")
+
+                if plugin_name == cve_component.lower():
+                    if cve_version and compare_versions(plugin_version, cve_version):
+                        return {
+                            "matched": True,
+                            "software_name": f"{cve_vendor}:{cve_component}",
+                            "device_version": plugin_version,
+                            "normalized_id": f"{cve_vendor}:{cve_component}",
+                            "match_type": "exact_component",
+                            "confidence": 95,
+                            "component": cve_component,
+                            "component_type": "plugin"
+                        }
+                    else:
+                        return {
+                            "matched": True,
+                            "software_name": f"{cve_vendor}:{cve_component}",
+                            "device_version": plugin_version,
+                            "normalized_id": f"{cve_vendor}:{cve_component}",
+                            "match_type": "exact_component",
+                            "confidence": 85,
+                            "component": cve_component,
+                            "component_type": "plugin"
+                        }
+
+    # ────────────────────────────────────────────────────────────
+    # PHASE 0.5: PLATFORM MATCHING (WordPress core version)
+    # ────────────────────────────────────────────────────────────
+    if device and cve_vendor and cve_vendor.lower() in ["wordpress", "drupal", "joomla"]:
+        platform = device.get("platform", {})
+        platform_name = platform.get("name", "").lower() if platform else ""
+
+        if platform_name == cve_vendor.lower():
+            platform_version = platform.get("version")
+            if platform_version and cve_version and compare_versions(platform_version, cve_version):
+                return {
+                    "matched": True,
+                    "software_name": cve_vendor,
+                    "device_version": platform_version,
+                    "normalized_id": f"{cve_vendor}:{cve_vendor}",
+                    "match_type": "platform_match",
+                    "confidence": 70,
+                    "component": None,
+                    "component_type": None
+                }
 
     # ────────────────────────────────────────────────────────────
     # PHASE 1: EXACT NORMALIZED ID MATCHING
@@ -426,6 +498,9 @@ def match_app_in_device(
                     "device_version": software.get("version"),
                     "normalized_id": normalized_cve_id,
                     "match_type": "exact_normalized",
+                    "confidence": 80,
+                    "component": None,
+                    "component_type": None
                 }
 
     # ────────────────────────────────────────────────────────────
@@ -454,6 +529,9 @@ def match_app_in_device(
                 "device_version": software.get("version"),
                 "normalized_id": None,
                 "match_type": "keyword_fallback",
+                "confidence": 50,
+                "component": None,
+                "component_type": None
             }
 
     return {
@@ -462,6 +540,9 @@ def match_app_in_device(
         "device_version": None,
         "normalized_id": None,
         "match_type": "none",
+        "confidence": 0,
+        "component": None,
+        "component_type": None
     }
 
 

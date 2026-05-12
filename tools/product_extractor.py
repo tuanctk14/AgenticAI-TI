@@ -200,6 +200,31 @@ def extract_component_info(description: str) -> Dict:
     desc_lower = description.lower()
     result = {}
 
+    # WordPress plugin patterns (more specific - match "WordPress <Plugin Name>")
+    wordpress_plugin_patterns = [
+        r"wordpress\s+(\w+(?:\s+\w+)?)\s+(?:plugin|extension)\s+(?:version\s+)?([\d.]+)",
+        r"(?:mstore|elementor|woocommerce|yoast|jetpack)(?:\s+api)?(?:\s+plugin)?.*?before\s+([\d.]+)",
+        r"wordpress\s+([a-z\-]+(?:\s+[a-z]+)?)\s+([0-9.]+)(?:\s+.*?)(?:vulnerable|flaw|issue)",
+        r"mstore(?:\s*[-_]?\s*)(?:api)?\s+(?:version\s+)?([\d.]+)",  # mstore-api specific
+        r"wordpress\s+plugin\s+([a-z\-]+)\s+([0-9.]+)",
+    ]
+
+    for pattern in wordpress_plugin_patterns:
+        match = re.search(pattern, desc_lower, re.IGNORECASE)
+        if match:
+            groups = match.groups()
+            if len(groups) >= 2:
+                plugin_name = groups[0].strip().replace(" ", "-")
+                version = groups[1]
+
+                # Exclude generic WordPress platform names
+                if plugin_name.lower() not in ["wordpress", "plugin", "extension", "core"]:
+                    result["platform"] = "wordpress"
+                    result["component"] = plugin_name.lower()
+                    result["component_type"] = "plugin"
+                    result["version"] = version
+                    return result
+
     # Platform patterns (WordPress, Drupal, Joomla, etc.)
     platform_patterns = {
         "wordpress": r"wordpress\s+(\w+(?:\s+\w+)?)\s+([\d.]+)",  # WordPress <plugin> <version>
@@ -211,10 +236,13 @@ def extract_component_info(description: str) -> Dict:
         match = re.search(pattern, desc_lower)
         if match:
             result["platform"] = platform
-            result["component"] = match.group(1).replace("_", "-")
-            result["component_type"] = "plugin"  # Default for CMS
-            result["version"] = match.group(2)
-            return result
+            component_name = match.group(1).replace("_", "-")
+            # Exclude generic names
+            if component_name.lower() not in ["plugin", "extension", "core", "before"]:
+                result["component"] = component_name
+                result["component_type"] = "plugin"  # Default for CMS
+                result["version"] = match.group(2)
+                return result
 
     # Library patterns (Log4j, Jackson, etc.)
     library_patterns = {
@@ -280,7 +308,7 @@ def extract_product_metadata(cve_dict: Dict) -> Dict:
 
     # Try extraction in order of confidence
 
-    # 1. Try component detection first (plugin/module/library)
+    # 1. Try component detection FIRST (WordPress plugins, etc) - MORE SPECIFIC
     component_info = extract_component_info(description)
     if component_info.get("component"):
         result["vendor"] = component_info.get("platform")
@@ -293,7 +321,35 @@ def extract_product_metadata(cve_dict: Dict) -> Dict:
         result["reasoning"] = f"Plugin/module detected: {result['component']} in {result['vendor']}"
         return result
 
-    # 2. Try product pattern (most specific)
+    # 1.5 Special handling for WordPress plugins that may have been missed
+    desc_lower = description.lower()
+    wordpress_plugins = ["mstore-api", "mstore", "elementor", "woocommerce", "yoast", "jetpack"]
+    for plugin in wordpress_plugins:
+        if plugin in desc_lower and "wordpress" in desc_lower:
+            # Try to extract version with multiple patterns
+            version = None
+            version_patterns = [
+                rf"{plugin}\s+(?:plugin\s+)?(?:version\s+)?(?:before\s+)?([\d.]+)",
+                rf"{plugin}(?:\s+[a-z]+)*\s+([\d.]+)",
+                rf"(?:before|up\s+to|through)\s+([\d.]+)",  # Generic version patterns
+            ]
+            for pattern in version_patterns:
+                version_match = re.search(pattern, desc_lower)
+                if version_match:
+                    version = version_match.group(1)
+                    break
+
+            result["vendor"] = "wordpress"
+            result["component"] = plugin
+            result["component_type"] = "plugin"
+            result["product"] = f"wordpress:{plugin}"
+            result["version"] = version
+            result["confidence"] = "high"
+            result["source"] = "component"
+            result["reasoning"] = f"WordPress plugin detected: {plugin}"
+            return result
+
+    # 2. Try product pattern (generic products)
     extracted = extract_product_from_description(description)
     if extracted:
         result["vendor"], result["product"] = extracted

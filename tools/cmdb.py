@@ -69,8 +69,8 @@ def match_cves_with_cmdb(cve_list: list) -> dict:
         for device in CMDB_DEVICES:
             device_software = device.get("software", [])
 
-            # Use analyst-grade matching function
-            match_result = match_app_in_device(cve_metadata, device_software)
+            # Use analyst-grade matching function with full device context
+            match_result = match_app_in_device(cve_metadata, device_software, device)
 
             if match_result.get("matched"):
                 risk = (
@@ -81,23 +81,26 @@ def match_cves_with_cmdb(cve_list: list) -> dict:
                 )
 
                 matches.append({
-                    "cve_id":            cve_id,
-                    "cvss_score":        cve_score,
-                    "risk_level":        risk,
-                    "device_id":         device["device_id"],
-                    "hostname":          device["hostname"],
-                    "ip":                device["ip"],
-                    "department":        device["department"],
-                    "criticality":       device["criticality"],
-                    "affected_software": match_result.get("software_name", "Unknown"),
-                    "device_version":    match_result.get("device_version", "Unknown"),
-                    "os":                f"{device['os']} {device['os_version']}",
-                    "location":          device["location"],
-                    "match_type":        match_result.get("match_type", "unknown"),
-                    "cve_source":        cve_source,  # gold_cpe or description_inference
-                    "cwe_ids":           cwe_analysis.get("cwe_ids", []),
-                    "mitre_techniques":  cwe_analysis.get("mitre_techniques", []),
-                    "nist_controls":     cwe_analysis.get("nist_controls", []),
+                    "cve_id":              cve_id,
+                    "cvss_score":          cve_score,
+                    "risk_level":          risk,
+                    "device_id":           device["device_id"],
+                    "hostname":            device["hostname"],
+                    "ip":                  device["ip"],
+                    "department":          device["department"],
+                    "criticality":         device["criticality"],
+                    "affected_software":   match_result.get("software_name", "Unknown"),
+                    "device_version":      match_result.get("device_version", "Unknown"),
+                    "os":                  f"{device['os']} {device['os_version']}",
+                    "location":            device["location"],
+                    "match_type":          match_result.get("match_type", "unknown"),
+                    "match_confidence":    match_result.get("confidence", 0),
+                    "component":           match_result.get("component"),
+                    "component_type":      match_result.get("component_type"),
+                    "cve_source":          cve_source,
+                    "cwe_ids":             cwe_analysis.get("cwe_ids", []),
+                    "mitre_techniques":    cwe_analysis.get("mitre_techniques", []),
+                    "nist_controls":       cwe_analysis.get("nist_controls", []),
                 })
 
     # Sắp xếp theo nguy cơ

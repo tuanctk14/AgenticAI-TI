@@ -6,14 +6,19 @@
     "type": "Server",
     "os": "Windows Server 2019",
     "os_version": "10.0.17763",
+    "platform": {"name": "apache", "version": "2.4.49"},
+    "components": [
+      {"type": "library", "name": "openssl", "version": "1.0.2k"},
+      {"type": "language", "name": "php", "version": "7.4.3"}
+    ],
+    "criticality": "HIGH",
+    "department": "IT",
+    "location": "HaNoi-DC1",
     "software": [
       {"name": "Apache HTTP Server", "version": "2.4.49"},
       {"name": "OpenSSL",            "version": "1.0.2k"},
       {"name": "PHP",                "version": "7.4.3"}
-    ],
-    "criticality": "HIGH",
-    "department": "IT",
-    "location": "HaNoi-DC1"
+    ]
   },
   {
     "device_id": "SRV-002",
@@ -22,14 +27,19 @@
     "type": "Server",
     "os": "Ubuntu",
     "os_version": "20.04",
+    "platform": {"name": "mysql", "version": "8.0.26"},
+    "components": [
+      {"type": "service", "name": "openssh", "version": "8.2p1"},
+      {"type": "library", "name": "log4j", "version": "2.14.1"}
+    ],
+    "criticality": "CRITICAL",
+    "department": "Finance",
+    "location": "HaNoi-DC1",
     "software": [
       {"name": "MySQL",   "version": "8.0.26"},
       {"name": "OpenSSH", "version": "8.2p1"},
       {"name": "log4j",   "version": "2.14.1"}
-    ],
-    "criticality": "CRITICAL",
-    "department": "Finance",
-    "location": "HaNoi-DC1"
+    ]
   },
   {
     "device_id": "PC-001",
@@ -38,14 +48,20 @@
     "type": "Workstation",
     "os": "Windows 10",
     "os_version": "21H2",
+    "platform": {"name": "windows", "version": "10"},
+    "components": [
+      {"type": "application", "name": "microsoft-office", "version": "2019"},
+      {"type": "application", "name": "chrome", "version": "109.0.5414"},
+      {"type": "application", "name": "adobe-acrobat", "version": "21.011"}
+    ],
+    "criticality": "MEDIUM",
+    "department": "Finance",
+    "location": "HaNoi-Office",
     "software": [
       {"name": "Microsoft Office", "version": "2019"},
       {"name": "Chrome",           "version": "109.0.5414"},
       {"name": "Adobe Acrobat",    "version": "21.011"}
-    ],
-    "criticality": "MEDIUM",
-    "department": "Finance",
-    "location": "HaNoi-Office"
+    ]
   },
   {
     "device_id": "FW-001",
@@ -54,12 +70,14 @@
     "type": "Network Device",
     "os": "Cisco IOS",
     "os_version": "15.7",
-    "software": [
-      {"name": "Cisco IOS", "version": "15.7(3)M6"}
-    ],
+    "platform": {"name": "cisco-ios", "version": "15.7(3)M6"},
+    "components": [],
     "criticality": "CRITICAL",
     "department": "Network",
-    "location": "HaNoi-DC1"
+    "location": "HaNoi-DC1",
+    "software": [
+      {"name": "Cisco IOS", "version": "15.7(3)M6"}
+    ]
   },
   {
     "device_id": "SRV-003",
@@ -68,14 +86,19 @@
     "type": "Server",
     "os": "CentOS",
     "os_version": "7.9",
+    "platform": {"name": "tomcat", "version": "9.0.58"},
+    "components": [
+      {"type": "framework", "name": "spring-framework", "version": "5.3.18"},
+      {"type": "runtime", "name": "openjdk", "version": "11.0.14"}
+    ],
+    "criticality": "HIGH",
+    "department": "Development",
+    "location": "HaNoi-DC2",
     "software": [
       {"name": "Spring Framework", "version": "5.3.18"},
       {"name": "Tomcat",           "version": "9.0.58"},
       {"name": "OpenJDK",          "version": "11.0.14"}
-    ],
-    "criticality": "HIGH",
-    "department": "Development",
-    "location": "HaNoi-DC2"
+    ]
   },
   {
     "device_id": "SRV-004",
@@ -84,15 +107,25 @@
     "type": "Server",
     "os": "Ubuntu",
     "os_version": "20.04",
+    "platform": {"name": "wordpress", "version": "6.0"},
+    "plugins": [
+      {"name": "mstore-api", "version": "2.0.6"},
+      {"name": "download-from-files", "version": "1.48"}
+    ],
+    "components": [
+      {"type": "webserver", "name": "apache", "version": "2.4.41"},
+      {"type": "language", "name": "php", "version": "7.4.3"},
+      {"type": "database", "name": "mysql", "version": "8.0.28"}
+    ],
+    "criticality": "HIGH",
+    "department": "Marketing",
+    "location": "HaNoi-Office",
     "software": [
       {"name": "WordPress",                        "version": "6.0"},
       {"name": "WordPress Plugin Download From Files", "version": "1.48"},
       {"name": "Apache HTTP Server",               "version": "2.4.41"},
       {"name": "PHP",                              "version": "7.4.3"},
       {"name": "MySQL",                            "version": "8.0.28"}
-    ],
-    "criticality": "HIGH",
-    "department": "Marketing",
-    "location": "HaNoi-Office"
+    ]
   }
 ]
