@@ -7,11 +7,14 @@ Hierarchy:
 3. Product extraction (regex patterns + entity matching when CPE unavailable)
 4. Confidence scoring (high/medium/low with manual review flags)
 5. Description parsing (last resort - noisy, inconsistent)
+6. Date validation (sanity check for published date)
 """
 import re
 from typing import Dict, List, Optional, Tuple
+from datetime import datetime
 from packaging import version as pkg_version
 from tools.product_extractor import extract_product_metadata, match_confidence_score
+from tools.date_validator import DateValidator
 
 # Software normalization layer (ANALYST-GRADE)
 SOFTWARE_NORMALIZATION = {
@@ -263,7 +266,20 @@ def parse_cve_metadata(cve_dict: dict) -> dict:
         "affected_os": None,
         "cwe_ids": cwe_ids,
         "source": "none",  # gold_cpe, component, pattern, inference, fallback
+        "date_valid": True,  # CVE date sanity check
+        "date_warnings": [],  # Date validation warnings
     }
+
+    # ────────────────────────────────────────────────────────────
+    # DATE VALIDATION (SANITY CHECK)
+    # ────────────────────────────────────────────────────────────
+    published_date = cve_dict.get("published_date")
+    if published_date:
+        date_validation = DateValidator.validate_published_date(cve_id, published_date)
+        result["date_valid"] = date_validation["is_valid"]
+        result["date_warnings"].extend(date_validation["errors"])
+        result["date_warnings"].extend(date_validation["warnings"])
+
 
     # ────────────────────────────────────────────────────────────
     # PHASE 1: CPE EXTRACTION (GOLD SOURCE)

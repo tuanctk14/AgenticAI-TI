@@ -50,10 +50,16 @@ def match_cves_with_cmdb(cve_list: list) -> dict:
         cve_id = cve.get("id", "").upper()
         normalized_sw_id = cve_metadata.get("normalized_software_id")
         cve_source = cve_metadata.get("source")
+        date_valid = cve_metadata.get("date_valid", True)
+        date_warnings = cve_metadata.get("date_warnings", [])
 
         # Skip if no software identified
         if not normalized_sw_id:
             continue
+
+        # Flag if date validation found issues
+        if not date_valid:
+            print(f"  [WARN] {cve_id}: Date validation failed - {date_warnings}")
 
         # Handle CVSS score
         cvss_raw = cve.get("cvss_score", 0)
@@ -98,6 +104,8 @@ def match_cves_with_cmdb(cve_list: list) -> dict:
                     "component":           match_result.get("component"),
                     "component_type":      match_result.get("component_type"),
                     "cve_source":          cve_source,
+                    "date_valid":          date_valid,
+                    "date_warnings":       date_warnings,
                     "cwe_ids":             cwe_analysis.get("cwe_ids", []),
                     "mitre_techniques":    cwe_analysis.get("mitre_techniques", []),
                     "nist_controls":       cwe_analysis.get("nist_controls", []),
