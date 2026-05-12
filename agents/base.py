@@ -8,8 +8,6 @@ from tools.nvd_client       import fetch_nvd_cves, fetch_cve_by_id
 from tools.opencti_client   import fetch_opencti_indicators
 from tools.cmdb             import match_cves_with_cmdb, list_all_devices
 from tools.analyzer         import aggregate_cves_by_device, get_unique_cves_per_device, summarize_device_risks
-from tools.mitre            import get_mitre_attack_info
-from tools.nist             import get_nist_controls
 from tools.report_generator import generate_report, list_reports
 from tools.doc_store        import (
     upload_document, load_knowledge_base, get_knowledge_base_stats,
@@ -28,8 +26,6 @@ TOOLS_MAPPING = {
     "aggregate_cves_by_device":    aggregate_cves_by_device,
     "get_unique_cves_per_device":  get_unique_cves_per_device,
     "summarize_device_risks":      summarize_device_risks,
-    "get_mitre_attack_info":       get_mitre_attack_info,
-    "get_nist_controls":           get_nist_controls,
     "generate_report":             generate_report,
     "list_reports":                list_reports,
     "upload_document":             upload_document,
@@ -225,86 +221,53 @@ MANDATORY RULES:
 
     "agent_analyst": {
         "role": "Threat Analysis Agent - Phân tích MITRE ATT&CK và NIST SP 800-53",
-        "system_instruction": """Bạn là Threat Analysis Agent. Nhiệm vụ: Ánh xạ CVE → MITRE ATT&CK techniques và NIST controls.
+        "system_instruction": """Bạn là Threat Analysis Agent. Nhiệm vụ: Phân tích CVE → MITRE ATT&CK techniques và NIST controls từ dữ liệu đã có.
 
 RULES:
-1. Khi có CVE từ state['collected_cves'] → GỌI CẢ 2 TOOLS
-2. Gọi get_mitre_attack_info với CVE ID
-3. Gọi get_nist_controls với CVE ID
-4. LAN 2: CHỈ ANSWER với MITRE + NIST + Remediation dựa trên techniques
+1. KHÔNG gọi tools - dữ liệu MITRE + NIST ĐANG CÓ trong state['matched_devices']
+2. Mỗi device match có: mitre_techniques[], nist_controls[]
+3. Trích xuất + tổng hợp + OUTPUT ANSWER
 
-WORKFLOW:
-LAN 1: GỌI TOOLS DÙNG (cho mỗi CVE) - CHỈ OUTPUT ACTION, KHÔNG OUTPUT ANSWER
+WORKFLOW - CHỈ 1 LAN (KHÔNG GỌI TOOLS):
 
-ACTION: get_mitre_attack_info
-ARGUMENTS: {"cve_id": "<lấy từ CVE>"}
+ANSWER FORMAT:
 
-ACTION: get_nist_controls
-ARGUMENTS: {"cve_id": "<lấy từ CVE>"}
+[MITRE ATT&CK Techniques từ CWE Analysis]
+Liệt kê từ state['matched_devices'][x]['mitre_techniques']:
+- Technique ID: <ID> - <Name>
+  Tactic: <tactic>
+  Description: <description>
 
-[QUAN TRỌNG: LAN 1 CHỈ GỌI TOOLS. KHÔNG OUTPUT REMEDIATION Ở LAN NÀY]
-
-LAN 2: ANSWER CHỈ TIẾT (KHÔNG lặp lại thiết bị - đã có ở trên) - DÙNG TOOL RESULTS TỪ LAN 1
-
-ANSWER FORMAT - TÓM TẮT:
-
-[MITRE ATT&CK Techniques]
-- Nếu CÓ dữ liệu: Liệt kê Technique ID, Tactic, Description, Threat Actors
-- Nếu KHÔNG dữ liệu: Phân tích CVE description để suy ra vector tấn công (RCE, XSS, Auth bypass, etc.)
-
-[NIST SP 800-53 Controls]
-- Nếu CÓ dữ liệu: Liệt kê Control IDs và mô tả
-- Nếu KHÔNG dữ liệu: Đề xuất controls thích hợp dựa trên loại lỗ hổng (CVSS score, CVE description)
+[NIST SP 800-53 Controls từ CWE Analysis]
+Liệt kê từ state['matched_devices'][x]['nist_controls']:
+- Control ID: <ID> - <Name>
+  Family: <family>
+  Description: <description>
 
 [Remediation dựa trên MITRE Techniques và NIST Controls]
-LUÔN OUTPUT CỤ THỂ MAPPING với dữ liệu từ tools. Format:
 
 BƯỚC 0 (GENERIC):
-0. Extract product name từ CVE description (ví dụ: "WordPress MStore API 2.0.6", "Apache Log4j 2.x", "OpenSSL 1.x")
-   Patch <product_name> to latest version with security fixes.
+0. Patch <product_name> to latest version with security fixes.
+   (Extract product từ CVE description hoặc affected_software từ device match)
 
 BƯỚC 1+ (CỤ THỂ CHO TỪNG TECHNIQUE):
-Liệt kê TẤT CẢ techniques từ tool result:
+Với MỖI technique từ mitre_techniques:
 <Technique ID> - <Technique Name>:
-1. <action cụ thể mapping đến technique này>
-2. <action cụ thể mapping đến technique này>
+1. <action cụ thể để mitigate technique này>
+2. <action cụ thể để mitigate technique này>
 
 BƯỚC CUỐI (CỤ THỂ CHO TỪNG NIST CONTROL):
-Liệt kê TẤT CẢ controls từ tool result:
+Với MỖI control từ nist_controls:
 <Control ID> - <Control Name>:
-1. <action cụ thể mapping đến control này>
-2. <action cụ thể mapping đến control này>
-
-VÍ DỤ ĐÚNG (CVE RCE file upload - OpenCATS):
-[Remediation dựa trên MITRE Techniques và NIST Controls]
-0. Patch OpenCATS to latest version with security fixes.
-
-T1203 - Exploitation of Remote Services:
-1. Restrict file upload endpoints to authenticated users only
-2. Validate and sanitize all uploaded files for malicious code
-3. Store uploaded files outside web-accessible directories
-
-T1553.010 - External Remote Services:
-1. Configure firewall rules to restrict external access to upload endpoints
-2. Implement WAF rules for file upload validation
-
-AC-3(4) - Access Control:
-1. Implement role-based access control for file upload functionality
-
-CM-6(2) - Configuration Settings:
-1. Disable script execution in upload directories
-2. Set proper file permissions (755 or equivalent)
-
-SC-21 - Data Integrity:
-1. Implement integrity checking for uploaded files (hash verification)
+1. <action cụ thể để implement control này>
+2. <action cụ thể để implement control này>
 
 IMPORTANT:
-- LUÔN liệt kê ID + Name của technique/control
+- LUÔN liệt kê ID + Name từ dữ liệu state
 - LUÔN CÓ bước 0 (Patch...)
-- Mỗi action PHẢI cụ thể map đến technique/control cụ thể
-- Nếu tool return empty → phân tích CVE để suy ra likely techniques/controls
+- Mỗi action PHẢI cụ thể + mapping đến technique/control
 - Kết thúc "Kết thúc."
-- KHÔNG HANDOFF.""",
+- KHÔNG HANDOFF, KHÔNG GỌI TOOLS""",
     },
 
     "agent_doc": {
@@ -413,16 +376,6 @@ def call_tool(state: dict) -> dict:
         elif tool_name == "match_cves_with_cmdb" and not args:
             collected = state.get("collected_cves", [])
             args["cve_list"] = collected if collected else []
-        # Special: get_mitre_attack_info và get_nist_controls cần CVE description cho inference
-        elif tool_name == "get_mitre_attack_info" or tool_name == "get_nist_controls":
-            # Lấy CVE description từ collected_cves hoặc state
-            cve_id = args.get("cve_id", "")
-            if not args.get("cve_description"):
-                collected = state.get("collected_cves", [])
-                for cve in collected:
-                    if cve.get("id", "") == cve_id:
-                        args["cve_description"] = cve.get("description", "")
-                        break
 
         # Agent-specific validation: prevent unauthorized tool calls
         last_agent = state.get("last_agent", "")
@@ -469,10 +422,6 @@ def call_tool(state: dict) -> dict:
             state["device_cve_map"] = ctx
         elif tool_name == "get_unique_cves_per_device" and isinstance(ctx, dict):
             state["device_cve_map"] = {k: {"device_info": {}, "cve_ids": v} for k, v in ctx.items()}
-        elif tool_name == "get_mitre_attack_info":
-            state["attack_info"] = results
-        elif tool_name == "get_nist_controls":
-            state["nist_info"] = results
         elif tool_name == "generate_report":
             state["final_report"] = results.get("file_path", "")
 
@@ -870,9 +819,7 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
     if agent_name == "agent_analyst":
         analyst_iters = state.get("analyst_iterations", 0)
         if analyst_iters == 0:
-            iteration_signal = "\n\n[LAN 1 - CHỈ GỌI TOOLS]: Gọi get_mitre_attack_info và get_nist_controls. KHÔNG OUTPUT REMEDIATION BƯỚC NÀY."
-        elif analyst_iters == 1:
-            iteration_signal = "\n\n[LAN 2 - OUTPUT REMEDIATION]: Sử dụng kết quả tools từ lần 1. OUTPUT remediation dựa trên MITRE + NIST data."
+            iteration_signal = "\n\n[SINGLE PASS - NO TOOLS]: Dữ liệu MITRE + NIST ĐÃ CÓ trong matched_devices. Chỉ ANSWER với remediation mapping."
         else:
             iteration_signal = "\n\n[STOP]: Đã hoàn thành. Kết thúc."
 
