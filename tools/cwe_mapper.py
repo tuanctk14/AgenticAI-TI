@@ -43,7 +43,31 @@ CWE_TO_MITRE = {
 
     # Default Credentials
     "521": ["T1078"],  # CWE-521 Weak Password Requirements
+
+    # Missing Authentication / Authorization
+    "306": ["T1190"],  # CWE-306 Missing Authentication -> Exploit Public-Facing Application
+    "862": ["T1548"],  # CWE-862 Missing Authorization -> Privilege Escalation
+    "639": ["T1548"],  # CWE-639 Authorization Bypass Through User-Controlled Key -> Privilege Escalation
+
+    # Cryptography Issues
+    "327": ["T1040"],  # CWE-327 Use of Broken/Risky Cryptographic Algorithm -> Traffic Sniffing
+    "330": ["T1040"],  # CWE-330 Use of Insufficiently Random Values -> Traffic Sniffing
+
+    # Information Exposure
+    "200": ["T1526"],  # CWE-200 Exposure of Sensitive Information to an Unauthorized Actor -> Discovery
+    "404": ["T1526"],  # CWE-404 Improper Resource Validation -> Discovery
+    "532": ["T1526"],  # CWE-532 Insertion of Sensitive Information Into Log File -> Discovery
+
+    # Injection Issues
+    "116": ["T1059"],  # CWE-116 Improper Encoding/Escaping of Output -> Command Execution
+    "917": ["T1190"],  # CWE-917 Expression Language Injection -> Exploit (already included)
+
+    # Logic Flaws
+    "862": ["T1548"],  # CWE-862 Missing Authorization (already included)
 }
+
+# Update existing entry to avoid duplicate
+CWE_TO_MITRE["434"] = ["T1505.003", "T1190"]  # File upload -> Web Shell + Exploit
 
 # CWE to NIST controls mapping
 CWE_TO_NIST = {
@@ -61,6 +85,23 @@ CWE_TO_NIST = {
     "502": ["SI-16"],  # Deserialization -> Memory Protection
     "611": ["SI-10"],  # XML XXE -> Information System Monitoring
     "917": ["SI-10"],  # Expression Language -> Information System Monitoring
+
+    # Missing Authentication / Authorization (CRITICAL)
+    "306": ["AC-3", "IA-2", "IA-8"],  # Missing auth -> Access Control, Authentication
+    "862": ["AC-3", "AC-6"],  # Missing authz -> Access Control, Least Privilege
+    "639": ["AC-3", "AC-4"],  # Authorization bypass -> Access Control, Information Flow Control
+
+    # Cryptography Issues
+    "327": ["SC-7", "SC-13"],  # Weak crypto -> Boundary Protection, Cryptographic Protection
+    "330": ["SC-12", "SI-16"],  # Weak randomness -> Key Management, Memory Protection
+
+    # Information Exposure
+    "200": ["AC-3", "SI-4"],  # Info exposure -> Access Control, Information Monitoring
+    "404": ["AC-3", "SI-4"],  # Resource validation -> Access Control, Monitoring
+    "532": ["AU-2", "AU-12"],  # Log injection -> Audit and Accountability
+
+    # Additional File Upload
+    "434": ["SI-10", "CM-5", "SI-4"],  # File upload -> Monitoring, Change Control, Detection
 }
 
 

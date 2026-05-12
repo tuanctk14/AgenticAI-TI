@@ -34,6 +34,10 @@ DEFAULT_ALIASES = {
     "tomcat": ["apache tomcat", "tomcat"],
     "java": ["java runtime", "jre", "jdk"],
     "bettercap": ["bettercap"],
+    # WordPress plugins
+    "mstore-api": ["mstore api", "mstore-api"],
+    "woocommerce": ["woocommerce"],
+    "elementor": ["elementor"],
 }
 
 # Vendor patterns
