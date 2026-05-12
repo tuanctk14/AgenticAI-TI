@@ -179,23 +179,76 @@ def find_alias_key(product_name: str) -> Optional[str]:
     return None
 
 
+def extract_component_info(description: str) -> Dict:
+    """
+    Extract component (plugin/module/extension) info from description.
+
+    Examples:
+    - "WordPress MStore API 2.0.6" → {platform: "wordpress", component: "mstore-api", type: "plugin"}
+    - "Apache Log4j2" → {platform: "apache", component: "log4j2", type: "library"}
+    - "Cisco IOS XE" → {platform: "cisco", component: None, type: None}
+
+    Returns: {platform, component, component_type, version}
+    """
+    if not description:
+        return {}
+
+    desc_lower = description.lower()
+    result = {}
+
+    # Platform patterns (WordPress, Drupal, Joomla, etc.)
+    platform_patterns = {
+        "wordpress": r"wordpress\s+(\w+(?:\s+\w+)?)\s+([\d.]+)",  # WordPress <plugin> <version>
+        "drupal": r"drupal\s+(\w+(?:\s+\w+)?)\s+([\d.]+)",
+        "joomla": r"joomla\s+(\w+(?:\s+\w+)?)\s+([\d.]+)",
+    }
+
+    for platform, pattern in platform_patterns.items():
+        match = re.search(pattern, desc_lower)
+        if match:
+            result["platform"] = platform
+            result["component"] = match.group(1).replace("_", "-")
+            result["component_type"] = "plugin"  # Default for CMS
+            result["version"] = match.group(2)
+            return result
+
+    # Library patterns (Log4j, Jackson, etc.)
+    library_patterns = {
+        "apache": [("log4j", "library"), ("activemq", "library"), ("tomcat", "library")],
+        "jackson": [("jackson", "library")],
+    }
+
+    for vendor, components in library_patterns.items():
+        for component, comp_type in components:
+            if component in desc_lower:
+                result["platform"] = vendor
+                result["component"] = component
+                result["component_type"] = comp_type
+                return result
+
+    return result
+
+
 def extract_product_metadata(cve_dict: Dict) -> Dict:
     """
     Complete product extraction from CVE metadata.
 
     Tries in order:
     1. CPE (highest confidence)
-    2. Product pattern matching
-    3. Vendor + product from description
-    4. Fingerprinting hints
+    2. Component detection (platform + plugin/module)
+    3. Product pattern matching
+    4. Vendor + product from description
+    5. Fingerprinting hints
 
     Returns:
     {
         "vendor": "string",
         "product": "string",
+        "component": "plugin_name or None",
+        "component_type": "plugin|module|library|extension or None",
         "version": "string or None",
         "confidence": "high|medium|low",
-        "source": "cpe|pattern|description|fingerprint|unknown",
+        "source": "cpe|component|pattern|description|fingerprint|unknown",
         "aliases": ["possible inventory keys"],
         "needs_review": bool,
         "reasoning": "explanation"
@@ -208,6 +261,8 @@ def extract_product_metadata(cve_dict: Dict) -> Dict:
     result = {
         "vendor": None,
         "product": None,
+        "component": None,
+        "component_type": None,
         "version": None,
         "confidence": "low",
         "source": "unknown",
@@ -221,7 +276,20 @@ def extract_product_metadata(cve_dict: Dict) -> Dict:
 
     # Try extraction in order of confidence
 
-    # 1. Try product pattern (most specific)
+    # 1. Try component detection first (plugin/module/library)
+    component_info = extract_component_info(description)
+    if component_info.get("component"):
+        result["vendor"] = component_info.get("platform")
+        result["component"] = component_info.get("component")
+        result["component_type"] = component_info.get("component_type")
+        result["version"] = component_info.get("version")
+        result["product"] = f"{component_info.get('platform')}:{component_info.get('component')}"
+        result["confidence"] = "high"
+        result["source"] = "component"
+        result["reasoning"] = f"Plugin/module detected: {result['component']} in {result['vendor']}"
+        return result
+
+    # 2. Try product pattern (most specific)
     extracted = extract_product_from_description(description)
     if extracted:
         result["vendor"], result["product"] = extracted

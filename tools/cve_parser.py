@@ -256,11 +256,13 @@ def parse_cve_metadata(cve_dict: dict) -> dict:
         "cve_id": cve_id,
         "vendor": None,
         "product": None,
+        "component": None,  # plugin/module/extension name
+        "component_type": None,  # plugin, module, library, extension
         "version": None,
         "normalized_software_id": None,
         "affected_os": None,
         "cwe_ids": cwe_ids,
-        "source": "none",  # gold_cpe, inference, fallback
+        "source": "none",  # gold_cpe, component, pattern, inference, fallback
     }
 
     # ────────────────────────────────────────────────────────────
@@ -308,6 +310,8 @@ def parse_cve_metadata(cve_dict: dict) -> dict:
         if extracted.get("vendor") and extracted.get("product"):
             result["vendor"] = extracted["vendor"]
             result["product"] = extracted["product"]
+            result["component"] = extracted.get("component")
+            result["component_type"] = extracted.get("component_type")
             result["version"] = extracted.get("version")
             result["normalized_software_id"] = f"{extracted['vendor']}:{extracted['product']}"
             result["source"] = f"product_extraction_{extracted['source']}"
