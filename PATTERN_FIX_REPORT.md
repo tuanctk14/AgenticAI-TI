@@ -33,28 +33,40 @@ Pattern `apache(?:\s+web)?` in `apache:http_server` was matching any text with "
 
 ## Solution Implemented
 
-**Fixed Patterns** (tools/cve_parser.py:140-145):
+**Fix 1: Description Patterns** (tools/cve_parser.py:140-155):
 
 ```python
 # AFTER (More restrictive)
 "apache:log4j": r'apache\s+log4j2?|^log4j|log4j\s+library',
 "apache:activemq": r'apache\s+activemq|activemq\s+broker|activemq\s+message',
-"apache:http_server": r'apache\s+(?:http|web|server)|httpd|apache2',
+"apache:http_server": r'apache\s+(?:http|web|server)|apache(?:\s+)?httpd|apache2\b',
 "apache:tomcat": r'apache\s+tomcat|tomcat\s+server',
+"tenda:ac6": r'tenda\s+(?:ac6|ac\s*6)',
+"tenda:router": r'tenda\s+(?:router|gateway)',
 ```
 
 **Changes**:
 1. `apache:log4j`: Removed loose `log4j2?(?:\s+log4j)?` → added `^log4j` (start of text) + `log4j\s+library`
-2. `apache:http_server`: Removed `apache(?:\s+web)?` (too loose) → require `apache\s+(?:http|web|server)`
+2. `apache:http_server`: 
+   - Removed `apache(?:\s+web)?` (too loose)
+   - Changed `httpd` to `apache(?:\s+)?httpd` to require "apache" prefix
+   - Prevents: "component httpd" in non-Apache devices from matching
 3. `apache:activemq`: Added specific keywords `activemq\s+broker|activemq\s+message`
 4. `apache:tomcat`: Made stricter with `tomcat\s+server`
+5. Added Tenda patterns for AC6 routers
 
-**Fix 2: Keyword Fallback Logic** (tools/cve_parser.py:376-395):
+**Fix 2: Keyword Fallback Logic** (tools/cve_parser.py:382-398):
 
 Tightened PHASE 2 (keyword_fallback) in `match_app_in_device()`:
 - Before: matched if ANY vendor keyword appeared in device software name
 - After: only match if BOTH vendor+product keywords appear, OR product keyword prominently appears
 - Prevents: "apache" vendor matching "Apache HTTP Server" when product is "log4j"
+
+**Fix 3: Software Normalization** (tools/cve_parser.py:30-34):
+
+Added Tenda router aliases:
+- "tenda ac6" → "tenda:ac6"
+- "tenda" → "tenda:router"
 
 ---
 

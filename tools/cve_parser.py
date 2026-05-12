@@ -90,7 +90,9 @@ class CPEParser:
         """
         Extract CPEs from NVD configurations structure
 
-        NVD format:
+        NVD API v2.0 format:
+        configurations[].nodes[].cpeMatch[].criteria (CPE string)
+        or legacy:
         configurations[].nodes[].cpeMatch[].cpe23Uri
         """
         cpes = []
@@ -102,7 +104,8 @@ class CPEParser:
             for node in nodes:
                 cpe_matches = node.get("cpeMatch", [])
                 for match in cpe_matches:
-                    cpe_uri = match.get("cpe23Uri", "")
+                    # Try 'criteria' first (NVD API v2.0), then 'cpe23Uri' (legacy)
+                    cpe_uri = match.get("criteria", "") or match.get("cpe23Uri", "")
                     if cpe_uri and cpe_uri not in cpes:
                         cpes.append(cpe_uri)
 

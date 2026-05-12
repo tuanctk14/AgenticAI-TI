@@ -13,7 +13,7 @@ def fetch_cve_by_id(cve_id: str) -> dict:
     Tra cứu một CVE cụ thể từ NVD API.
     Fallback sang mock data nếu không có internet.
     """
-    print(f"  [NVD] Tra cứu: CVE={cve_id}")
+    print(f"  [NVD] Looking up: CVE={cve_id}")
 
     base_url = f"https://services.nvd.nist.gov/rest/json/cves/2.0"
     headers  = {"apiKey": NVD_API_KEY} if NVD_API_KEY else {}
@@ -44,13 +44,14 @@ def fetch_cve_by_id(cve_id: str) -> dict:
                 "severity": sev,
                 "published": cve.get("published", "N/A")[:10],
                 "references": [r["url"] for r in cve.get("references", [])[:3]],
+                "configurations": cve.get("configurations", []),
             }]
-            print(f"  [NVD]  Tìm thấy {cve_id}")
+            print(f"  [NVD]  Found {cve_id}")
             return {"context": result, "source": "NVD-LIVE", "total": 1}
 
     except Exception as e:
-        print(f"  [NVD]  Lỗi API: {e}")
-        print(f"  [NVD] Không thể tìm CVE {cve_id}")
+        print(f"  [NVD]  API Error: {e}")
+        print(f"  [NVD] Could not find CVE {cve_id}")
         return {"context": [], "source": "NVD-ERROR", "total": 0}
 
 
@@ -125,6 +126,7 @@ def fetch_nvd_cves(keyword: str = "", severity: str = "HIGH", days_back: int = 3
                     "severity":    sev,
                     "published":   cve.get("published", "N/A")[:10],
                     "references":  [r["url"] for r in cve.get("references", [])[:2]],
+                    "configurations": cve.get("configurations", []),
                 })
 
             start_index += PAGE_SIZE
