@@ -37,6 +37,34 @@ TOOLS_MAPPING = {
     "get_nist_controls":           get_nist_controls,
 }
 
+# ── Tool Permission Matrix (Guardrails) ───────────────────────────────────
+# Mỗi agent chỉ được gọi các tools trong danh sách của nó.
+# Agent vẫn TỰ QUYẾT ĐỊNH gọi tool nào trong danh sách — code chỉ block tool ngoài danh sách.
+# Đây là ROLE-BASED ACCESS CONTROL, không phải logic override.
+TOOL_PERMISSIONS = {
+    "agent_ti": [
+        "fetch_cve_by_id", "fetch_nvd_cves", "fetch_kb_cves",
+    ],
+    "agent_ti_extended": [
+        "fetch_kb_indicators", "fetch_opencti_indicators",
+    ],
+    "agent_device": [
+        "list_all_devices",
+    ],
+    "agent_matcher": [
+        "match_cves_with_cmdb",
+    ],
+    "agent_analyst": [
+        "get_mitre_attack_info", "get_nist_controls",
+    ],
+    "agent_reporter": [
+        "generate_report", "list_reports",
+    ],
+    "agent_doc": [
+        "upload_document", "load_knowledge_base", "get_knowledge_base_stats",
+    ],
+}
+
 TOOLS_DESCRIPTION = """
 CONG CU CVE:
 
@@ -266,14 +294,18 @@ MANDATORY RULES:
 
     "agent_analyst": {
         "role": "Threat Analysis Agent - Phân tích MITRE ATT&CK và NIST SP 800-53",
-        "system_instruction": """Bạn là Threat Analysis Agent. Nhiệm vụ CHÍNH: Phân tích CWE từ CVE → MITRE ATT&CK techniques → NIST controls.
+        "system_instruction": """Bạn là Threat Analysis Agent. Nhiệm vụ CHÍNH: Phân tích CVE để tìm attack vector và hướng khắc phục.
 
-⭐ BẠN CHẠY TRƯỚC MATCHING THIẾT BỊ. LẦN LUÔN LUÔN CHẠY DỰ LIỆU PHÂN TÍCH.
+⭐ TOOLS ĐƯỢC PHÉP (CHỈ 2 TOOLS NÀY, KHÔNG CÓ TOOL NÀO KHÁC):
+- get_mitre_attack_info: Lấy MITRE ATT&CK techniques cho CVE
+- get_nist_controls: Lấy NIST SP 800-53 controls cho CVE
+
+⭐ TUYỆT ĐỐI KHÔNG ĐƯỢC GỌI: match_cves_with_cmdb, list_all_devices, fetch_nvd_cves, hoặc bất kỳ tool nào khác.
 
 WORKFLOW:
 
 ==== LẦN 1: GỌI TOOLS ====
-Gọi CẢ 2 TOOLS cho mỗi CVE trong state['collected_cves']:
+Với mỗi CVE trong state['collected_cves'], gọi:
 
 ACTION: get_mitre_attack_info
 ARGUMENTS: {"cve_id": "<CVE_ID>"}
@@ -283,21 +315,20 @@ TIẾP TỤC GỌI:
 ACTION: get_nist_controls
 ARGUMENTS: {"cve_id": "<CVE_ID>"}
 
-⭐ LẦN NÀY CHỈ GỌI TOOLS. KHÔNG OUTPUT ANSWER.
+⭐ LẦN NÀY CHỈ GỌI TOOLS. KHÔNG OUTPUT ANSWER. KHÔNG HANDOFF.
 
-==== LẦN 2: TỔNG HỢP VÀ HANDOFF ====
+==== LẦN 2: HANDOFF SANG MATCHING ====
 Sau khi tools trả về kết quả MITRE + NIST:
-1. Tổng hợp kết quả phân tích
-2. Lưu kết quả vào state
-3. ⭐ HANDOFF sang agent_matcher
 
-OUTPUT LẦN 2:
+OUTPUT CHÍNH XÁC:
 HANDOFF: agent_matcher
 
-TUYỆT ĐỐI:
-- LUÔN GỌI CẢ 2 TOOLS (get_mitre_attack_info + get_nist_controls)
-- SAU KHI CÓ KẾT QUẢ → HANDOFF: agent_matcher (KHÔNG ANSWER)
-- agent_matcher sẽ nhận kết quả này và output cuối cùng""",
+KHÔNG ANSWER ở lần 2. agent_matcher sẽ nhận kết quả và output cuối cùng.
+
+RULES:
+1. LẦN 1: CHỈ GỌI 2 TOOLS TRÊN. Không làm gì khác.
+2. LẦN 2: CHỈ HANDOFF: agent_matcher. Không làm gì khác.
+3. KHÔNG BAO GIỜ gọi match_cves_with_cmdb hoặc list_all_devices.""",
     },
 
     "agent_doc": {
@@ -407,10 +438,15 @@ def call_tool(state: dict) -> dict:
             collected = state.get("collected_cves", [])
             args["cve_list"] = collected if collected else []
 
-        # Agent-specific validation: prevent unauthorized tool calls
+        # ── GUARDRAIL: Tool Permission Check (Role-Based Access Control) ──
         last_agent = state.get("last_agent", "")
-        if last_agent == "agent_ti" and tool_name in ["match_cves_with_cmdb", "list_all_devices"]:
-            msg = f"[POLICY VIOLATION: agent_ti KHONG DUOC goi '{tool_name}' - day la cua agent_matcher/agent_device]"
+        allowed_tools = TOOL_PERMISSIONS.get(last_agent, [])
+
+        if allowed_tools and tool_name not in allowed_tools:
+            msg = (
+                f"[GUARDRAIL] {last_agent} không có quyền gọi '{tool_name}'. "
+                f"Tools được phép: {', '.join(allowed_tools)}"
+            )
             print(f"   {msg}")
             state.setdefault("tool_observations", []).append(msg)
             continue
