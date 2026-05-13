@@ -143,5 +143,4 @@ def get_graph():
     global _graph
     if _graph is None:
         _graph = build_graph()
-        print(" ATI-AgenticThreatIntelligence Graph đã biên dịch")
     return _graph

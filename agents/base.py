@@ -13,6 +13,8 @@ from tools.doc_store        import (
     upload_document, load_knowledge_base, get_knowledge_base_stats,
     fetch_kb_indicators, fetch_kb_cves
 )
+from tools.mitre            import get_mitre_attack_info
+from tools.nist             import get_nist_controls
 
 # ── Tool registry ──────────────────────────────────────────────────────────
 TOOLS_MAPPING = {
@@ -31,6 +33,8 @@ TOOLS_MAPPING = {
     "upload_document":             upload_document,
     "load_knowledge_base":         load_knowledge_base,
     "get_knowledge_base_stats":    get_knowledge_base_stats,
+    "get_mitre_attack_info":       get_mitre_attack_info,
+    "get_nist_controls":           get_nist_controls,
 }
 
 TOOLS_DESCRIPTION = """
@@ -756,6 +760,24 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
         # Reset analyst iterations for new query
         state["analyst_iterations"]  = 0
         return state
+
+    # agent_analyst: on 2nd iteration (after tools), ALWAYS handoff to agent_matcher
+    if agent_name == "agent_analyst" and state.get("last_agent") == "agent_analyst":
+        analyst_iters = state.get("analyst_iterations", 0)
+        # If we've called tools once (iter 1), now handoff to matcher
+        if analyst_iters >= 1:
+            response = "HANDOFF: agent_matcher"
+            print(f"\n{'='*55}")
+            print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
+            print("="*55)
+            print(f"  MITRE/NIST analysis complete (iterations: {analyst_iters})")
+            print(f"  → HANDOFF: agent_matcher (thiết bị matching)")
+            print(response)
+            state["last_agent_response"] = response
+            state["last_agent"]          = agent_name
+            state["num_steps"]           = state.get("num_steps", 0) + 1
+            state["agent_history"]       = state.get("agent_history", []) + [agent_name]
+            return state
 
     # agent_device: on first call, auto-fetch device list
     if agent_name == "agent_device" and state.get("last_agent") != agent_name:
