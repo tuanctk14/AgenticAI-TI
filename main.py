@@ -297,6 +297,17 @@ def _print_chat_response(result: dict):
 
 def _print_summary(result: dict):
     """In tóm tắt kết quả sau khi chạy xong - CHI TIẾT ĐẦY ĐỦ."""
+    last_response = result.get("last_agent_response", "")
+
+    # Nếu agent_matcher đã output đầy đủ (có section markers) → chỉ in metadata
+    if "KẾT QUẢ QUÉT LỖ HỔNG" in last_response or "THIẾT BỊ BỊ ẢNH HƯỞNG" in last_response:
+        print("\n" + "="*70)
+        history = result.get("agent_history", [])
+        print(f" Agents: {' → '.join(history)} | Bước: {result.get('num_steps', 0)}")
+        print("="*70)
+        return
+
+    # Các trường hợp khác (IOC, device info, chat) → giữ nguyên logic cũ
     print("\n" + "="*70)
     print(" KẾT QUẢ CHI TIẾT ĐẦY ĐỦ")
     print("="*70)

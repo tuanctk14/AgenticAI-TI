@@ -437,6 +437,22 @@ def call_tool(state: dict) -> dict:
         elif tool_name == "match_cves_with_cmdb" and not args:
             collected = state.get("collected_cves", [])
             args["cve_list"] = collected if collected else []
+        # Special: MITRE/NIST tools need CWE IDs from collected CVEs for better mapping
+        elif tool_name in ["get_mitre_attack_info", "get_nist_controls"]:
+            cve_id = args.get("cve_id", "")
+            # If cve_id provided, extract CWE IDs from collected_cves for enhanced mapping
+            if cve_id:
+                collected = state.get("collected_cves", [])
+                for cve in collected:
+                    if cve.get("id") == cve_id:
+                        cwe_ids = cve.get("cwe_ids", [])
+                        if cwe_ids:
+                            args["cwe_ids"] = cwe_ids
+                        # Also provide CVE description for semantic analysis
+                        cve_desc = cve.get("description", "")
+                        if cve_desc:
+                            args["cve_description"] = cve_desc
+                        break
 
         # ── GUARDRAIL: Tool Permission Check (Role-Based Access Control) ──
         last_agent = state.get("last_agent", "")
@@ -501,6 +517,25 @@ def call_tool(state: dict) -> dict:
 
 
 # ── Helper function for comprehensive analyst output ──────────────────────────
+# ── Remediation fallback tables for when LLM inference is unavailable ──────
+FALLBACK_TECHNIQUE_ACTIONS = {
+    "T1190": ["Monitor web application logs for suspicious requests", "Implement WAF rules to detect exploit patterns", "Patch vulnerable component immediately"],
+    "T1059": ["Restrict command execution capabilities", "Monitor process creation for suspicious patterns", "Disable unnecessary scripting engines"],
+    "T1071": ["Monitor network traffic for anomalous patterns", "Implement network segmentation", "Use threat intelligence to identify C2 communications"],
+    "T1133": ["Restrict remote access to essential users only", "Use multi-factor authentication", "Monitor remote access logs"],
+    "T1547": ["Review and harden autostart locations", "Monitor startup configuration changes", "Deploy EDR to detect unauthorized persistence"],
+}
+
+FALLBACK_CONTROL_ACTIONS = {
+    "SI-2": ["Apply latest patches and security updates", "Maintain inventory of all software", "Test patches before deployment"],
+    "SI-3": ["Deploy malware protection tools", "Keep malware definitions current", "Monitor for malicious activity"],
+    "SC-7": ["Review and strengthen firewall rules", "Monitor boundary traffic", "Segment network by security zones"],
+    "CM-6": ["Document baseline security configurations", "Enforce configuration standards", "Monitor for unauthorized changes"],
+    "RA-5": ["Conduct regular vulnerability scans", "Prioritize by CVSS score", "Track remediation progress"],
+    "IR-4": ["Develop incident response playbook", "Conduct regular incident response drills", "Maintain incident response team readiness"],
+}
+
+
 def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, matched_devices: list, has_devices: bool) -> str:
     """
     Build comprehensive output for CVE analysis with MITRE/NIST and device matching.
@@ -535,9 +570,6 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
             lines.append(f"  Published: {published}")
             if cwe_ids:
                 lines.append(f"  CWE: {', '.join(cwe_ids)}")
-            # Truncate description if too long
-            if len(desc) > 200:
-                desc = desc[:200] + "..."
             lines.append(f"  Description: {desc}")
             lines.append("")
 
@@ -629,6 +661,60 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
         lines.append("  được triển khai trong tương lai.")
 
     lines.append("")
+
+    # ════════════════════════════════════════════════════════════
+    # SECTION 5: REMEDIATION ACTIONS (per technique + control)
+    # ════════════════════════════════════════════════════════════
+    lines.append("═" * 60)
+    lines.append(" HƯỚNG KHẮC PHỤC")
+    lines.append("═" * 60)
+    lines.append("")
+
+    # Per-technique remediation
+    attack_ctx = {}
+    if attack_info and isinstance(attack_info, dict):
+        attack_ctx = attack_info.get("context", {})
+    techniques = attack_ctx.get("techniques", [])
+
+    if techniques:
+        lines.append(" Theo MITRE ATT&CK Techniques:")
+        lines.append("")
+        for tech in techniques:
+            tech_id = tech.get("id", "")
+            tech_name = tech.get("name", "")
+            if tech_id:
+                lines.append(f"  {tech_id} - {tech_name}:")
+                actions = FALLBACK_TECHNIQUE_ACTIONS.get(tech_id, ["Thực hiện biện pháp kiểm soát phù hợp"])
+                for i, action in enumerate(actions, 1):
+                    lines.append(f"    {i}. {action}")
+                lines.append("")
+
+    # Per-control remediation
+    nist_ctx = {}
+    if nist_info and isinstance(nist_info, dict):
+        nist_ctx = nist_info.get("context", {})
+    controls = nist_ctx.get("controls", [])
+
+    if controls:
+        lines.append(" Theo NIST SP 800-53 Controls:")
+        lines.append("")
+        for ctrl in controls:
+            ctrl_id = ctrl.get("id", "")
+            ctrl_title = ctrl.get("title", "")
+            if ctrl_id:
+                lines.append(f"  {ctrl_id} - {ctrl_title}:")
+                actions = FALLBACK_CONTROL_ACTIONS.get(ctrl_id, ["Thực hiện biện pháp kiểm soát theo tiêu chuẩn"])
+                for i, action in enumerate(actions, 1):
+                    lines.append(f"    {i}. {action}")
+                lines.append("")
+
+    if not techniques and not controls:
+        lines.append("  Hướng khắc phục chung:")
+        lines.append("    1. Cập nhật phần mềm/thành phần lên phiên bản mới nhất")
+        lines.append("    2. Áp dụng các biện pháp giảm nhẹ công bố bởi nhà cung cấp")
+        lines.append("    3. Giám sát các chỉ báo tấn công được công bố")
+        lines.append("")
+
     lines.append("═" * 60)
 
     return "\n".join(lines)
@@ -917,6 +1003,21 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
             state["agent_history"] = state.get("agent_history", []) + [agent_name]
             return state
 
+    # agent_matcher: 1st iteration - ALWAYS call match_cves_with_cmdb (deterministic, no LLM hallucinate)
+    if agent_name == "agent_matcher" and state.get("last_agent") != "agent_matcher":
+        if cves:
+            response = "ACTION: match_cves_with_cmdb\nARGUMENTS: {}"
+            print(f"\n{'='*55}")
+            print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
+            print("="*55)
+            print(f"  Matching {len(cves)} CVEs với devices trong CMDB...")
+            state["last_agent_response"] = response
+            state["last_agent"]          = agent_name
+            state["num_steps"]           = state.get("num_steps", 0) + 1
+            state["agent_history"]       = state.get("agent_history", []) + [agent_name]
+            state["matcher_iterations"]  = 1
+            return state
+
     # agent_matcher: 2nd iteration - after tool ran (NEW FLOW: ALWAYS comprehensive output)
     if agent_name == "agent_matcher" and state.get("last_agent") == "agent_matcher":
         matched = state.get("matched_devices", [])
@@ -927,14 +1028,7 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
         # NEW FLOW: Always output full analysis with CVE + MITRE/NIST + (devices if any)
         response = _build_full_analyst_output(cves, attack_info, nist_info, matched, has_devices)
 
-        print(f"\n{'='*55}")
-        print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
-        print("="*55)
-        if has_devices:
-            print(f"==== {len(matched)} MATCHED_DEVICES ====")
-        else:
-            print(f"==== NO MATCHED_DEVICES (CVE không khớp CMDB) ====")
-        print(response[:500] + "...")  # Show first 500 chars
+        print(response)
 
         state["last_agent_response"] = f"ANSWER: {response}"
         state["last_agent"]          = agent_name
