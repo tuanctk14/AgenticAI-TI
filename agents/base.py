@@ -62,8 +62,9 @@ AGENT_PROFILES = {
 IMPORTANT: Luon tham khao CONVERSATION HISTORY de hieu context. Neu user hoi "cô ấy" thi tra ve conversation_history de tim ra ai la "cô ấy".
 
 RULES - PRIORITY ORDER:
-1. CVE-*, CVE ID hoac keyword (log4j, apache, etc) + device mention → HANDOFF: agent_ti (LUU Y: fetch CVE TIEN, sau do agent_ti se tu-forward toi agent_matcher)
+1. CVE-*, CVE ID hoac keyword (log4j, apache, etc) + device mention → HANDOFF: agent_ti
 2. CVE-*, CVE ID, loi ho, NVD, severity KHONG co device → HANDOFF: agent_ti
+   (NOTE: agent_ti se tu-forward toi agent_analyst → agent_matcher)
 3. IOC, Malware, APT, threat actor, APT29, emotet, file hash, SHA-256, SHA-1, MD5, domain name, IP address, URL, IPv6 → HANDOFF: agent_ti_extended
 4. Chi hoi thiet bi (device name, SRV-001, etc) ma KHONG CO CVE, Malware, IOC → HANDOFF: agent_device
 5. Hoi thiet bi + tên vendor/product (Apache, Cisco, etc) nhung KHONG ROI CVE → HANDOFF: agent_device (layer info truoc)
@@ -96,7 +97,7 @@ STEP 1: Tìm CVE
 - Query có keyword (log4j, apache)? → fetch_kb_cves
 - Không biết? → fetch_nvd_cves với keyword
 
-OUTPUT FORMAT (chỉ 1 trong 2):
+OUTPUT FORMAT (chỉ 1 trong 3):
 ACTION: fetch_cve_by_id
 ARGUMENTS: {"cve_id": "CVE-2021-44228"}
 
@@ -108,14 +109,18 @@ HOẶC:
 ACTION: fetch_nvd_cves
 ARGUMENTS: {"keyword": "log4j"}
 
-STEP 2: Khi LLM gọi tool xong (lần 2+)
-SAU KHI CO CVE:
-- Nếu query ban đầu hỏi "device", "thiet bi", "anh huong", "so khop" → HANDOFF: agent_matcher
-- Nếu query CHỈ hỏi CVE details → ANSWER với CVE info
+STEP 2: Khi tool chạy xong (lần 2+)
+SAU KHI CÓ CVE:
+  ⭐ LUÔN HANDOFF sang agent_analyst TRƯỚC
+  ⭐ agent_analyst sẽ phân tích CWE → MITRE/NIST, sau đó forward sang agent_matcher
+
+OUTPUT:
+HANDOFF: agent_analyst
 
 RULES:
-NEVER: match_cves_with_cmdb, list_all_devices, python code
-ONLY: fetch_cve_by_id, fetch_kb_cves, fetch_nvd_cves""",
+- NEVER: match_cves_with_cmdb, list_all_devices, python code, agent_matcher handoff
+- ONLY: fetch_cve_by_id, fetch_kb_cves, fetch_nvd_cves
+- LUÔN HANDOFF agent_analyst sau khi có CVE (bất kể query hỏi gì)""",
     },
 
     "agent_ti_extended": {
@@ -183,106 +188,112 @@ CHI 1 TOOL. KHONG HANDOFF. KET THUC.""",
     },
 
     "agent_matcher": {
-        "role": "Asset Matcher Agent - So khop CVE theo device",
-        "system_instruction": """Ban la Matcher Agent. NHIEM VU: So khop CVE voi CMDB devices de tim thiet bi bi anh huong.
+        "role": "Asset Matcher Agent - So khop CVE theo device va output ket qua cuoi cung",
+        "system_instruction": """Ban la Matcher Agent. NHIEM VU: So khop CVE voi CMDB devices VÀ OUTPUT kết quả cuối cùng.
 
-==== LAN 1 (TOOL CALL) ====
-MANDATORY: Goi match_cves_with_cmdb tool voi CVE list tu state['collected_cves']
+==== LẦN 1 (GỌI TOOL) ====
+MANDATORY: Gọi match_cves_with_cmdb tool với CVE list từ state['collected_cves']
 
-OUTPUT CHINH XAC (KHONG SOAN BOA):
+OUTPUT:
 ACTION: match_cves_with_cmdb
-ARGUMENTS: {"cve_list": [CVE objects tu state]}
+ARGUMENTS: {"cve_list": [CVE objects từ state]}
 
-==== LAN 2+ (AFTER TOOL RUN) ====
-HAI TRUONG HOP:
+==== LẦN 2+ (SAU KHI TOOL CHẠY) ====
+⭐ LUÔN OUTPUT ANSWER với đầy đủ thông tin. CÓ 2 TRƯỜNG HỢP:
 
-TRUONG HOP 1: CO MATCHED_DEVICES
-PHAI HANDOFF sang agent_analyst:
-OUTPUT:
-HANDOFF: agent_analyst
+─── TRƯỜNG HỢP 1: CÓ THIẾT BỊ BỊ ẢNH HƯỞNG ───
 
-TRUONG HOP 2: KHONG CO MATCHED_DEVICES (Tool return empty list)
-PHAI ANSWER NGAY LAP TUC - KHONG GOI TOOL LAI:
-OUTPUT:
-ANSWER: Khong co thiet bi nao trong CMDB bi anh huong boi CVE nay. CVE <CVE_ID> khong ket hop voi bat ky phan mem nao da cai dat tren cac thiet bi noi bo.
+ANSWER:
 
-==== KHONG BOA TUONG SAU ====
-- KHONG OUTPUT "Huong khac phuc" hay remediation
-- KHONG OUTPUT "NIST controls" - de cho agent_analyst
-- KHONG OUTPUT "MITRE ATT&CK" - de cho agent_analyst
-- CHI CO: device info va cve details
+═══════════════════════════════════════════
+ KẾT QUẢ QUÉT LỖ HỔNG
+═══════════════════════════════════════════
+
+[CVE DETAILS]
+Với MỖI CVE tìm được:
+- CVE ID, CVSS Score, Severity, Published, CWE IDs
+- Description (full text)
+
+[PHÂN TÍCH MITRE ATT&CK]
+(Từ kết quả agent_analyst trước đó)
+- Technique ID - Technique Name (Tactic)
+- Mô tả attack vector
+
+[NIST SP 800-53 CONTROLS]
+(Từ kết quả agent_analyst)
+- Control ID - Control Name
+- Mô tả biện pháp kiểm soát
+
+[THIẾT BỊ BỊ ẢNH HƯỞNG]
+Với MỖI thiết bị match:
+- Device: device_id (hostname)
+- IP, OS, Department, Criticality
+- Phần mềm bị ảnh hưởng: name version
+- Risk Level, Match Type
+
+[REMEDIATION]
+Dựa trên MITRE + NIST:
+0. Patch product to latest version
+Per technique:
+  T_ID - Technique Name:
+  1. <hành động cụ thể>
+Per NIST control:
+  Control_ID - Control Name:
+  1. <hành động cụ thể>
+
+─── TRƯỜNG HỢP 2: KHÔNG CÓ THIẾT BỊ ───
+
+ANSWER: (Giống Trường hợp 1, nhưng phần "[THIẾT BỊ BỊ ẢNH HƯỞNG]" thay bằng)
+
+[MATCHING THIẾT BỊ]
+Không có thiết bị nào trong CMDB bị ảnh hưởng. CVE không khớp phần mềm nội bộ.
+
+(Vẫn output CVE details + MITRE + NIST + Remediation)
+
+═══════════════════════════════════════════
 
 MANDATORY RULES:
-1. NEU LAN 1 + CO CVE → PHAI GOI match_cves_with_cmdb DUNG 1 LAN (KHONG DUOC skip)
-2. NEU LAN 2+ + CO MATCHED_DEVICES → PHAI HANDOFF agent_analyst
-3. NEU LAN 2+ + KHONG CO MATCHED_DEVICES → PHAI ANSWER NGAY LAP TUC (KHONG GOI TOOL LAI)
-4. KHONG DUOC LOOP - Chi goi tool 1 lan""",
+1. LẦN 1 + CÓ CVE → GỌI match_cves_with_cmdb ĐÚNG 1 LẦN
+2. LẦN 2+ → LUÔN OUTPUT ANSWER ĐẦY ĐỦ (cả 2 trường hợp có/không thiết bị)
+3. KHÔNG HANDOFF - agent_matcher là agent cuối cùng
+4. PHẢI bao gồm kết quả MITRE/NIST từ agent_analyst
+5. PHẢI bao gồm REMEDIATION trong MỌI trường hợp""",
     },
 
     "agent_analyst": {
         "role": "Threat Analysis Agent - Phân tích MITRE ATT&CK và NIST SP 800-53",
-        "system_instruction": """Bạn là Threat Analysis Agent. Nhiệm vụ: Phân tích CVE → MITRE ATT&CK techniques và NIST controls từ matched_devices.
+        "system_instruction": """Bạn là Threat Analysis Agent. Nhiệm vụ CHÍNH: Phân tích CWE từ CVE → MITRE ATT&CK techniques → NIST controls.
 
-DỮ LIỆU ĐẦU VÀO:
-- state['matched_devices'] = danh sách device bị ảnh hưởng
-- Mỗi device trong matched_devices CÓ:
-  * device_id, hostname
-  * cwe_ids: ["20", "400", "502", ...]
-  * mitre_techniques: [{id: "T1190", name: "Exploit...", description: "...", tactics: ["Initial Access"]}, ...]
-  * nist_controls: [{id: "SI-10", name: "Control SI-10", description: "...", family: "SI"}, ...]
+⭐ BẠN CHẠY TRƯỚC MATCHING THIẾT BỊ. LẦN LUÔN LUÔN CHẠY DỰ LIỆU PHÂN TÍCH.
 
-WORKFLOW: Chỉ 1 pass, KHÔNG gọi tools
+WORKFLOW:
 
-STEP 1: LẤY DỮ LIỆU TỪNG DEVICE
-Với MỖI device trong matched_devices, trích xuất:
-- Device info: device_id, hostname, affected_software
-- CWE IDs list
-- MITRE techniques list (từ mitre_techniques array)
-- NIST controls list (từ nist_controls array)
+==== LẦN 1: GỌI TOOLS ====
+Gọi CẢ 2 TOOLS cho mỗi CVE trong state['collected_cves']:
 
-STEP 2: TỔNG HỢP VÀ LIỆT KÊ
+ACTION: get_mitre_attack_info
+ARGUMENTS: {"cve_id": "<CVE_ID>"}
 
-[MITRE ATT&CK Techniques từ CWE Analysis]
-Nếu HAS techniques (mitre_techniques NOT empty):
-  Với MỖI technique trong mitre_techniques:
-  - <ID>: <Name>
-    Tactic: <tactic từ tactics array>
-    Description: <description>
-Nếu NO techniques (rỗng):
-  Không có MITRE mapping cho CWE này, inference từ CVE description...
+TIẾP TỤC GỌI:
 
-[NIST SP 800-53 Controls từ CWE Analysis]
-Nếu HAS controls (nist_controls NOT empty):
-  Với MỖI control trong nist_controls:
-  - <ID>: <Name>
-    Family: <family>
-    Description: <description>
-Nếu NO controls (rỗng):
-  Không có NIST mapping cho CWE này, propose general controls...
+ACTION: get_nist_controls
+ARGUMENTS: {"cve_id": "<CVE_ID>"}
 
-[Remediation dựa trên MITRE Techniques và NIST Controls]
+⭐ LẦN NÀY CHỈ GỌI TOOLS. KHÔNG OUTPUT ANSWER.
 
-BƯỚC 0 (GENERIC):
-0. Patch <product_name> to latest version with security fixes.
-   (Lấy product từ affected_software của device)
+==== LẦN 2: TỔNG HỢP VÀ HANDOFF ====
+Sau khi tools trả về kết quả MITRE + NIST:
+1. Tổng hợp kết quả phân tích
+2. Lưu kết quả vào state
+3. ⭐ HANDOFF sang agent_matcher
 
-BƯỚC 1+ (CỤ THỂ):
-Với MỖI technique có trong mitre_techniques:
-<TechID> - <TechName>:
-1. <action mitigate cụ thể>
-2. <action mitigate cụ thể>
+OUTPUT LẦN 2:
+HANDOFF: agent_matcher
 
-Với MỖI control có trong nist_controls:
-<ControlID> - <ControlName>:
-1. <action implement cụ thể>
-2. <action implement cụ thể>
-
-CRITICAL:
-- EXTRACT VÀ IN RA DỮ LIỆU THỰC từ mitre_techniques[] và nist_controls[]
-- KHÔNG VIẾT "Liệt kê từ state[...]" - đó là HƯỚNG DẪN, không phải output
-- LUÔN có MITRE + NIST + Remediation
-- Kết thúc "Kết thúc."
-- KHÔNG GỌI TOOLS, KHÔNG HANDOFF""",
+TUYỆT ĐỐI:
+- LUÔN GỌI CẢ 2 TOOLS (get_mitre_attack_info + get_nist_controls)
+- SAU KHI CÓ KẾT QUẢ → HANDOFF: agent_matcher (KHÔNG ANSWER)
+- agent_matcher sẽ nhận kết quả này và output cuối cùng""",
     },
 
     "agent_doc": {
@@ -433,6 +444,12 @@ def call_tool(state: dict) -> dict:
             state["collected_cves"] = ctx
         elif tool_name == "match_cves_with_cmdb" and isinstance(ctx, list):
             state["matched_devices"] = ctx
+        elif tool_name == "get_mitre_attack_info" and isinstance(results, dict):
+            # NEW: Save MITRE attack info for agent_analyst
+            state["attack_info"] = results
+        elif tool_name == "get_nist_controls" and isinstance(results, dict):
+            # NEW: Save NIST controls info for agent_analyst
+            state["nist_info"] = results
         elif tool_name == "aggregate_cves_by_device" and isinstance(ctx, dict):
             state["device_cve_map"] = ctx
         elif tool_name == "get_unique_cves_per_device" and isinstance(ctx, dict):
@@ -441,6 +458,140 @@ def call_tool(state: dict) -> dict:
             state["final_report"] = results.get("file_path", "")
 
     return state
+
+
+# ── Helper function for comprehensive analyst output ──────────────────────────
+def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, matched_devices: list, has_devices: bool) -> str:
+    """
+    Build comprehensive output for CVE analysis with MITRE/NIST and device matching.
+    Used by agent_matcher to output final result.
+
+    NEW FLOW: Always includes CVE + MITRE/NIST + (devices if available)
+    """
+    lines = []
+
+    # ════════════════════════════════════════════════════════════
+    # SECTION 1: CVE DETAILS
+    # ════════════════════════════════════════════════════════════
+    lines.append("═" * 60)
+    lines.append(" KẾT QUẢ QUÉT LỖ HỔNG")
+    lines.append("═" * 60)
+    lines.append("")
+    lines.append(f"Tổng cộng: {len(cves) if cves else 0} CVE được tìm thấy")
+    lines.append("")
+
+    if cves:
+        for i, cve in enumerate(cves, 1):
+            cve_id = cve.get("id", "Unknown")
+            cvss = cve.get("cvss_score", "N/A")
+            severity = cve.get("severity", "UNKNOWN")
+            desc = cve.get("description", "Không có mô tả")
+            published = cve.get("published", "N/A")
+            cwe_ids = cve.get("cwe_ids", [])
+
+            lines.append(f"{'─' * 50}")
+            lines.append(f"  CVE #{i}: {cve_id}")
+            lines.append(f"  CVSS: {cvss} | Severity: {severity}")
+            lines.append(f"  Published: {published}")
+            if cwe_ids:
+                lines.append(f"  CWE: {', '.join(cwe_ids)}")
+            # Truncate description if too long
+            if len(desc) > 200:
+                desc = desc[:200] + "..."
+            lines.append(f"  Description: {desc}")
+            lines.append("")
+
+    # ════════════════════════════════════════════════════════════
+    # SECTION 2: MITRE ATT&CK ANALYSIS
+    # ════════════════════════════════════════════════════════════
+    lines.append("═" * 60)
+    lines.append(" PHÂN TÍCH MITRE ATT&CK")
+    lines.append("═" * 60)
+    lines.append("")
+
+    attack_ctx = {}
+    if attack_info and isinstance(attack_info, dict):
+        attack_ctx = attack_info.get("context", {})
+
+    techniques = attack_ctx.get("techniques", [])
+    if techniques:
+        for tech in techniques:
+            tech_id = tech.get("id", "")
+            tech_name = tech.get("name", "")
+            tactic = tech.get("tactic", "")
+            lines.append(f"  • {tech_id}: {tech_name} ({tactic})")
+    else:
+        lines.append("  Không tìm thấy mapping MITRE ATT&CK trong database.")
+
+    lines.append("")
+
+    # ════════════════════════════════════════════════════════════
+    # SECTION 3: NIST SP 800-53 CONTROLS
+    # ════════════════════════════════════════════════════════════
+    lines.append("═" * 60)
+    lines.append(" NIST SP 800-53 CONTROLS")
+    lines.append("═" * 60)
+    lines.append("")
+
+    nist_ctx = {}
+    if nist_info and isinstance(nist_info, dict):
+        nist_ctx = nist_info.get("context", {})
+
+    controls = nist_ctx.get("controls", [])
+    if controls:
+        priority = nist_ctx.get("priority", "N/A")
+        lines.append(f"  Priority: {priority}")
+        lines.append("")
+        for ctrl in controls:
+            ctrl_id = ctrl.get("id", "")
+            ctrl_title = ctrl.get("title", "")
+            lines.append(f"  • {ctrl_id}: {ctrl_title}")
+    else:
+        lines.append("  Không tìm thấy mapping NIST controls trong database.")
+
+    lines.append("")
+
+    # ════════════════════════════════════════════════════════════
+    # SECTION 4: THIẾT BỊ BỊ ẢNH HƯỞNG
+    # ════════════════════════════════════════════════════════════
+    lines.append("═" * 60)
+    lines.append(" THIẾT BỊ BỊ ẢNH HƯỞNG")
+    lines.append("═" * 60)
+    lines.append("")
+
+    if has_devices and matched_devices:
+        devices_affected = len({m.get("device_id") for m in matched_devices})
+        lines.append(f"  Tổng: {len(matched_devices)} kết quả trên {devices_affected} thiết bị")
+        lines.append("")
+
+        for i, match in enumerate(matched_devices, 1):
+            device_id = match.get("device_id", "")
+            hostname = match.get("hostname", "")
+            ip = match.get("ip", "")
+            os_info = match.get("os", "")
+            dept = match.get("department", "")
+            affected_sw = match.get("affected_software", "")
+            device_version = match.get("device_version", "")
+            risk = match.get("risk_level", "")
+
+            lines.append(f"  [{i}] {device_id} ({hostname})")
+            lines.append(f"      IP: {ip} | OS: {os_info}")
+            lines.append(f"      Department: {dept}")
+            lines.append(f"      Phần mềm bị ảnh hưởng: {affected_sw} (version: {device_version})")
+            lines.append(f"      Risk Level: {risk}")
+            lines.append("")
+    else:
+        lines.append("  Không có thiết bị nào trong CMDB bị ảnh hưởng bởi CVE này.")
+        lines.append("  Lý do: CVE không khớp với phần mềm đã cài đặt trên các thiết bị nội bộ.")
+        lines.append("")
+        lines.append("  Lưu ý: Thông tin MITRE ATT&CK và NIST controls ở trên vẫn có giá trị")
+        lines.append("  để hỗ trợ phòng ngừa và chuẩn bị ứng phó nếu sản phẩm bị ảnh hưởng")
+        lines.append("  được triển khai trong tương lai.")
+
+    lines.append("")
+    lines.append("═" * 60)
+
+    return "\n".join(lines)
 
 
 MAX_ITERATIONS = 3  # Prevent infinite loops
@@ -588,43 +739,23 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
             return state
 
 
-    # agent_ti: on 2nd+ iteration, handle based on query context
+    # agent_ti: on 2nd+ iteration, ALWAYS handoff to agent_analyst for CWE analysis (NEW FLOW)
     if agent_name == "agent_ti" and cves and state.get("last_agent") == "agent_ti":
-        # Check if query asks for device matching after CVE search (handle Vietnamese diacritics)
-        has_device_kw = any(kw in query_lower for kw in ["so khớp", "so khop", "ảnh hưởng", "anh huong", "thiết bị", "thiet bi", "device"])
-
-        if has_device_kw:
-            # Query explicitly asks for CVE+device matching → forward to agent_matcher
-            response = f"HANDOFF: agent_matcher"
-            print(f"\n{'='*55}")
-            print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
-            print("="*55)
-            print(response)
-            state["last_agent_response"] = response
-            state["last_agent"]          = agent_name
-            state["num_steps"]           = state.get("num_steps", 0) + 1
-            state["agent_history"]       = state.get("agent_history", []) + [agent_name]
-            return state
-        else:
-            # No device context → simple answer with CVE info
-            cve_summary = f"\n\n**{len(cves)} CVE(s) found:**\n"
-            for c in cves[:10]:  # Show up to 10 CVEs
-                desc = c.get('description', 'N/A')
-                cvss = c.get('cvss_score', 'N/A')
-                cve_summary += f"- **{c.get('id')}**: {desc} (CVSS: {cvss})\n"
-            if len(cves) > 10:
-                cve_summary += f"- ... and {len(cves) - 10} more CVEs\n"
-            response = f"ANSWER: {cve_summary}"
-
-            print(f"\n{'='*55}")
-            print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
-            print("="*55)
-            print(response)
-            state["last_agent_response"] = response
-            state["last_agent"]          = agent_name
-            state["num_steps"]           = state.get("num_steps", 0) + 1
-            state["agent_history"]       = state.get("agent_history", []) + [agent_name]
-            return state
+        # NEW FLOW: Always handoff to agent_analyst for MITRE/NIST analysis FIRST
+        response = "HANDOFF: agent_analyst"
+        print(f"\n{'='*55}")
+        print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
+        print("="*55)
+        print(f"  CVEs collected: {len(cves)}")
+        print(f"  → HANDOFF: agent_analyst (phân tích MITRE/NIST trước matching)")
+        print(response)
+        state["last_agent_response"] = response
+        state["last_agent"]          = agent_name
+        state["num_steps"]           = state.get("num_steps", 0) + 1
+        state["agent_history"]       = state.get("agent_history", []) + [agent_name]
+        # Reset analyst iterations for new query
+        state["analyst_iterations"]  = 0
+        return state
 
     # agent_device: on first call, auto-fetch device list
     if agent_name == "agent_device" and state.get("last_agent") != agent_name:
@@ -728,37 +859,30 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
             state["agent_history"] = state.get("agent_history", []) + [agent_name]
             return state
 
-    # agent_matcher: 2nd iteration - after tool ran
+    # agent_matcher: 2nd iteration - after tool ran (NEW FLOW: ALWAYS comprehensive output)
     if agent_name == "agent_matcher" and state.get("last_agent") == "agent_matcher":
-        # Check if matched any devices
-        if state.get("matched_devices"):
-            # Case 1: CO matched devices → HANDOFF to agent_analyst
-            response = "HANDOFF: agent_analyst"
-            print(f"\n{'='*55}")
-            print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
-            print("="*55)
-            print(response)
-            state["last_agent_response"] = response
-            state["last_agent"]          = agent_name
-            state["num_steps"]           = state.get("num_steps", 0) + 1
-            state["agent_history"]       = state.get("agent_history", []) + [agent_name]
-            return state
+        matched = state.get("matched_devices", [])
+        attack_info = state.get("attack_info", {})
+        nist_info = state.get("nist_info", {})
+        has_devices = len(matched) > 0
+
+        # NEW FLOW: Always output full analysis with CVE + MITRE/NIST + (devices if any)
+        response = _build_full_analyst_output(cves, attack_info, nist_info, matched, has_devices)
+
+        print(f"\n{'='*55}")
+        print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
+        print("="*55)
+        if has_devices:
+            print(f"==== {len(matched)} MATCHED_DEVICES ====")
         else:
-            # Case 2: KHONG CO matched devices → ANSWER no devices and STOP
-            cve_id = ""
-            if cves:
-                cve_id = cves[0].get("id", "")
-            response = f"ANSWER: Khong co thiet bi nao trong CMDB bi anh huong boi CVE {cve_id}. CVE nay khong ket hop voi bat ky phan mem nao da cai dat tren cac thiet bi noi bo."
-            print(f"\n{'='*55}")
-            print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
-            print("="*55)
-            print(f"==== KHONG CO MATCHED_DEVICES ====")
-            print(response)
-            state["last_agent_response"] = response
-            state["last_agent"]          = agent_name
-            state["num_steps"]           = state.get("num_steps", 0) + 1
-            state["agent_history"]       = state.get("agent_history", []) + [agent_name]
-            return state
+            print(f"==== NO MATCHED_DEVICES (CVE không khớp CMDB) ====")
+        print(response[:500] + "...")  # Show first 500 chars
+
+        state["last_agent_response"] = f"ANSWER: {response}"
+        state["last_agent"]          = agent_name
+        state["num_steps"]           = state.get("num_steps", 0) + 1
+        state["agent_history"]       = state.get("agent_history", []) + [agent_name]
+        return state
 
     # agent_matcher: if NO CVEs collected → auto-answer without CVE matching
     # agent_matcher: auto-fetch CVEs if query has keywords but no CVEs yet
@@ -829,14 +953,16 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
     if state.get("tool_observations"):
         observations_text = "\n\nKet qua tools:\n" + "\n".join(state["tool_observations"][-3:])
 
-    # For agent_analyst, add iteration signal (LAN 1 vs LAN 2)
+    # For agent_analyst, add iteration signal (LẦN 1 gọi tools vs LẦN 2 HANDOFF)
     iteration_signal = ""
     if agent_name == "agent_analyst":
         analyst_iters = state.get("analyst_iterations", 0)
         if analyst_iters == 0:
-            iteration_signal = "\n\n[SINGLE PASS - NO TOOLS]: Dữ liệu MITRE + NIST ĐÃ CÓ trong matched_devices. Chỉ ANSWER với remediation mapping."
+            iteration_signal = "\n\n[LẦN 1 - GỌI TOOLS]: Gọi get_mitre_attack_info và get_nist_controls. KHÔNG OUTPUT ANSWER."
+        elif analyst_iters == 1:
+            iteration_signal = "\n\n[LẦN 2 - HANDOFF]: Đã có kết quả MITRE/NIST. HANDOFF sang agent_matcher (KHÔNG ANSWER)."
         else:
-            iteration_signal = "\n\n[STOP]: Đã hoàn thành. Kết thúc."
+            iteration_signal = "\n\n[STOP]: Hoàn tất."
 
     prev_response = ""
     if state.get("last_agent_response") and state.get("last_agent") != agent_name:
@@ -917,6 +1043,11 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
 
     response = ollama_chat(messages, temperature=0.1)
     print(response)
+
+    # NEW: Special handling for agent_analyst iterations
+    if agent_name == "agent_analyst":
+        analyst_iters = state.get("analyst_iterations", 0)
+        state["analyst_iterations"] = analyst_iters + 1
 
     state["last_agent_response"] = response
     state["last_agent"]          = agent_name
