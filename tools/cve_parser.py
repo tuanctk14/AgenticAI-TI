@@ -87,32 +87,69 @@ SOFTWARE_NORMALIZATION = {
 }
 
 class CPEParser:
-    """Extract and normalize CPE from CVE configurations (NVD structure)"""
+    """Extract and normalize CPE from CVE configurations with version range support (NVD structure)"""
 
     @staticmethod
-    def extract_cpe_from_configurations(configurations: List[Dict]) -> List[str]:
+    def extract_cpe_from_configurations(configurations: List[Dict]) -> List[Dict]:
         """
-        Extract CPEs from NVD configurations structure
+        Extract CPE entries with version range data from NVD configurations.
 
-        NVD API v2.0 format:
-        configurations[].nodes[].cpeMatch[].criteria (CPE string)
-        or legacy:
-        configurations[].nodes[].cpeMatch[].cpe23Uri
+        Returns list of dict with: {
+            cpe_uri, vendor, product, version,
+            version_start_including, version_start_excluding,
+            version_end_including, version_end_excluding,
+            vulnerable, normalized_id
+        }
         """
-        cpes = []
+        cpe_entries = []
         if not configurations:
-            return cpes
+            return cpe_entries
 
+        seen = set()
         for config in configurations:
             nodes = config.get("nodes", [])
             for node in nodes:
                 cpe_matches = node.get("cpeMatch", [])
                 for match in cpe_matches:
-                    # Try 'criteria' first (NVD API v2.0), then 'cpe23Uri' (legacy)
                     cpe_uri = match.get("criteria", "") or match.get("cpe23Uri", "")
-                    if cpe_uri and cpe_uri not in cpes:
-                        cpes.append(cpe_uri)
+                    if not cpe_uri or cpe_uri in seen:
+                        continue
+                    seen.add(cpe_uri)
 
+                    parsed = CPEParser.parse_cpe_uri(cpe_uri)
+                    if not parsed:
+                        continue
+
+                    entry = {
+                        "cpe_uri": cpe_uri,
+                        "vendor": parsed.get("vendor"),
+                        "product": parsed.get("product"),
+                        "version": parsed.get("version"),
+                        "version_start_including": match.get("versionStartIncluding"),
+                        "version_start_excluding": match.get("versionStartExcluding"),
+                        "version_end_including": match.get("versionEndIncluding"),
+                        "version_end_excluding": match.get("versionEndExcluding"),
+                        "vulnerable": match.get("vulnerable", True),
+                        "normalized_id": CPEParser.normalize_software_id(
+                            parsed.get("vendor", ""),
+                            parsed.get("product", "")
+                        )
+                    }
+                    cpe_entries.append(entry)
+
+        return cpe_entries
+
+    @staticmethod
+    def extract_cpe_uris_simple(configurations: List[Dict]) -> List[str]:
+        """
+        Extract just CPE URI strings (for backward compatibility).
+        Returns list of CPE URI strings.
+        """
+        cpes = []
+        cpe_entries = CPEParser.extract_cpe_from_configurations(configurations)
+        for entry in cpe_entries:
+            if entry.get("cpe_uri") and entry["cpe_uri"] not in cpes:
+                cpes.append(entry["cpe_uri"])
         return cpes
 
     @staticmethod
@@ -284,37 +321,38 @@ def parse_cve_metadata(cve_dict: dict) -> dict:
     # ────────────────────────────────────────────────────────────
     # PHASE 1: CPE EXTRACTION (GOLD SOURCE)
     # ────────────────────────────────────────────────────────────
-    cpes = CPEParser.extract_cpe_from_configurations(configurations)
-    if cpes:
-        # For CVEs with multiple CPEs (e.g., library vulnerabilities),
-        # try to find the primary/library CPE by matching description keywords
-        selected_cpe = None
+    cpe_entries = CPEParser.extract_cpe_from_configurations(configurations)
+    if cpe_entries:
+        # Store ALL CPE entries for multi-CPE matching
+        result["cpe_entries"] = cpe_entries
+
+        # For return data, select primary CPE by description matching
+        selected_entry = None
         desc_lower = description.lower()
 
         # Priority 1: Try to match description keywords to find the vulnerable component
-        for cpe in cpes:
-            parsed = CPEParser.parse_cpe_uri(cpe)
-            product = parsed.get("product", "").lower().replace("_", " ")
-            vendor = parsed.get("vendor", "").lower()
+        for entry in cpe_entries:
+            product = entry.get("product", "").lower().replace("_", " ")
+            vendor = entry.get("vendor", "").lower()
 
             # Check if product name appears prominently in description
             if product in desc_lower or vendor in desc_lower:
-                selected_cpe = cpe
+                selected_entry = entry
                 break
 
         # Priority 2: Fall back to first CPE if no match found
-        if not selected_cpe:
-            selected_cpe = cpes[0]
+        if not selected_entry:
+            selected_entry = cpe_entries[0]
 
-        cpe_parsed = CPEParser.parse_cpe_uri(selected_cpe)
-        if cpe_parsed:
-            result["vendor"] = cpe_parsed.get("vendor")
-            result["product"] = cpe_parsed.get("product")
-            result["version"] = cpe_parsed.get("version")
-            result["normalized_software_id"] = CPEParser.normalize_software_id(
-                cpe_parsed.get("vendor", ""),
-                cpe_parsed.get("product", "")
-            )
+        if selected_entry:
+            result["vendor"] = selected_entry.get("vendor")
+            result["product"] = selected_entry.get("product")
+            result["version"] = selected_entry.get("version")
+            result["version_start_including"] = selected_entry.get("version_start_including")
+            result["version_start_excluding"] = selected_entry.get("version_start_excluding")
+            result["version_end_including"] = selected_entry.get("version_end_including")
+            result["version_end_excluding"] = selected_entry.get("version_end_excluding")
+            result["normalized_software_id"] = selected_entry.get("normalized_id")
             result["source"] = "gold_cpe"
             return result
 
@@ -377,33 +415,65 @@ def parse_cve_metadata(cve_dict: dict) -> dict:
     return result
 
 
-def compare_versions(device_version: str, vulnerable_max: str, vulnerable_min: str = None) -> bool:
+def compare_versions(
+    device_version: str,
+    vulnerable_max: str = None,
+    vulnerable_min: str = None,
+    version_end_excluding: str = None,
+    version_end_including: str = None,
+    version_start_including: str = None,
+    version_start_excluding: str = None,
+) -> bool:
     """
-    Compare versions to check if device is vulnerable.
+    Compare versions against CPE version range to check if device is vulnerable.
 
-    Returns True if device_version is within vulnerable range:
-    - If vulnerable_min: vulnerable_min <= device_version <= vulnerable_max
-    - Else: device_version <= vulnerable_max
+    Priority order (from CPE official range to legacy parameters):
+    1. CPE version range: version_end_excluding, version_end_including,
+       version_start_including, version_start_excluding
+    2. Legacy: vulnerable_max, vulnerable_min
 
-    Returns False if version cannot be parsed (safe assumption)
+    Returns True if device_version is within vulnerable range.
+    Returns False if version cannot be parsed (conservative).
     """
     try:
         dev_ver = pkg_version.parse(device_version)
-        max_ver = pkg_version.parse(vulnerable_max)
 
-        # Check if device version <= max vulnerable version
-        if dev_ver > max_ver:
-            return False
+        # Phase 1: Use CPE version range if available
+        if version_end_excluding or version_end_including or version_start_including or version_start_excluding:
+            # Check upper bound
+            if version_end_excluding:
+                if dev_ver >= pkg_version.parse(version_end_excluding):
+                    return False
+            if version_end_including:
+                if dev_ver > pkg_version.parse(version_end_including):
+                    return False
 
-        # If min version specified, check lower bound
-        if vulnerable_min:
-            min_ver = pkg_version.parse(vulnerable_min)
-            if dev_ver < min_ver:
+            # Check lower bound
+            if version_start_including:
+                if dev_ver < pkg_version.parse(version_start_including):
+                    return False
+            if version_start_excluding:
+                if dev_ver <= pkg_version.parse(version_start_excluding):
+                    return False
+
+            return True
+
+        # Phase 2: Fallback to legacy vulnerable_max/vulnerable_min
+        if vulnerable_max:
+            max_ver = pkg_version.parse(vulnerable_max)
+            if dev_ver > max_ver:
                 return False
 
-        return True
+            if vulnerable_min:
+                min_ver = pkg_version.parse(vulnerable_min)
+                if dev_ver < min_ver:
+                    return False
+
+            return True
+
+        # If no version range specified, cannot determine vulnerability
+        return False
     except Exception:
-        # If version parsing fails, be conservative and don't match
         return False
 
 

@@ -51,14 +51,21 @@ def fetch_cve_by_id(cve_id: str) -> dict:
 
             result = [{
                 "id": cve["id"],
-                "description": desc[:400],
+                "description": desc,  # Keep full description for NLP extraction
                 "cvss_score": score,
+                "cvss_vector": None,  # Will be set below if available
                 "severity": sev,
                 "published": cve.get("published", "N/A")[:10],
-                "references": [r["url"] for r in cve.get("references", [])[:3]],
+                "references": [r["url"] for r in cve.get("references", [])[:5]],
                 "configurations": cve.get("configurations", []),
                 "cwe_ids": cwe_ids,
             }]
+
+            # Extract CVSS vector string for more detailed vulnerability analysis
+            if "cvssMetricV31" in metrics:
+                result[0]["cvss_vector"] = metrics["cvssMetricV31"][0]["cvssData"].get("vectorString")
+            elif "cvssMetricV30" in metrics:
+                result[0]["cvss_vector"] = metrics["cvssMetricV30"][0]["cvssData"].get("vectorString")
             print(f"  [NVD]  Found {cve_id}")
             return {"context": result, "source": "NVD-LIVE", "total": 1}
 
@@ -145,16 +152,25 @@ def fetch_nvd_cves(keyword: str = "", severity: str = "HIGH", days_back: int = 3
                             if cwe_id not in cwe_ids:
                                 cwe_ids.append(cwe_id)
 
-                all_cves.append({
+                cve_entry = {
                     "id":          cve["id"],
-                    "description": desc[:400],
+                    "description": desc,  # Keep full description for NLP extraction
                     "cvss_score":  score,
+                    "cvss_vector": None,  # Will be set below if available
                     "severity":    sev,
                     "published":   cve.get("published", "N/A")[:10],
-                    "references":  [r["url"] for r in cve.get("references", [])[:2]],
+                    "references":  [r["url"] for r in cve.get("references", [])[:5]],
                     "configurations": cve.get("configurations", []),
                     "cwe_ids":     cwe_ids,
-                })
+                }
+
+                # Extract CVSS vector string
+                if "cvssMetricV31" in metrics:
+                    cve_entry["cvss_vector"] = metrics["cvssMetricV31"][0]["cvssData"].get("vectorString")
+                elif "cvssMetricV30" in metrics:
+                    cve_entry["cvss_vector"] = metrics["cvssMetricV30"][0]["cvssData"].get("vectorString")
+
+                all_cves.append(cve_entry)
 
             start_index += PAGE_SIZE
             fetched = len(all_cves)

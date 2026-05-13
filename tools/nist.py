@@ -30,21 +30,62 @@ def load_nist_database() -> Optional[dict]:
         raise
 
 
-def get_nist_controls(cve_id: str = "", keyword: str = "", cve_description: str = "") -> dict:
+def get_nist_controls(cve_id: str = "", keyword: str = "", cve_description: str = "", cwe_ids: list = None) -> dict:
     """
     Tra cuu NIST SP 800-53 controls cho CVE
 
-    Tra ve:
-        dict voi keys: controls (danh sach), priority, timeframe
+    CWE resolution hierarchy:
+    1. cwe_ids parameter (CWE chinh thuc tu NVD weaknesses) - highest priority
+    2. Truy van tu co so du lieu CVE cu bo
+    3. Inference tu description
 
-    Fallback: Neu CVE khong co trong database, su dung inference tu description
+    Tra ve:
+        dict voi keys: controls (danh sach), priority, timeframe, source
     """
-    print(f"  [NIST] Tra cuu: cve='{cve_id}', keyword='{keyword}'")
+    from tools.cwe_mapper import CWEMapper
+
+    print(f"  [NIST] Tra cuu: cve='{cve_id}', keyword='{keyword}', cwe_ids={cwe_ids}")
 
     # Tai co so du lieu
     db = load_nist_database()
 
-    # Truy van tu co so du lieu cu bo
+    # PHASE 1: Use official CWE IDs from NVD (highest priority)
+    if cwe_ids:
+        cwe_mapper = CWEMapper()
+        # Lam sach CWE IDs
+        valid_cwes = [c for c in cwe_ids if c.startswith("CWE-") or c.isdigit()]
+        if valid_cwes:
+            ctrl_ids = []
+            for cwe_id in valid_cwes:
+                controls = cwe_mapper.cwe_to_nist_controls(cwe_id)
+                for ctrl in controls:
+                    if ctrl["id"] not in ctrl_ids:
+                        ctrl_ids.append(ctrl["id"])
+
+            if ctrl_ids:
+                controls_db = db.get("controls", {})
+                controls = []
+                for ctrl_id in ctrl_ids:
+                    if ctrl_id in controls_db:
+                        ctrl = controls_db[ctrl_id]
+                        controls.append({
+                            "id": ctrl_id,
+                            "title": ctrl.get("title", "Khong xac dinh"),
+                            "description": ctrl.get("description", ""),
+                            "family": ctrl.get("family", ""),
+                        })
+
+                return {
+                    "context": {
+                        "controls": controls,
+                        "priority": _get_priority_from_controls(ctrl_ids),
+                        "timeframe": _get_timeframe_from_priority(_get_priority_from_controls(ctrl_ids)),
+                        "source": "cwe_nvd_chinh_thuc",
+                        "cwe_ids_used": valid_cwes,
+                    }
+                }
+
+    # PHASE 2: CVE mapping from local database
     cve_mapping = db.get("cve_mapping", {})
     controls_db = db.get("controls", {})
 
@@ -72,21 +113,7 @@ def get_nist_controls(cve_id: str = "", keyword: str = "", cve_description: str 
                 }
             }
 
-    # Khong tim thay - su dung inference neu co description
-    if cve_description and infer_nist_controls_from_cve:
-        inferred = infer_nist_controls_from_cve(cve_id, cve_description)
-        ctrl_ids = [c["id"] for c in inferred.get("controls", [])]
-        return {
-            "context": {
-                "controls": inferred.get("controls", []),
-                "priority": _get_priority_from_controls(ctrl_ids) if ctrl_ids else "MEDIUM",
-                "timeframe": _get_timeframe_from_priority(_get_priority_from_controls(ctrl_ids)) if ctrl_ids else "7 ngay",
-                "vulnerability_types": inferred.get("vulnerability_types", []),
-                "source": "inference_tu_description",
-            }
-        }
-
-    # Khong tim thay du lieu
+    # PHASE 3: Fallback - khong tim thay
     return {
         "context": {
             "controls": [],
