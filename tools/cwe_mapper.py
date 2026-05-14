@@ -93,7 +93,7 @@ class CWEMapper:
             control_data = nist_controls.get(control_id, {})
             controls.append({
                 "id": control_id,
-                "name": control_data.get("name", f"Control {control_id}"),
+                "name": control_data.get("title", control_data.get("name", f"Control {control_id}")),
                 "description": control_data.get("description", ""),
                 "family": control_id.split("-")[0] if "-" in control_id else "",
             })

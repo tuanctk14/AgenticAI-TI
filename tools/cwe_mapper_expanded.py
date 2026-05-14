@@ -673,6 +673,7 @@ CWE_TO_NIST = {
 
     # Authentication & Authorization
     "287": ["IA-2", "IA-8", "IA-3"],  # Improper Authentication
+    "288": ["IA-2", "AC-3", "AC-4"],  # Authentication Bypass Using Alternate Path
     "306": ["AC-3", "IA-2"],  # Missing Authentication
     "352": ["SI-10", "SC-23"],  # CSRF
     "384": ["SI-11", "SC-23"],  # Session Fixation
