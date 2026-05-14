@@ -516,24 +516,13 @@ def call_tool(state: dict) -> dict:
     return state
 
 
-# ── Helper function for comprehensive analyst output ──────────────────────────
-# ── Remediation fallback tables for when LLM inference is unavailable ──────
-FALLBACK_TECHNIQUE_ACTIONS = {
-    "T1190": ["Monitor web application logs for suspicious requests", "Implement WAF rules to detect exploit patterns", "Patch vulnerable component immediately"],
-    "T1059": ["Restrict command execution capabilities", "Monitor process creation for suspicious patterns", "Disable unnecessary scripting engines"],
-    "T1071": ["Monitor network traffic for anomalous patterns", "Implement network segmentation", "Use threat intelligence to identify C2 communications"],
-    "T1133": ["Restrict remote access to essential users only", "Use multi-factor authentication", "Monitor remote access logs"],
-    "T1547": ["Review and harden autostart locations", "Monitor startup configuration changes", "Deploy EDR to detect unauthorized persistence"],
-}
-
-FALLBACK_CONTROL_ACTIONS = {
-    "SI-2": ["Apply latest patches and security updates", "Maintain inventory of all software", "Test patches before deployment"],
-    "SI-3": ["Deploy malware protection tools", "Keep malware definitions current", "Monitor for malicious activity"],
-    "SC-7": ["Review and strengthen firewall rules", "Monitor boundary traffic", "Segment network by security zones"],
-    "CM-6": ["Document baseline security configurations", "Enforce configuration standards", "Monitor for unauthorized changes"],
-    "RA-5": ["Conduct regular vulnerability scans", "Prioritize by CVSS score", "Track remediation progress"],
-    "IR-4": ["Develop incident response playbook", "Conduct regular incident response drills", "Maintain incident response team readiness"],
-}
+# ── Import comprehensive remediation framework ─────────────────────────────
+from tools.remediation_framework import (
+    MITRE_TECHNIQUE_REMEDIATION,
+    NIST_CONTROL_REMEDIATION,
+    get_mitre_remediation,
+    get_nist_remediation,
+)
 
 
 def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, matched_devices: list, has_devices: bool) -> str:
@@ -712,7 +701,9 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
             tech_name = tech.get("name", "")
             if tech_id:
                 lines.append(f"  {tech_id} - {tech_name}:")
-                actions = FALLBACK_TECHNIQUE_ACTIONS.get(tech_id, ["Thực hiện biện pháp kiểm soát phù hợp"])
+                # Get comprehensive remediation from framework
+                remediation_data = get_mitre_remediation(tech_id)
+                actions = remediation_data.get("actions", ["Thực hiện biện pháp kiểm soát phù hợp"])
                 for i, action in enumerate(actions, 1):
                     lines.append(f"    {i}. {action}")
                 lines.append("")
@@ -725,7 +716,9 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
             ctrl_title = ctrl.get("title", "")
             if ctrl_id:
                 lines.append(f"  {ctrl_id} - {ctrl_title}:")
-                actions = FALLBACK_CONTROL_ACTIONS.get(ctrl_id, ["Thực hiện biện pháp kiểm soát theo tiêu chuẩn"])
+                # Get comprehensive remediation from framework
+                remediation_data = get_nist_remediation(ctrl_id)
+                actions = remediation_data.get("actions", ["Thực hiện biện pháp kiểm soát theo tiêu chuẩn"])
                 for i, action in enumerate(actions, 1):
                     lines.append(f"    {i}. {action}")
                 lines.append("")
