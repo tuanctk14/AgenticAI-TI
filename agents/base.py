@@ -747,7 +747,20 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
             ip = match.get("ip", "")
             os_info = match.get("os", "")
             dept = match.get("department", "")
-            affected_sw = match.get("affected_software", "")
+            # Get CVE affected software from CVE metadata (vendor/product), not from CMDB device
+            if cves and len(cves) > 0:
+                cve = cves[0]
+                vendor = cve.get("vendor", "")
+                product = cve.get("product", "")
+                # Construct affected software name from vendor and product
+                if vendor and product:
+                    affected_sw = f"{vendor} {product}" if vendor.lower() not in product.lower() else product
+                elif product:
+                    affected_sw = product
+                else:
+                    affected_sw = match.get("affected_software", "Unknown")
+            else:
+                affected_sw = match.get("affected_software", "Unknown")
             device_version = match.get("device_version", "")
             risk = match.get("risk_level", "")
 
