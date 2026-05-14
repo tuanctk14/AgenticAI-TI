@@ -113,7 +113,8 @@ class CPEParser:
         for config in configurations:
             nodes = config.get("nodes", [])
             for node in nodes:
-                cpe_matches = node.get("cpeMatch", [])
+                # Handle both "cpeMatch" (old format) and "cpe_match" (NVD API)
+                cpe_matches = node.get("cpe_match", []) or node.get("cpeMatch", [])
                 for match in cpe_matches:
                     cpe_uri = match.get("criteria", "") or match.get("cpe23Uri", "")
                     if not cpe_uri or cpe_uri in seen:
