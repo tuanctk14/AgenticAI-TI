@@ -125,9 +125,9 @@ def match_cves_with_cmdb(cve_list: list) -> dict:
                         "cwe_ids":             cwe_analysis.get("cwe_ids", []),
                         "mitre_techniques":    cwe_analysis.get("mitre_techniques", []),
                         "nist_controls":       cwe_analysis.get("nist_controls", []),
-                        "msi_confidence":      cve_metadata.get("extraction_confidence", 1.0),
-                        "msi_source_breakdown": cve_metadata.get("msi_source_breakdown", {}),
-                        "msi_sources_agreeing": cve_metadata.get("msi_sources_agreeing", []),
+                        "msi_confidence":      cve_metadata.get("extraction_confidence") if cve_source == "multi_source_intel" else None,
+                        "msi_source_breakdown": cve_metadata.get("msi_source_breakdown", {}) if cve_source == "multi_source_intel" else {},
+                        "msi_sources_agreeing": cve_metadata.get("msi_sources_agreeing", []) if cve_source == "multi_source_intel" else [],
                     })
 
     # Sắp xếp theo nguy cơ
@@ -244,9 +244,6 @@ def _match_cpe_entry_with_devices(
                     "cwe_ids":             cwe_analysis.get("cwe_ids", []),
                     "mitre_techniques":    cwe_analysis.get("mitre_techniques", []),
                     "nist_controls":       cwe_analysis.get("nist_controls", []),
-                    "msi_confidence":      cve_metadata.get("extraction_confidence", 1.0),
-                    "msi_source_breakdown": cve_metadata.get("msi_source_breakdown", {}),
-                    "msi_sources_agreeing": cve_metadata.get("msi_sources_agreeing", []),
                 })
 
     return matches
