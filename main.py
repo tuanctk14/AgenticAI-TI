@@ -299,11 +299,17 @@ def _print_summary(result: dict):
     """In tóm tắt kết quả sau khi chạy xong - CHI TIẾT ĐẦY ĐỦ."""
     last_response = result.get("last_agent_response", "")
     collected_cves = result.get("collected_cves") or []
+    last_agent = result.get("last_agent", "")
 
-    # Nếu agent_matcher đã output đầy đủ (có section markers) hoặc CVEs đã có
-    # → chỉ in metadata, không in lại CVE DETAILS
-    if ("KẾT QUẢ QUÉT LỖ HỔNG" in last_response or "THIẾT BỊ BỊ ẢNH HƯỞNG" in last_response
-        or collected_cves):
+    # Nếu agent_matcher đã hoàn thành (chứa bất kỳ section nào của full report)
+    # hoặc có CVEs collected → chỉ in metadata, không in lại chi tiết
+    is_full_report = ("PHÂN TÍCH MITRE ATT&CK" in last_response or
+                      "NIST SP 800-53 CONTROLS" in last_response or
+                      "HƯỚNG KHẮC PHỤC" in last_response or
+                      "THIẾT BỊ BỊ ẢNH HƯỞNG" in last_response or
+                      "agent_matcher" in last_agent)
+
+    if is_full_report or collected_cves:
         print("\n" + "="*70)
         history = result.get("agent_history", [])
         print(f" Agents: {' → '.join(history)} | Bước: {result.get('num_steps', 0)}")
