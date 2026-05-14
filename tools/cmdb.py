@@ -244,6 +244,9 @@ def _match_cpe_entry_with_devices(
                     "cwe_ids":             cwe_analysis.get("cwe_ids", []),
                     "mitre_techniques":    cwe_analysis.get("mitre_techniques", []),
                     "nist_controls":       cwe_analysis.get("nist_controls", []),
+                    "msi_confidence":      cve_metadata.get("extraction_confidence", 1.0),
+                    "msi_source_breakdown": cve_metadata.get("msi_source_breakdown", {}),
+                    "msi_sources_agreeing": cve_metadata.get("msi_sources_agreeing", []),
                 })
 
     return matches

@@ -15,9 +15,9 @@
     "department": "IT",
     "location": "HaNoi-DC1",
     "software": [
-      {"name": "Apache HTTP Server", "version": "2.4.49"},
-      {"name": "OpenSSL",            "version": "1.0.2k"},
-      {"name": "PHP",                "version": "7.4.3"}
+      {"name": "Apache HTTP Server", "version": "2.4.49", "normalized_id": "apache:http_server"},
+      {"name": "OpenSSL",            "version": "1.0.2k", "normalized_id": "openssl:openssl"},
+      {"name": "PHP",                "version": "7.4.3", "normalized_id": "php:php"}
     ]
   },
   {
@@ -36,9 +36,9 @@
     "department": "Finance",
     "location": "HaNoi-DC1",
     "software": [
-      {"name": "MySQL",   "version": "8.0.26"},
-      {"name": "OpenSSH", "version": "8.2p1"},
-      {"name": "log4j",   "version": "2.14.1"}
+      {"name": "MySQL",   "version": "8.0.26", "normalized_id": "mysql:mysql"},
+      {"name": "OpenSSH", "version": "8.2p1", "normalized_id": "openssh:openssh"},
+      {"name": "log4j",   "version": "2.14.1", "normalized_id": "apache:log4j"}
     ]
   },
   {
@@ -58,9 +58,9 @@
     "department": "Finance",
     "location": "HaNoi-Office",
     "software": [
-      {"name": "Microsoft Office", "version": "2019"},
-      {"name": "Chrome",           "version": "109.0.5414"},
-      {"name": "Adobe Acrobat",    "version": "21.011"}
+      {"name": "Microsoft Office", "version": "2019", "normalized_id": "microsoft:office"},
+      {"name": "Chrome",           "version": "109.0.5414", "normalized_id": "google:chrome"},
+      {"name": "Adobe Acrobat",    "version": "21.011", "normalized_id": "adobe:acrobat"}
     ]
   },
   {
@@ -76,7 +76,7 @@
     "department": "Network",
     "location": "HaNoi-DC1",
     "software": [
-      {"name": "Cisco IOS", "version": "15.7(3)M6"}
+      {"name": "Cisco IOS", "version": "15.7(3)M6", "normalized_id": "cisco:ios"}
     ]
   },
   {
@@ -95,9 +95,9 @@
     "department": "Development",
     "location": "HaNoi-DC2",
     "software": [
-      {"name": "Spring Framework", "version": "5.3.18"},
-      {"name": "Tomcat",           "version": "9.0.58"},
-      {"name": "OpenJDK",          "version": "11.0.14"}
+      {"name": "Spring Framework", "version": "5.3.18", "normalized_id": "pivotal:spring_framework"},
+      {"name": "Tomcat",           "version": "9.0.58", "normalized_id": "apache:tomcat"},
+      {"name": "OpenJDK",          "version": "11.0.14", "normalized_id": "openjdk:openjdk"}
     ]
   },
   {
@@ -121,11 +121,11 @@
     "department": "Marketing",
     "location": "HaNoi-Office",
     "software": [
-      {"name": "WordPress",                        "version": "6.0"},
-      {"name": "WordPress Plugin Download From Files", "version": "1.48"},
-      {"name": "Apache HTTP Server",               "version": "2.4.41"},
-      {"name": "PHP",                              "version": "7.4.3"},
-      {"name": "MySQL",                            "version": "8.0.28"}
+      {"name": "WordPress",                        "version": "6.0", "normalized_id": "wordpress:wordpress"},
+      {"name": "WordPress Plugin Download From Files", "version": "1.48", "normalized_id": "wordpress:wordpress"},
+      {"name": "Apache HTTP Server",               "version": "2.4.41", "normalized_id": "apache:http_server"},
+      {"name": "PHP",                              "version": "7.4.3", "normalized_id": "php:php"},
+      {"name": "MySQL",                            "version": "8.0.28", "normalized_id": "mysql:mysql"}
     ]
   }
 ]
