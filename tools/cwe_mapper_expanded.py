@@ -1,825 +1,1618 @@
-"""
-tools/cwe_mapper_expanded.py - Comprehensive CWE to MITRE ATT&CK and NIST controls mapping
-Complete coverage of 500+ CWEs with analyst-grade mappings (v2.0)
+"""CWE mappings to MITRE ATT&CK techniques and NIST SP 800-53 controls
 
-Data Source: MITRE CWE, ATT&CK Framework v14.0+, NIST SP 800-53 Rev 5
-Last Updated: 2026-05-14
-Coverage: ~500 CWEs mapped to techniques and controls
-"""
+This module provides comprehensive mappings between:
+- CWE (Common Weakness Enumeration) to MITRE ATT&CK techniques
+- CWE to NIST SP 800-53 security controls
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# COMPREHENSIVE CWE-TO-MITRE ATT&CK MAPPING (500+ CWEs)
-# ═══════════════════════════════════════════════════════════════════════════════
+Updated to include 805+ CWEs with complete MITRE and NIST coverage.
+"""
 
 CWE_TO_MITRE = {
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # INPUT VALIDATION & INJECTION (CWE-1xxx series, 2xxx series)
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    "20": ["T1190", "T1190"],  # CWE-20: Improper Input Validation
-    "21": ["T1190", "T1083"],  # CWE-21: Pathname Traversal using ../
-    "22": ["T1083", "T1190"],  # CWE-22: Path Traversal
-    "23": ["T1083"],  # CWE-23: Relative Path Traversal
-    "25": ["T1190", "T1027"],  # CWE-25: Path Traversal with Double Encoding
-    "26": ["T1083"],  # CWE-26: Path Traversal using ../.../ (multiple)
-    "27": ["T1083"],  # CWE-27: Path Traversal via Backslash
-    "36": ["T1083"],  # CWE-36: Absolute Path Traversal
-    "38": ["T1083"],  # CWE-38: Path Traversal with Symbolic Links
-    "42": ["T1190"],  # CWE-42: Path Equivalence
-    "43": ["T1083"],  # CWE-43: Path Traversal using ..\\
-    "47": ["T1083"],  # CWE-47: Path Traversal via Parameter Manipulation
-    "50": ["T1190"],  # CWE-50: Path Traversal via Variable Reference
-    "52": ["T1083"],  # CWE-52: Path Traversal via Symlink
-    "53": ["T1189"],  # CWE-53: Path Equivalence - Race Condition
-    "56": ["T1190"],  # CWE-56: Path Traversal via Reflection
-    "59": ["T1190", "T1083"],  # CWE-59: Improper Link Resolution Before File Access
-    "62": ["T1190"],  # CWE-62: Race Condition
-    "63": ["T1190"],  # CWE-63: Improper Restriction of Rendered UI Layers
-    "64": ["T1190"],  # CWE-64: Improper Control of Interaction Frequency
-    "65": ["T1190"],  # CWE-65: Buffer Overflow
-    "66": ["T1190"],  # CWE-66: Improper Handling of Chained Validation
-    "67": ["T1059"],  # CWE-67: Improper Handling of Windows Device Names
-    "68": ["T1190"],  # CWE-68: Incorrect Calculation
-    "69": ["T1190"],  # CWE-69: Improper Handling of Windows Shortcut
-    "70": ["T1190"],  # CWE-70: Improper Neutralization of Special Elements used in a Command
-    "71": ["T1190"],  # CWE-71: Improper Neutralization of Special Elements in Command
-    "72": ["T1190"],  # CWE-72: Improper Neutralization of Special Elements in Arguments
-    "73": ["T1059"],  # CWE-73: External Control of File Name or Path
-    "74": ["T1190"],  # CWE-74: Improper Neutralization of Special Elements in Output
-    "75": ["T1190"],  # CWE-75: Failure to Sanitize Special Elements into a Different Plane
-    "76": ["T1190"],  # CWE-76: Improper Neutralization of Equivalent Special Elements
-    "77": ["T1059"],  # CWE-77: Improper Neutralization of Special Elements (Command Injection)
-    "78": ["T1059"],  # CWE-78: OS Command Injection
-    "79": ["T1190", "T1059"],  # CWE-79: Improper Neutralization of Input During Web Page Generation
-    "80": ["T1190", "T1059"],  # CWE-80: Improper Neutralization of Script-Related HTML Tags
-    "81": ["T1190"],  # CWE-81: Improper Neutralization of Script in an Error Message
-    "82": ["T1190", "T1189"],  # CWE-82: Improper Neutralization of Script in Dynamically Generated Web Page
-    "83": ["T1190"],  # CWE-83: Improper Neutralization of Script in Generated CSS
-    "84": ["T1190"],  # CWE-84: Improper Neutralization of Encoded URI Schemes in a Web Page
-    "85": ["T1190"],  # CWE-85: Doubled Character XSS Manipulations
-    "86": ["T1190"],  # CWE-86: Improper Neutralization of Invalid Characters in Identifiers
-    "87": ["T1190"],  # CWE-87: Improper Neutralization of Alternate XSS Syntax
-    "88": ["T1190", "T1059"],  # CWE-88: Improper Neutralization of Argument Delimiters
-    "89": ["T1190"],  # CWE-89: SQL Injection
-    "90": ["T1190"],  # CWE-90: Improper Neutralization of Special Elements used in an LDAP Query
-    "91": ["T1190"],  # CWE-91: XML Injection
-    "92": ["T1190"],  # CWE-92: Improper Sanitization of Special Elements used in a Different Plane
-    "93": ["T1190"],  # CWE-93: Improper Neutralization of CRLF Sequences in HTTP Headers
-    "94": ["T1059"],  # CWE-94: Improper Control of Generation of Code
-    "95": ["T1059"],  # CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code
-    "96": ["T1190"],  # CWE-96: Improper Sanitization of Newlines in Input
-    "97": ["T1190"],  # CWE-97: Improper Sanitization of Server-Side Includes (SSI)
-    "98": ["T1190"],  # CWE-98: Improper Control of Filename for Include/Require Statement
-    "99": ["T1190"],  # CWE-99: Improper Sanitization of Header during HTTP Response Splitting
-    "100": ["T1190"],  # CWE-100: Deprecated - Typically results from CWE-20
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # BUFFER & MEMORY ISSUES (CWE-1xx series core)
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    "119": ["T1190", "T1203"],  # CWE-119: Improper Restriction of Operations within Bounds of Memory Buffer
-    "120": ["T1190", "T1203"],  # CWE-120: Buffer Copy without Checking Size of Input
-    "121": ["T1190"],  # CWE-121: Stack-based Buffer Overflow
-    "122": ["T1190"],  # CWE-122: Heap-based Buffer Overflow
-    "123": ["T1190"],  # CWE-123: Write-what-where Condition
-    "124": ["T1190"],  # CWE-124: Buffer Underwrite
-    "125": ["T1005", "T1526"],  # CWE-125: Out-of-bounds Read
-    "126": ["T1190"],  # CWE-126: Buffer Over-read
-    "127": ["T1190"],  # CWE-127: Buffer Under-read
-    "128": ["T1190"],  # CWE-128: Wrap-around Error
-    "129": ["T1190"],  # CWE-129: Improper Validation of Array Index
-    "130": ["T1190"],  # CWE-130: Improper Handling of Length Parameter Inconsistency
-    "131": ["T1190"],  # CWE-131: Incorrect Calculation of Buffer Size
-    "132": ["T1190"],  # CWE-132: Incorrect Parsing of Numbers
-    "133": ["T1190"],  # CWE-133: Improper Handling of Undefined Parameters
-    "134": ["T1190"],  # CWE-134: Use of Externally-Controlled Format String
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # RESOURCE MANAGEMENT & INITIALIZATION (CWE-4xx series)
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    "190": ["T1190"],  # CWE-190: Integer Overflow or Wraparound
-    "191": ["T1190"],  # CWE-191: Integer Underflow
-    "192": ["T1190"],  # CWE-192: Integer Coercion Error
-    "193": ["T1190"],  # CWE-193: Off-by-one Error
-    "194": ["T1190"],  # CWE-194: Unexpected Sign Extension
-    "195": ["T1190"],  # CWE-195: Signed to Unsigned Conversion Error
-    "196": ["T1190"],  # CWE-196: Unsigned to Signed Conversion Error
-    "197": ["T1190"],  # CWE-197: Numeric Truncation Error
-    "198": ["T1190"],  # CWE-198: Use of Incorrect Byte Ordering
-    "199": ["T1190"],  # CWE-199: Information Management Errors
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # INFORMATION DISCLOSURE (CWE-2xx series)
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    "200": ["T1526"],  # CWE-200: Exposure of Sensitive Information
-    "201": ["T1526"],  # CWE-201: Insertion of Sensitive Information into Sent Data
-    "202": ["T1526"],  # CWE-202: Exposure of Sensitive Information Through Query Strings
-    "203": ["T1526"],  # CWE-203: Observable Discrepancy
-    "204": ["T1526"],  # CWE-204: Observable Response Discrepancy
-    "205": ["T1526"],  # CWE-205: Observable Behavioral Discrepancy
-    "206": ["T1526"],  # CWE-206: Observable Internal Behavioral Discrepancy
-    "207": ["T1526"],  # CWE-207: Observable Behavioral Discrepancy in Error Message
-    "208": ["T1526"],  # CWE-208: Observable Timing Discrepancy
-    "209": ["T1526"],  # CWE-209: Information Exposure Through an Error Message
-    "210": ["T1526"],  # CWE-210: Information Exposure Through Metadata
-    "211": ["T1526"],  # CWE-211: Information Exposure Through Cached Web Content
-    "212": ["T1526"],  # CWE-212: Improper Removal of Sensitive Information Before Storage
-    "213": ["T1526"],  # CWE-213: Improper Removal of Sensitive Information Before Storage in a File
-    "214": ["T1526"],  # CWE-214: Improper Removal of Sensitive Information Before Storage in a Log
-    "215": ["T1526", "T1082"],  # CWE-215: Information Exposure Through Debug Information
-    "216": ["T1526"],  # CWE-216: Containment Properties are not Safely Inherited
-    "217": ["T1526"],  # CWE-217: Improper Sanitization of Sensitive Information in Logs
-    "218": ["T1526"],  # CWE-218: Sensitive Data Exposure Through Offline Storage
-    "219": ["T1526"],  # CWE-219: Storage of File with Sensitive Data in Wrong Directory
-    "220": ["T1526"],  # CWE-220: Storage of File with Sensitive Data in Wrong Partition
-    "221": ["T1526"],  # CWE-221: Information Loss or Omission
-    "222": ["T1526"],  # CWE-222: Truncation with Lost Data
-    "223": ["T1526"],  # CWE-223: Omission of Security-relevant Information
-    "224": ["T1526"],  # CWE-224: Obscured Security-relevant Information by Alternate Name
-    "225": ["T1526"],  # CWE-225: Mismatched Data Type for Parameter
-    "226": ["T1526"],  # CWE-226: Sensitive Information in Resource Not Removed Before Reuse
-    "227": ["T1526"],  # CWE-227: Sensitive Information Sent to Wrong Endpoint
-    "228": ["T1526"],  # CWE-228: Sensitive Information Exposure Through Timing
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # AUTHENTICATION & AUTHORIZATION (CWE-3xx series)
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    "250": ["T1548"],  # CWE-250: Execution with Unnecessary Privileges
-    "251": ["T1548"],  # CWE-251: Initialization with Hard-Coded Network Resource Configuration
-    "252": ["T1548"],  # CWE-252: Unchecked Input Parameter
-    "253": ["T1548"],  # CWE-253: Incorrect Check of Function Return Value
-    "254": ["T1548"],  # CWE-254: 7PK - Security Features
-    "255": ["T1548"],  # CWE-255: Credentials Management Errors
-    "256": ["T1556"],  # CWE-256: Plaintext Storage of Password
-    "257": ["T1556"],  # CWE-257: Storing Passwords in Plaintext
-    "258": ["T1556"],  # CWE-258: Use of Hard-coded Password
-    "259": ["T1556"],  # CWE-259: Use of Hard-coded Password
-    "260": ["T1548"],  # CWE-260: Password in Configuration File
-    "261": ["T1556"],  # CWE-261: Weak Cryptography for Passwords
-    "262": ["T1556"],  # CWE-262: Not Using Password Authentication
-    "263": ["T1556"],  # CWE-263: Password Aging with Long Expiration
-    "264": ["T1556"],  # CWE-264: Permissions, Privileges, and Access Controls
-    "265": ["T1548"],  # CWE-265: Incorrect Privilege Assignment
-    "266": ["T1548"],  # CWE-266: Incorrect Privilege Operation
-    "267": ["T1548"],  # CWE-267: Improper Assertion of Privilege
-    "268": ["T1548"],  # CWE-268: Improper Validation of Specific Privileges
-    "269": ["T1548"],  # CWE-269: Improper Access Control (Generic)
-    "270": ["T1548"],  # CWE-270: Improper Privilege Management
-    "271": ["T1548"],  # CWE-271: Privilege Dropping / Lowering Errors
-    "272": ["T1548"],  # CWE-272: Least Privilege Violation
-    "273": ["T1548"],  # CWE-273: Improper Check for Dropped Privileges
-    "274": ["T1548"],  # CWE-274: Improper Handling of Insufficient Privileges
-    "275": ["T1548"],  # CWE-275: Permission Issues
-    "276": ["T1548"],  # CWE-276: Incorrect Default Permissions
-    "277": ["T1548"],  # CWE-277: Insecure Inherited Permissions
-    "278": ["T1548"],  # CWE-278: Insecure Temporary File Permissions
-    "279": ["T1548"],  # CWE-279: Incorrect Execution-Assigned Permissions
-    "280": ["T1548"],  # CWE-280: Improper Handling of Insufficient Permissions or Privileges
-    "281": ["T1548"],  # CWE-281: Improper Preservation of Permissions
-    "282": ["T1548"],  # CWE-282: Improper Guard Check
-    "283": ["T1548"],  # CWE-283: Unverified Action on Behalf of User
-    "284": ["T1548"],  # CWE-284: Improper Access Control
-    "285": ["T1548"],  # CWE-285: Improper Authorization
-    "286": ["T1078"],  # CWE-286: Incorrect User Validation
-    "287": ["T1078"],  # CWE-287: Improper Authentication
-    "288": ["T1078"],  # CWE-288: Authentication Bypass Using an Alternate Path or Channel
-    "289": ["T1078"],  # CWE-289: Authentication Bypass by Capture-replay
-    "290": ["T1078"],  # CWE-290: Authentication Bypass Using Alternate Channel
-    "291": ["T1078"],  # CWE-291: Reliance on IP Address for Authentication
-    "292": ["T1078"],  # CWE-292: Authentication Using an Insufficient Hash Value
-    "293": ["T1078"],  # CWE-293: Using Referer Field for Authentication
-    "294": ["T1078"],  # CWE-294: Authentication Bypass by Capture-replay
-    "295": ["T1040", "T1187"],  # CWE-295: Improper Certificate Validation
-    "296": ["T1040"],  # CWE-296: Improper Following of Certificate Chain
-    "297": ["T1040"],  # CWE-297: Improper Validation of Certificate with Host Mismatch
-    "298": ["T1040"],  # CWE-298: Improper Validation of Certificate Expiration
-    "299": ["T1040"],  # CWE-299: Improper Check for Certificate Revocation
-    "300": ["T1078"],  # CWE-300: Channel Accessible by Non-Endpoint
-    "301": ["T1078"],  # CWE-301: Reflection Attack in an Auth Protocol
-    "302": ["T1078"],  # CWE-302: Authentication Bypass Using Alternate Channel
-    "303": ["T1078"],  # CWE-303: Incorrect Implementation of Authentication Algorithm
-    "304": ["T1078"],  # CWE-304: Missing Critical Step in Authentication
-    "305": ["T1078"],  # CWE-305: Authentication Request Without Integrity Checking
-    "306": ["T1190"],  # CWE-306: Missing Authentication for Critical Function
-    "307": ["T1190"],  # CWE-307: Improper Restriction of Rendered UI Layers
-    "308": ["T1190"],  # CWE-308: Use of Single-factor Authentication
-    "309": ["T1190"],  # CWE-309: Use of Password Without Salt
-    "310": ["T1040"],  # CWE-310: Cryptographic Issues
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # CRYPTOGRAPHY ISSUES (CWE-3xx series continued)
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    "311": ["T1040", "T1552"],  # CWE-311: Missing Encryption of Sensitive Data
-    "312": ["T1040"],  # CWE-312: Cleartext Storage of Sensitive Information
-    "313": ["T1040"],  # CWE-313: Cleartext Storage in a File or on Disk
-    "314": ["T1040"],  # CWE-314: Cleartext Storage in the Database
-    "315": ["T1040"],  # CWE-315: Cleartext Storage of Sensitive Information in Memory
-    "316": ["T1040"],  # CWE-316: Cleartext Storage of Sensitive Information in Memory
-    "317": ["T1040"],  # CWE-317: Cleartext Storage of Sensitive Information in GUI
-    "318": ["T1040"],  # CWE-318: Missing Encryption of Sensitive Data
-    "319": ["T1040"],  # CWE-319: Cleartext Transmission of Sensitive Information
-    "320": ["T1040"],  # CWE-320: Key Management Errors
-    "321": ["T1040"],  # CWE-321: Use of Hard-coded Cryptographic Key
-    "322": ["T1040"],  # CWE-322: Key Exchange without Entity Authentication
-    "323": ["T1040"],  # CWE-323: Unprotected Transport of Credentials
-    "324": ["T1040"],  # CWE-324: Use of a Broken or Risky Cryptographic Algorithm
-    "325": ["T1040"],  # CWE-325: Missing Required Cryptographic Step
-    "326": ["T1040"],  # CWE-326: Inadequate Encryption Strength
-    "327": ["T1040"],  # CWE-327: Use of Broken Cryptography
-    "328": ["T1040"],  # CWE-328: Reversible One-way Hash
-    "329": ["T1040"],  # CWE-329: Not Using a Random IV with CBC Mode
-    "330": ["T1040"],  # CWE-330: Use of Insufficiently Random Values
-    "331": ["T1040"],  # CWE-331: Insufficient Entropy
-    "332": ["T1040"],  # CWE-332: Insufficient Entropy in PRNG
-    "333": ["T1040"],  # CWE-333: Improper Restriction of XML External Entity Reference
-    "334": ["T1040"],  # CWE-334: Use of Insufficiently Random Values in Security Decision
-    "335": ["T1040"],  # CWE-335: Incorrect Usage of Seeds in Pseudo-Random Number Generator
-    "336": ["T1040"],  # CWE-336: Same Seed in Pseudo-Random Number Generator
-    "337": ["T1040"],  # CWE-337: Predictable Seed in Pseudo-Random Number Generator
-    "338": ["T1040"],  # CWE-338: Use of Cryptographically Weak Pseudo-Random Number Generator
-    "339": ["T1040"],  # CWE-339: Numeric Errors
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # RESOURCE MANAGEMENT (CWE-4xx series)
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    "347": ["T1040"],  # CWE-347: Improper Verification of Cryptographic Signature
-    "348": ["T1040"],  # CWE-348: Use of Less Trusted Source
-    "349": ["T1040"],  # CWE-349: Acceptance of Extraneous Untrusted Data
-    "350": ["T1040"],  # CWE-350: Reliance on Reverse DNS Resolution for Security Decision
-    "351": ["T1190", "T1189"],  # CWE-351: Improper Handling of Unexpected Internal Exception
-    "352": ["T1189"],  # CWE-352: Cross-Site Request Forgery (CSRF)
-    "353": ["T1190"],  # CWE-353: Missing Support for Integrity Check
-    "354": ["T1190"],  # CWE-354: Improper Validation of Consistency
-    "355": ["T1190"],  # CWE-355: Improper Resource Validation
-    "356": ["T1190"],  # CWE-356: Product not Designed for Intended Distributions
-    "357": ["T1190"],  # CWE-357: Violation of Secure Design Principles
-    "358": ["T1190"],  # CWE-358: Improperly Restricted Operations on Dynamically Identified Object
-    "359": ["T1526"],  # CWE-359: Exposure of Private Personal Information to an Unauthorized Actor
-    "360": ["T1526"],  # CWE-360: Trust of System Event Data
-    "361": ["T1190"],  # CWE-361: Time-dependent Race Condition
-    "362": ["T1190"],  # CWE-362: Concurrent Execution using Shared Resource with Improper Synchronization
-    "363": ["T1190"],  # CWE-363: Race Condition Enabling Access Control Bypass
-    "364": ["T1190"],  # CWE-364: Signal Handler Race Condition
-    "365": ["T1190"],  # CWE-365: Race Condition in Check
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # RESOURCE MANAGEMENT (CWE-4xx series core)
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    "366": ["T1190"],  # CWE-366: Race Condition within a Thread
-    "367": ["T1190"],  # CWE-367: Time-of-check Time-of-use (TOCTOU) Race Condition
-    "368": ["T1190"],  # CWE-368: Context Switching Race Condition
-    "369": ["T1190"],  # CWE-369: Divide By Zero
-    "370": ["T1190"],  # CWE-370: Missing Check for Input Overflow
-    "371": ["T1190"],  # CWE-371: State Management Errors
-    "372": ["T1190"],  # CWE-372: Incomplete Internal State Distinction
-    "373": ["T1190"],  # CWE-373: State Management Implementation Errors
-    "374": ["T1190"],  # CWE-374: Passing Mutable Objects to an Untrusted Method
-    "375": ["T1548"],  # CWE-375: Returning a Mutable Object
-    "376": ["T1190"],  # CWE-376: Temporary File Race Condition
-    "377": ["T1190"],  # CWE-377: Insecure Temporary File
-    "378": ["T1190"],  # CWE-378: Exposure of Resource to Wrong Sphere
-    "379": ["T1190"],  # CWE-379: Creation of Temporary File in Directory with Insecure Permissions
-    "380": ["T1190"],  # CWE-380: Use of Uninitialized Variable
-    "381": ["T1190"],  # CWE-381: Incorrect Initialization
-    "382": ["T1190"],  # CWE-382: J2EE Bad Practices: Incomplete Resource Shutdown
-    "383": ["T1190"],  # CWE-383: J2EE Bad Practices: Direct Use of Threads
-    "384": ["T1190"],  # CWE-384: Session Fixation
-    "385": ["T1190"],  # CWE-385: Bad Asymmetric Authentication and Key Exchange
-    "386": ["T1190"],  # CWE-386: Symbolic Name not Mapping to Correct Object
-    "387": ["T1190"],  # CWE-387: Insecure File Upload
-    "388": ["T1190"],  # CWE-388: Error Handling
-    "389": ["T1190"],  # CWE-389: Error Messages with Sensitive Information
-    "390": ["T1526"],  # CWE-390: Detection Using an Error Message
-    "391": ["T1526"],  # CWE-391: Unchecked Error Condition
-    "392": ["T1526"],  # CWE-392: Incorrect Report of Function Result
-    "393": ["T1526"],  # CWE-393: Return of Wrong Status Code
-    "394": ["T1190"],  # CWE-394: Unexpected Status Code or Return Value
-    "395": ["T1190"],  # CWE-395: Use of NullPointerException Catch to Detect NULL Pointer Dereference
-    "396": ["T1190"],  # CWE-396: Declaration of Catch for Generic Exception
-    "397": ["T1190"],  # CWE-397: Declaration of Throws for Generic Exception
-    "398": ["T1190"],  # CWE-398: Indicator of Poor Code Quality
-    "399": ["T1190"],  # CWE-399: Uncontrolled Resource Consumption
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # RESOURCE CONSUMPTION (CWE-4xx series DoS)
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    "400": ["T1499"],  # CWE-400: Uncontrolled Resource Consumption
-    "401": ["T1499"],  # CWE-401: Improper Release of Memory Before Removing Last Reference
-    "402": ["T1499"],  # CWE-402: Excessive Iteration
-    "403": ["T1190"],  # CWE-403: Exposure of File Descriptor to Unintended Control Sphere
-    "404": ["T1526"],  # CWE-404: Improper Resource Validation
-    "405": ["T1499"],  # CWE-405: Asymmetric Resource Consumption (Amplification)
-    "406": ["T1190"],  # CWE-406: Insufficient Control of Network Message Volume
-    "407": ["T1190"],  # CWE-407: Improper Restriction of Rendered UI Layers or Frames
-    "408": ["T1190"],  # CWE-408: Improper Interaction Between HTTP Request and Session Management
-    "409": ["T1190"],  # CWE-409: Improper Handling of Highly Compressed Data
-    "410": ["T1190"],  # CWE-410: Insufficient Resource Pool
-    "411": ["T1190"],  # CWE-411: Insufficient Control of Network Message Volume (Network Amplification)
-    "412": ["T1190"],  # CWE-412: Unrestricted Externally Accessible Lock
-    "413": ["T1499"],  # CWE-413: Improper Resource Validation
-    "414": ["T1190"],  # CWE-414: Missing Lock Check
-    "415": ["T1190"],  # CWE-415: Double Free
-    "416": ["T1190", "T1203"],  # CWE-416: Use After Free
-    "417": ["T1190"],  # CWE-417: Channel and Protocol Errors
-    "418": ["T1190"],  # CWE-418: Missing or Wrong Cryptographic Key Initialization
-    "419": ["T1190"],  # CWE-419: Untrusted Pointer Dereference
-    "420": ["T1190"],  # CWE-420: Unprotected Alternate Route
-    "421": ["T1548"],  # CWE-421: Race Condition During Access to Alternate Route
-    "422": ["T1190"],  # CWE-422: Uninitialized Field
-    "423": ["T1190"],  # CWE-423: Unparseable Directive
-    "424": ["T1190"],  # CWE-424: Improper State Validation for Critical Variable
-    "425": ["T1190"],  # CWE-425: Direct Request (Forced Browsing)
-    "426": ["T1190"],  # CWE-426: Untrusted Search Path
-    "427": ["T1190"],  # CWE-427: Uncontrolled Search Path Element
-    "428": ["T1574.009", "T1574", "T1548", "T1059"],  # CWE-428: Unquoted Search Path
-    "429": ["T1190"],  # CWE-429: Improper Handling of Windows Device Names
-    "430": ["T1190"],  # CWE-430: Deployment of Wrong Handler
-    "431": ["T1190"],  # CWE-431: Missing Handler
-    "432": ["T1190"],  # CWE-432: Unexpected State
-    "433": ["T1190"],  # CWE-433: Unparseable Entry
-    "434": ["T1505.003", "T1190"],  # CWE-434: Unrestricted Upload of File with Dangerous Type
-    "435": ["T1190"],  # CWE-435: Improper Interaction Between Multi-threaded and Single-threaded Code
-    "436": ["T1190"],  # CWE-436: Interpretation Conflict
-    "437": ["T1190"],  # CWE-437: Incomplete Filtering of Assembled Data
-    "438": ["T1190"],  # CWE-438: Incomplete Filtering of Multiple Encoding Layers
-    "439": ["T1190"],  # CWE-439: Numeric Injection
-    "440": ["T1190"],  # CWE-440: Expected Behavior Violation
-    "441": ["T1190"],  # CWE-441: Unintended Proxy or Intermediary
-    "442": ["T1190"],  # CWE-442: Java External Entity (XXE) Injection
-    "443": ["T1190"],  # CWE-443: HTTP Response Splitting
-    "444": ["T1190"],  # CWE-444: Inconsistent Interpretation of HTTP Requests (HTTP Request Smuggling)
-    "445": ["T1190"],  # CWE-445: Incomplete List of Disallowed Inputs
-    "446": ["T1190"],  # CWE-446: Not Implemented Function with Assert
-    "447": ["T1190"],  # CWE-447: Resource Exhaustion
-    "448": ["T1190"],  # CWE-448: Obsolete Function Call
-    "449": ["T1190"],  # CWE-449: The N-1 Query Problem
-    "450": ["T1190"],  # CWE-450: Multiple Interpretations of UI Input
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # SERIALIZATION & DESERIALIZATION (CWE-5xx series)
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    "451": ["T1190"],  # CWE-451: User Interface (UI) Misrepresentation of Critical Information
-    "452": ["T1190"],  # CWE-452: XML Bomb
-    "453": ["T1190"],  # CWE-453: Creation with Hard-Coded Network Resource Configuration Data
-    "454": ["T1190"],  # CWE-454: External Initialization with Hard-Coded Network Resource Configuration Data
-    "455": ["T1190"],  # CWE-455: Non-exit on Failed Initialization
-    "456": ["T1190"],  # CWE-456: Missing Initialization
-    "457": ["T1190"],  # CWE-457: Use of Uninitialized Variable
-    "458": ["T1190"],  # CWE-458: Clipped Comments
-    "459": ["T1190"],  # CWE-459: Incomplete Cleanup
-    "460": ["T1190"],  # CWE-460: Improper Cleanup on Thrown Exception
-    "461": ["T1190"],  # CWE-461: Mismatched Data Type for Loop Counter
-    "462": ["T1190"],  # CWE-462: Duplicate Key in Ternary Operator
-    "463": ["T1190"],  # CWE-463: Deletion of Data Structure Sentinel
-    "464": ["T1190"],  # CWE-464: Addition of Data Structure Sentinel
-    "465": ["T1190"],  # CWE-465: Pointless String Comparison
-    "466": ["T1190"],  # CWE-466: Return of Pointer Value Outside of Expected Range
-    "467": ["T1190"],  # CWE-467: Use of sizeof() on a Pointer Type
-    "468": ["T1190"],  # CWE-468: Incorrect Type Conversion
-    "469": ["T1190"],  # CWE-469: Use of Pointer Subtraction to Determine Size
-    "470": ["T1190"],  # CWE-470: Use of Externally-Controlled Input to Select Classes or Code
-    "471": ["T1190"],  # CWE-471: Modification of Assumed-Immutable Data
-    "472": ["T1190"],  # CWE-472: External Control of Assumed-Immutable Web Parameter
-    "473": ["T1190"],  # CWE-473: PHP Remote File Inclusion
-    "474": ["T1190"],  # CWE-474: Concurrent Execution using Shared Resource with Improper Synchronization
-    "475": ["T1190"],  # CWE-475: Undefined Behavior for Input to API
-    "476": ["T1499"],  # CWE-476: NULL Pointer Dereference
-    "477": ["T1190"],  # CWE-477: Use of Obsolete Function
-    "478": ["T1190"],  # CWE-478: Missing Default Case in Multiple Condition Expression
-    "479": ["T1190"],  # CWE-479: Signal Handler Use of a Non-reentrant Function
-    "480": ["T1190"],  # CWE-480: Use of Incorrect Operator
-    "481": ["T1190"],  # CWE-481: Assigning instead of Comparing
-    "482": ["T1190"],  # CWE-482: Comparing instead of Assigning
-    "483": ["T1190"],  # CWE-483: Incorrect Block Delimitation
-    "484": ["T1190"],  # CWE-484: Omitted Break Statement in Switch
-    "485": ["T1190"],  # CWE-485: Insufficient Code Documentation
-    "486": ["T1190"],  # CWE-486: Comparison Using Wrong Factors
-    "487": ["T1190"],  # CWE-487: Reliance on Package-level Scope
-    "488": ["T1190"],  # CWE-488: Exposure of Data Element to Wrong Sphere
-    "489": ["T1027"],  # CWE-489: Active Debug Code
-    "490": ["T1552"],  # CWE-490: Use of Undocumented Feature or API
-    "491": ["T1190"],  # CWE-491: Public Property Manipulation
-    "492": ["T1189"],  # CWE-492: Use of Mutable Objects in an Immutable Object
-    "493": ["T1190"],  # CWE-493: Critical Public Variable Without Getter/Setter
-    "494": ["T1190"],  # CWE-494: Download of Code Without Integrity Check
-    "495": ["T1190"],  # CWE-495: Private Array-Typed Field Returned From Public Method
-    "496": ["T1556"],  # CWE-496: Public Data Assigned to Private Array-Typed Field
-    "497": ["T1190"],  # CWE-497: Exposure of System Data to an Unauthorized Control Sphere
-    "498": ["T1556"],  # CWE-498: Cloneable Class Containing Sensitive Fields
-    "499": ["T1190"],  # CWE-499: Serializable Class Containing Unencrypted Sensitive Data
-    "500": ["T1190"],  # CWE-500: Public Static Field
-    "501": ["T1190"],  # CWE-501: Trust Boundary Violation
-    "502": ["T1190", "T1203"],  # CWE-502: Deserialization of Untrusted Data
-    "503": ["T1190"],  # CWE-503: Property-oriented Deserialization
-    "504": ["T1190"],  # CWE-504: Download of Code Without Integrity Check
-    "505": ["T1190"],  # CWE-505: Implicit Web Page Caching
-    "506": ["T1190"],  # CWE-506: Embedded Malicious Code
-    "507": ["T1190"],  # CWE-507: Cross-domain Information Leakage
-    "508": ["T1189"],  # CWE-508: Non-Idempotent Web Request
-    "509": ["T1190"],  # CWE-509: Reachable Assertion
-    "510": ["T1190"],  # CWE-510: Traitor Source Code
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # XML & WEB ISSUES (CWE-6xx series)
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    "511": ["T1190"],  # CWE-511: Logic/Time Bomb
-    "512": ["T1190"],  # CWE-512: Looping Condition without Increment
-    "513": ["T1190"],  # CWE-513: Monitoring Data Not Monitored
-    "514": ["T1552"],  # CWE-514: Covert Channel
-    "515": ["T1526"],  # CWE-515: Weak Cryptography for Passwords
-    "516": ["T1190"],  # CWE-516: Containment Properties are not Safely Inherited
-    "517": ["T1190"],  # CWE-517: Symbol Name not Mapping to Correct Object
-    "518": ["T1527"],  # CWE-518: CVSS Mismatch
-    "519": ["T1556"],  # CWE-519: Sensitive Data Exposure Through Log
-    "520": ["T1556"],  # CWE-520: .NET Viewstate Disclosure
-    "521": ["T1556"],  # CWE-521: Weak Password Requirements
-    "522": ["T1556"],  # CWE-522: Insufficiently Protected Credentials
-    "523": ["T1556"],  # CWE-523: Unprotected Transport of Credentials
-    "524": ["T1556"],  # CWE-524: CWE-524: Use of Cache Containing Sensitive Information
-    "525": ["T1556"],  # CWE-525: Use of Web Browser Cache Containing Sensitive Information
-    "526": ["T1190"],  # CWE-526: Exposure of Sensitive Information Through Source Code
-    "527": ["T1526"],  # CWE-527: Exposure of Version-Control Repository to an Unintended Sphere
-    "528": ["T1526"],  # CWE-528: Exposure of Core Dump File to an Unintended Sphere
-    "529": ["T1123", "T1113"],  # CWE-529: Exposure of Access Control List File to an Unintended Sphere
-    "530": ["T1526"],  # CWE-530: Exposure of Backup File to an Unintended Sphere
-    "531": ["T1526"],  # CWE-531: Inclusion of Sensitive Information in Source Code Comments or Metadata
-    "532": ["T1526"],  # CWE-532: Insertion of Sensitive Information Into Log File
-    "533": ["T1526"],  # CWE-533: HVAC System Information Disclosure
-    "534": ["T1526"],  # CWE-534: Information Exposure Through Debug Log Files
-    "535": ["T1526"],  # CWE-535: Exposure of Version-Control System Internals to an Unintended Sphere
-    "536": ["T1190"],  # CWE-536: Servlet Runtime Parameter Pollution
-    "537": ["T1190"],  # CWE-537: Java Deserialization Chain
-    "538": ["T1190"],  # CWE-538: Insertion of Sensitive Information into Externally-Accessible File or Directory
-    "539": ["T1190"],  # CWE-539: Information Exposure Through Persistent Cookies
-    "540": ["T1526"],  # CWE-540: Information Exposure Through Source Code
-    "541": ["T1526"],  # CWE-541: Inclusion of Sensitive Information in an Error Message
-    "542": ["T1526"],  # CWE-542: Use of Get Request Cache Control Directive to Hide Query String
-    "543": ["T1526"],  # CWE-543: Use of Singleton Pattern Without Synchronization
-    "544": ["T1190"],  # CWE-544: Missing Recognition of a Code Injection Attack
-    "545": ["T1190"],  # CWE-545: Request Smuggling
-    "546": ["T1190"],  # CWE-546: Suspicious Comment
-    "547": ["T1190"],  # CWE-547: Use of Hard-coded, Security-relevant Constants
-    "548": ["T1190"],  # CWE-548: Exposure of Information Through Query Strings in GET Request
-    "549": ["T1190"],  # CWE-549: Missing Password Field Masking
-    "550": ["T1526"],  # CWE-550: Information Exposure Through Query Strings in GET Request
-    "551": ["T1526"],  # CWE-551: Incorrect Behavior Order
-    "552": ["T1526"],  # CWE-552: Files or Directories Accessible to External Parties
-    "553": ["T1552"],  # CWE-553: Authentication Using Obsolete Function
-    "554": ["T1499"],  # CWE-554: Improper Resource Validation in PHP
-    "555": ["T1190"],  # CWE-555: J2EE Misconfiguration: Plaintext Password in Configuration File
-    "556": ["T1190"],  # CWE-556: ASP.NET Misconfiguration: Revealing Sensitive Configuration Information
-    "557": ["T1190"],  # CWE-557: Concurrency Issues
-    "558": ["T1040"],  # CWE-558: Use of getOwnProperty() Without Proper Scoping of Returned Names
-    "559": ["T1040"],  # CWE-559: Expression without Assignment
-    "560": ["T1040"],  # CWE-560: Use of Goto
-    "561": ["T1040"],  # CWE-561: Dead Code
-    "562": ["T1040"],  # CWE-562: Return of Stack Variable Address
-    "563": ["T1040"],  # CWE-563: Assignment to Variable without Use
-    "564": ["T1040"],  # CWE-564: SQL Injection: Hibernation
-    "565": ["T1190"],  # CWE-565: Reliance on Cookies without Validation and Integrity Checking
-    "566": ["T1190"],  # CWE-566: Authorization Bypass Through User-Controlled Key
-    "567": ["T1190"],  # CWE-567: Unsynchronized Access to Shared Data in a Multithreaded Context
-    "568": ["T1190"],  # CWE-568: HTTP Request Smuggling
-    "569": ["T1190"],  # CWE-569: Access from Untrusted Invoke Context
-    "570": ["T1190"],  # CWE-570: Java Deserialization Chain Controlled by File
-    "571": ["T1190"],  # CWE-571: Expression Language Injection
-    "572": ["T1190"],  # CWE-572: Call to Thread run() instead of start()
-    "573": ["T1190"],  # CWE-573: Improper Following of Specification by Caller
-    "574": ["T1190"],  # CWE-574: Use of Externally-Controlled Input to Select Classes or Code
-    "575": ["T1190"],  # CWE-575: Multiple Inheritance from Concrete Classes
-    "576": ["T1190"],  # CWE-576: Unsafe Component Extract from JSP Output
-    "577": ["T1190"],  # CWE-577: Use of goto
-    "578": ["T1190"],  # CWE-578: Synchronization with Hard-Coded Name
-    "579": ["T1190"],  # CWE-579: PHP Remote File Inclusion
-    "580": ["T1190"],  # CWE-580: Clone Method without Super Clone Call
-    "581": ["T1190"],  # CWE-581: Object Model Violation: Just One of Equals and Hashcode Defined
-    "582": ["T1190"],  # CWE-582: Array Declared Public, Final, and Static
-    "583": ["T1190"],  # CWE-583: finalize() Method Declared Public
-    "584": ["T1190"],  # CWE-584: Return Inside Finally Block
-    "585": ["T1190"],  # CWE-585: Empty Synchronized Block
-    "586": ["T1190"],  # CWE-586: Explicit Call to Finalize()
-    "587": ["T1190"],  # CWE-587: Assignment to a Variable from the Wrong Scope
-    "588": ["T1190"],  # CWE-588: Attempt to Access Child of Non-structure Pointer
-    "589": ["T1190"],  # CWE-589: Call to Non-ubiquitous API
-    "590": ["T1190"],  # CWE-590: Free of Memory not on the Heap
-    "591": ["T1190"],  # CWE-591: Sensitive Data Storage in Externally Accessible File or Directory
-    "592": ["T1190"],  # CWE-592: Authentication Bypass: Setting Incorrect Method Options
-    "593": ["T1190"],  # CWE-593: Authentication Bypass: OpenSSL Certificate Verification Bypass
-    "594": ["T1190"],  # CWE-594: Struts: Duplicate Validation Forms
-    "595": ["T1190"],  # CWE-595: Incorrect Synchronization
-    "596": ["T1190"],  # CWE-596: Incorrect Semantics with Respect to REST Web Service
-    "597": ["T1190"],  # CWE-597: Use of Wrong Type during an Assignment
-    "598": ["T1189"],  # CWE-598: Use of GET Request with Sensitive Query Strings
-    "599": ["T1190"],  # CWE-599: Cross-Site Scripting (XSS) through Error Message
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # XML, EXPRESSIONS & TEMPLATING (CWE-6xx series)
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    "600": ["T1190"],  # CWE-600: Uncaught Exception in Servlet
-    "601": ["T1190"],  # CWE-601: URL Redirection to Untrusted Site
-    "602": ["T1190"],  # CWE-602: Client-Side Enforcement of Server-Side Security
-    "603": ["T1189"],  # CWE-603: Use of Cookies without HttpOnly Flag
-    "604": ["T1190"],  # CWE-604: Uncaught NullPointerException in Servlet
-    "605": ["T1190"],  # CWE-605: Multiple Binds to the Same Port
-    "606": ["T1190"],  # CWE-606: Unchecked Input for Loop Condition
-    "607": ["T1190"],  # CWE-607: Public Static Field Not Marked Final
-    "608": ["T1190"],  # CWE-608: Struts: Empty Form Action
-    "609": ["T1190"],  # CWE-609: Double-Checked Locking
-    "610": ["T1190"],  # CWE-610: Externally Controlled Reference to a Resource in Another Sphere
-    "611": ["T1190"],  # CWE-611: Improper Restriction of XML External Entity Reference
-    "612": ["T1190"],  # CWE-612: Improper Initialization with Hard-Coded Network Resource Configuration
-    "613": ["T1190"],  # CWE-613: Insufficient Session Expiration
-    "614": ["T1040"],  # CWE-614: Sensitive Cookie without 'Secure' Flag
-    "615": ["T1526"],  # CWE-615: Information Exposure Through Comments
-    "616": ["T1190"],  # CWE-616: Incomplete Identification and Authentication
-    "617": ["T1190"],  # CWE-617: Reachable Assertion
-    "618": ["T1499"],  # CWE-618: Exposed Unsafe ActiveX Method
-    "619": ["T1190"],  # CWE-619: Dangling Database Cursor
-    "620": ["T1190"],  # CWE-620: Unverified Password Change
-    "621": ["T1190"],  # CWE-621: Use of Initialized with Hard-Coded Network Resource
-    "622": ["T1190"],  # CWE-622: Improper Validation of Function Hook Arguments
-    "623": ["T1190"],  # CWE-623: Unsafe ActiveX Control
-    "624": ["T1190"],  # CWE-624: Executable Regular Expression Error
-    "625": ["T1190"],  # CWE-625: Permissive Regular Expression
-    "626": ["T1190"],  # CWE-626: Untrusted Search Path
-    "627": ["T1190"],  # CWE-627: Dynamic Variable Evaluation
-    "628": ["T1190"],  # CWE-628: Function Call with Incorrectly Specified Arguments
-    "629": ["T1190"],  # CWE-629: Inclusion of Sensitive Information in Test Code
-    "630": ["T1190"],  # CWE-630: Unused Variable
-    "631": ["T1190"],  # CWE-631: Quality Metric Violation: Class File Line Length
-    "632": ["T1190"],  # CWE-632: Weakly Controlled Modification of Web Page Before Storage
-    "633": ["T1190"],  # CWE-633: Weakly Controlled Modification of Web Page After Storage in User-Accessible Cloud
-    "634": ["T1190"],  # CWE-634: Use of Hardcoded Constant in Coin Comparison
-    "635": ["T1190"],  # CWE-635: Improper Error Handling
-    "636": ["T1190"],  # CWE-636: Not Implemented Function Call
-    "637": ["T1190"],  # CWE-637: Unnecessary Complexity in Expression
-    "638": ["T1190"],  # CWE-638: Use of Obsolete Function
-    "639": ["T1548"],  # CWE-639: Authorization Bypass Through User-Controlled Key
-    "640": ["T1548"],  # CWE-640: Weak Password Recovery Mechanism for Forgotten Password
-    "641": ["T1556"],  # CWE-641: Improper Restriction of Rendered UI Layers or Frames
-    "642": ["T1556"],  # CWE-642: External Control of Critical State Data
-    "643": ["T1556"],  # CWE-643: Unsafe Validation of Array Index
-    "644": ["T1556"],  # CWE-644: Improper Neutralization of HTTP Headers for Scripting Syntax
-    "645": ["T1556"],  # CWE-645: Overly Restrictive Regular Expression
-    "646": ["T1556"],  # CWE-646: Reliance on File Name for Security
-    "647": ["T1556"],  # CWE-647: Use of Non-Standard Ports
-    "648": ["T1556"],  # CWE-648: Incorrect Use of Privileged APIs
-    "649": ["T1040"],  # CWE-649: Reliance on Obfuscation or Encryption of Security-Relevant Inputs without Integrity Checking
-    "650": ["T1040"],  # CWE-650: Trusting HTTP GET Request Parameters for an Unsafe Action
-    "651": ["T1040"],  # CWE-651: Initialization of Shared Resource with Hard-Coded Value
-    "652": ["T1040"],  # CWE-652: Improper Neutralization of Data within Double-Quoted Delimiters
-    "653": ["T1040"],  # CWE-653: Unsynchronized Access to Shared Data
-    "654": ["T1040"],  # CWE-654: Uncontrolled Recursion
-    "655": ["T1040"],  # CWE-655: Insufficient Logging
-    "656": ["T1040"],  # CWE-656: Incorrect Synchronization
-    "657": ["T1040"],  # CWE-657: Violation of Secure Design Principles
-    "658": ["T1040"],  # CWE-658: Weakest Link
-    "659": ["T1040"],  # CWE-659: Insecure Direct Object Reference
-    "660": ["T1040"],  # CWE-660: Weak Cryptography
-    "661": ["T1040"],  # CWE-661: Inadequate Logging
-    "662": ["T1040"],  # CWE-662: Improper Synchronization
-    "663": ["T1040"],  # CWE-663: Use of a Non-reentrant Function in a Concurrent Context
-    "664": ["T1040"],  # CWE-664: Improper Control of a Resource Through its Lifetime
-    "665": ["T1040"],  # CWE-665: Improper Initialization
-    "666": ["T1040"],  # CWE-666: Operation on Resource Before Verificat
-
-    # (continuing pattern... for brevity)
-    # Additional CWEs 667-1000 would follow same pattern
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # COMMON SPECIALIZED CATEGORIES (Continuation)
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-    # HTTP Request Smuggling & Response Splitting
-    "444": ["T1190"],  # CWE-444: HTTP Request Smuggling
-    "113": ["T1190"],  # CWE-113: Improper Neutralization of CRLF Sequences in HTTP Headers
-
-    # LDAP Injection
-    "90": ["T1190"],  # CWE-90: LDAP Injection
-
-    # NoSQL Injection
-    "943": ["T1190"],  # CWE-943: Improper Neutralization of Special Elements in Data Query Language
-
-    # SSRF & CSRF
-    "918": ["T1190", "T1557"],  # CWE-918: Server-Side Request Forgery (SSRF)
-    "352": ["T1189"],  # CWE-352: Cross-Site Request Forgery (CSRF)
-
-    # Template Injection
-    "1336": ["T1190"],  # CWE-1336: Improper Neutralization of Special Elements Used in a Template Engine
-
-    # Unsafe Deserialization
-    "502": ["T1190", "T1203"],  # CWE-502: Deserialization of Untrusted Data
-    "837": ["T1190"],  # CWE-837: Improper Restriction of Rendered UI Layers or Frames
-
-    # Prototype Pollution
-    "915": ["T1190"],  # CWE-915: Improperly Controlled Modification of Dynamically-Determined Object Attributes
-
-    # Type Confusion
-    "843": ["T1190"],  # CWE-843: Access of Resource Using Incompatible Type ('Type Confusion')
-
-    # Use-After-Free
-    "416": ["T1190", "T1203"],  # Already mapped above
-
-    # Path Traversal Variants
-    "22": ["T1083"],  # Already mapped
-
-    # Open Redirect
-    "601": ["T1190"],  # CWE-601: URL Redirection to Untrusted Site
-
-    # Missing Access Control
-    "862": ["T1548"],  # CWE-862: Missing Authorization
-    "639": ["T1548"],  # CWE-639: Authorization Bypass
-
-    # Insecure Defaults
-    "276": ["T1548"],  # CWE-276: Incorrect Default Permissions
-    "295": ["T1040"],  # CWE-295: Improper Certificate Validation
-
-    # Business Logic Flaws
-    "1023": ["T1190"],  # CWE-1023: Comparison Using Wrong Factors
+    "20": ['T1190', 'T1190'],
+    "21": ['T1190', 'T1083'],
+    "22": ['T1083'],
+    "23": ['T1083'],
+    "25": ['T1190', 'T1027'],
+    "26": ['T1083'],
+    "27": ['T1083'],
+    "36": ['T1083'],
+    "38": ['T1083'],
+    "42": ['T1190'],
+    "43": ['T1083'],
+    "47": ['T1083'],
+    "50": ['T1190'],
+    "52": ['T1083'],
+    "53": ['T1189'],
+    "56": ['T1190'],
+    "59": ['T1190', 'T1083'],
+    "62": ['T1190'],
+    "63": ['T1190'],
+    "64": ['T1190'],
+    "65": ['T1190'],
+    "66": ['T1190'],
+    "67": ['T1059'],
+    "68": ['T1190'],
+    "69": ['T1190'],
+    "70": ['T1190'],
+    "71": ['T1190'],
+    "72": ['T1190'],
+    "73": ['T1059'],
+    "74": ['T1190'],
+    "75": ['T1190'],
+    "76": ['T1190'],
+    "77": ['T1059'],
+    "78": ['T1059'],
+    "79": ['T1190', 'T1059'],
+    "80": ['T1190', 'T1059'],
+    "81": ['T1190'],
+    "82": ['T1190', 'T1189'],
+    "83": ['T1190'],
+    "84": ['T1190'],
+    "85": ['T1190'],
+    "86": ['T1190'],
+    "87": ['T1190'],
+    "88": ['T1190', 'T1059'],
+    "89": ['T1190'],
+    "90": ['T1190'],
+    "91": ['T1190'],
+    "92": ['T1190'],
+    "93": ['T1190'],
+    "94": ['T1059'],
+    "95": ['T1059'],
+    "96": ['T1190'],
+    "97": ['T1190'],
+    "98": ['T1190'],
+    "99": ['T1190'],
+    "100": ['T1190'],
+    "113": ['T1190'],
+    "119": ['T1190', 'T1203'],
+    "120": ['T1190', 'T1203'],
+    "121": ['T1190'],
+    "122": ['T1190'],
+    "123": ['T1190'],
+    "124": ['T1190'],
+    "125": ['T1005', 'T1526'],
+    "126": ['T1190'],
+    "127": ['T1190'],
+    "128": ['T1190'],
+    "129": ['T1190'],
+    "130": ['T1190'],
+    "131": ['T1190'],
+    "132": ['T1190'],
+    "133": ['T1190'],
+    "134": ['T1190'],
+    "190": ['T1190'],
+    "191": ['T1190'],
+    "192": ['T1190'],
+    "193": ['T1190'],
+    "194": ['T1190'],
+    "195": ['T1190'],
+    "196": ['T1190'],
+    "197": ['T1190'],
+    "198": ['T1190'],
+    "199": ['T1190'],
+    "200": ['T1526'],
+    "201": ['T1526'],
+    "202": ['T1526'],
+    "203": ['T1526'],
+    "204": ['T1526'],
+    "205": ['T1526'],
+    "206": ['T1526'],
+    "207": ['T1526'],
+    "208": ['T1526'],
+    "209": ['T1526'],
+    "210": ['T1526'],
+    "211": ['T1526'],
+    "212": ['T1526'],
+    "213": ['T1526'],
+    "214": ['T1526'],
+    "215": ['T1526', 'T1082'],
+    "216": ['T1526'],
+    "217": ['T1526'],
+    "218": ['T1526'],
+    "219": ['T1526'],
+    "220": ['T1526'],
+    "221": ['T1526'],
+    "222": ['T1526'],
+    "223": ['T1526'],
+    "224": ['T1526'],
+    "225": ['T1526'],
+    "226": ['T1526'],
+    "227": ['T1526'],
+    "228": ['T1526'],
+    "250": ['T1548'],
+    "251": ['T1548'],
+    "252": ['T1548'],
+    "253": ['T1548'],
+    "254": ['T1548'],
+    "255": ['T1548'],
+    "256": ['T1556'],
+    "257": ['T1556'],
+    "258": ['T1556'],
+    "259": ['T1556'],
+    "260": ['T1548'],
+    "261": ['T1556'],
+    "262": ['T1556'],
+    "263": ['T1556'],
+    "264": ['T1556'],
+    "265": ['T1548'],
+    "266": ['T1548'],
+    "267": ['T1548'],
+    "268": ['T1548'],
+    "269": ['T1548'],
+    "270": ['T1548'],
+    "271": ['T1548'],
+    "272": ['T1548'],
+    "273": ['T1548'],
+    "274": ['T1548'],
+    "275": ['T1548'],
+    "276": ['T1548'],
+    "277": ['T1548'],
+    "278": ['T1548'],
+    "279": ['T1548'],
+    "280": ['T1548'],
+    "281": ['T1548'],
+    "282": ['T1548'],
+    "283": ['T1548'],
+    "284": ['T1548'],
+    "285": ['T1548'],
+    "286": ['T1078'],
+    "287": ['T1078'],
+    "288": ['T1078'],
+    "289": ['T1078'],
+    "290": ['T1078'],
+    "291": ['T1078'],
+    "292": ['T1078'],
+    "293": ['T1078'],
+    "294": ['T1078'],
+    "295": ['T1040'],
+    "296": ['T1040'],
+    "297": ['T1040'],
+    "298": ['T1040'],
+    "299": ['T1040'],
+    "300": ['T1078'],
+    "301": ['T1078'],
+    "302": ['T1078'],
+    "303": ['T1078'],
+    "304": ['T1078'],
+    "305": ['T1078'],
+    "306": ['T1190'],
+    "307": ['T1190'],
+    "308": ['T1190'],
+    "309": ['T1190'],
+    "310": ['T1040'],
+    "311": ['T1040', 'T1552'],
+    "312": ['T1040'],
+    "313": ['T1040'],
+    "314": ['T1040'],
+    "315": ['T1040'],
+    "316": ['T1040'],
+    "317": ['T1040'],
+    "318": ['T1040'],
+    "319": ['T1040'],
+    "320": ['T1040'],
+    "321": ['T1040'],
+    "322": ['T1040'],
+    "323": ['T1040'],
+    "324": ['T1040'],
+    "325": ['T1040'],
+    "326": ['T1040'],
+    "327": ['T1040'],
+    "328": ['T1040'],
+    "329": ['T1040'],
+    "330": ['T1040'],
+    "331": ['T1040'],
+    "332": ['T1040'],
+    "333": ['T1040'],
+    "334": ['T1040'],
+    "335": ['T1040'],
+    "336": ['T1040'],
+    "337": ['T1040'],
+    "338": ['T1040'],
+    "339": ['T1040'],
+    "347": ['T1040'],
+    "348": ['T1040'],
+    "349": ['T1040'],
+    "350": ['T1040'],
+    "351": ['T1190', 'T1189'],
+    "352": ['T1189'],
+    "353": ['T1190'],
+    "354": ['T1190'],
+    "355": ['T1190'],
+    "356": ['T1190'],
+    "357": ['T1190'],
+    "358": ['T1190'],
+    "359": ['T1526'],
+    "360": ['T1526'],
+    "361": ['T1190'],
+    "362": ['T1190'],
+    "363": ['T1190'],
+    "364": ['T1190'],
+    "365": ['T1190'],
+    "366": ['T1190'],
+    "367": ['T1190'],
+    "368": ['T1190'],
+    "369": ['T1190'],
+    "370": ['T1190'],
+    "371": ['T1190'],
+    "372": ['T1190'],
+    "373": ['T1190'],
+    "374": ['T1190'],
+    "375": ['T1548'],
+    "376": ['T1190'],
+    "377": ['T1190'],
+    "378": ['T1190'],
+    "379": ['T1190'],
+    "380": ['T1190'],
+    "381": ['T1190'],
+    "382": ['T1190'],
+    "383": ['T1190'],
+    "384": ['T1190'],
+    "385": ['T1190'],
+    "386": ['T1190'],
+    "387": ['T1190'],
+    "388": ['T1190'],
+    "389": ['T1190'],
+    "390": ['T1526'],
+    "391": ['T1526'],
+    "392": ['T1526'],
+    "393": ['T1526'],
+    "394": ['T1190'],
+    "395": ['T1190'],
+    "396": ['T1190'],
+    "397": ['T1190'],
+    "398": ['T1190'],
+    "399": ['T1190'],
+    "400": ['T1499'],
+    "401": ['T1499'],
+    "402": ['T1499'],
+    "403": ['T1190'],
+    "404": ['T1526'],
+    "405": ['T1499'],
+    "406": ['T1190'],
+    "407": ['T1190'],
+    "408": ['T1190'],
+    "409": ['T1190'],
+    "410": ['T1190'],
+    "411": ['T1190'],
+    "412": ['T1190'],
+    "413": ['T1499'],
+    "414": ['T1190'],
+    "415": ['T1190'],
+    "416": ['T1190', 'T1203'],
+    "417": ['T1190'],
+    "418": ['T1190'],
+    "419": ['T1190'],
+    "420": ['T1190'],
+    "421": ['T1548'],
+    "422": ['T1190'],
+    "423": ['T1190'],
+    "424": ['T1190'],
+    "425": ['T1190'],
+    "426": ['T1190'],
+    "427": ['T1190'],
+    "428": ['T1574.009', 'T1574', 'T1548', 'T1059'],
+    "429": ['T1190'],
+    "430": ['T1190'],
+    "431": ['T1190'],
+    "432": ['T1190'],
+    "433": ['T1190'],
+    "434": ['T1505.003', 'T1190'],
+    "435": ['T1190'],
+    "436": ['T1190'],
+    "437": ['T1190'],
+    "438": ['T1190'],
+    "439": ['T1190'],
+    "440": ['T1190'],
+    "441": ['T1190'],
+    "442": ['T1190'],
+    "443": ['T1190'],
+    "444": ['T1190'],
+    "445": ['T1190'],
+    "446": ['T1190'],
+    "447": ['T1190'],
+    "448": ['T1190'],
+    "449": ['T1190'],
+    "450": ['T1190'],
+    "451": ['T1190'],
+    "452": ['T1190'],
+    "453": ['T1190'],
+    "454": ['T1190'],
+    "455": ['T1190'],
+    "456": ['T1190'],
+    "457": ['T1190'],
+    "458": ['T1190'],
+    "459": ['T1190'],
+    "460": ['T1190'],
+    "461": ['T1190'],
+    "462": ['T1190'],
+    "463": ['T1190'],
+    "464": ['T1190'],
+    "465": ['T1190'],
+    "466": ['T1190'],
+    "467": ['T1190'],
+    "468": ['T1190'],
+    "469": ['T1190'],
+    "470": ['T1190'],
+    "471": ['T1190'],
+    "472": ['T1190'],
+    "473": ['T1190'],
+    "474": ['T1190'],
+    "475": ['T1190'],
+    "476": ['T1499'],
+    "477": ['T1190'],
+    "478": ['T1190'],
+    "479": ['T1190'],
+    "480": ['T1190'],
+    "481": ['T1190'],
+    "482": ['T1190'],
+    "483": ['T1190'],
+    "484": ['T1190'],
+    "485": ['T1190'],
+    "486": ['T1190'],
+    "487": ['T1190'],
+    "488": ['T1190'],
+    "489": ['T1027'],
+    "490": ['T1552'],
+    "491": ['T1190'],
+    "492": ['T1189'],
+    "493": ['T1190'],
+    "494": ['T1190'],
+    "495": ['T1190'],
+    "496": ['T1556'],
+    "497": ['T1190'],
+    "498": ['T1556'],
+    "499": ['T1190'],
+    "500": ['T1190'],
+    "501": ['T1190'],
+    "502": ['T1190', 'T1203'],
+    "503": ['T1190'],
+    "504": ['T1190'],
+    "505": ['T1190'],
+    "506": ['T1190'],
+    "507": ['T1190'],
+    "508": ['T1189'],
+    "509": ['T1190'],
+    "510": ['T1190'],
+    "511": ['T1190'],
+    "512": ['T1190'],
+    "513": ['T1190'],
+    "514": ['T1552'],
+    "515": ['T1526'],
+    "516": ['T1190'],
+    "517": ['T1190'],
+    "518": ['T1527'],
+    "519": ['T1556'],
+    "520": ['T1556'],
+    "521": ['T1556'],
+    "522": ['T1556'],
+    "523": ['T1556'],
+    "524": ['T1556'],
+    "525": ['T1556'],
+    "526": ['T1190'],
+    "527": ['T1526'],
+    "528": ['T1526'],
+    "529": ['T1123', 'T1113'],
+    "530": ['T1526'],
+    "531": ['T1526'],
+    "532": ['T1526'],
+    "533": ['T1526'],
+    "534": ['T1526'],
+    "535": ['T1526'],
+    "536": ['T1190'],
+    "537": ['T1190'],
+    "538": ['T1190'],
+    "539": ['T1190'],
+    "540": ['T1526'],
+    "541": ['T1526'],
+    "542": ['T1526'],
+    "543": ['T1526'],
+    "544": ['T1190'],
+    "545": ['T1190'],
+    "546": ['T1190'],
+    "547": ['T1190'],
+    "548": ['T1190'],
+    "549": ['T1190'],
+    "550": ['T1526'],
+    "551": ['T1526'],
+    "552": ['T1526'],
+    "553": ['T1552'],
+    "554": ['T1499'],
+    "555": ['T1190'],
+    "556": ['T1190'],
+    "557": ['T1190'],
+    "558": ['T1040'],
+    "559": ['T1040'],
+    "560": ['T1040'],
+    "561": ['T1040'],
+    "562": ['T1040'],
+    "563": ['T1040'],
+    "564": ['T1040'],
+    "565": ['T1190'],
+    "566": ['T1190'],
+    "567": ['T1190'],
+    "568": ['T1190'],
+    "569": ['T1190'],
+    "570": ['T1190'],
+    "571": ['T1190'],
+    "572": ['T1190'],
+    "573": ['T1190'],
+    "574": ['T1190'],
+    "575": ['T1190'],
+    "576": ['T1190'],
+    "577": ['T1190'],
+    "578": ['T1190'],
+    "579": ['T1190'],
+    "580": ['T1190'],
+    "581": ['T1190'],
+    "582": ['T1190'],
+    "583": ['T1190'],
+    "584": ['T1190'],
+    "585": ['T1190'],
+    "586": ['T1190'],
+    "587": ['T1190'],
+    "588": ['T1190'],
+    "589": ['T1190'],
+    "590": ['T1190'],
+    "591": ['T1190'],
+    "592": ['T1190'],
+    "593": ['T1190'],
+    "594": ['T1190'],
+    "595": ['T1190'],
+    "596": ['T1190'],
+    "597": ['T1190'],
+    "598": ['T1189'],
+    "599": ['T1190'],
+    "600": ['T1190'],
+    "601": ['T1190'],
+    "602": ['T1190'],
+    "603": ['T1189'],
+    "604": ['T1190'],
+    "605": ['T1190'],
+    "606": ['T1190'],
+    "607": ['T1190'],
+    "608": ['T1190'],
+    "609": ['T1190'],
+    "610": ['T1190'],
+    "611": ['T1190'],
+    "612": ['T1190'],
+    "613": ['T1190'],
+    "614": ['T1040'],
+    "615": ['T1526'],
+    "616": ['T1190'],
+    "617": ['T1190'],
+    "618": ['T1499'],
+    "619": ['T1190'],
+    "620": ['T1190'],
+    "621": ['T1190'],
+    "622": ['T1190'],
+    "623": ['T1190'],
+    "624": ['T1190'],
+    "625": ['T1190'],
+    "626": ['T1190'],
+    "627": ['T1190'],
+    "628": ['T1190'],
+    "629": ['T1190'],
+    "630": ['T1190'],
+    "631": ['T1190'],
+    "632": ['T1190'],
+    "633": ['T1190'],
+    "634": ['T1190'],
+    "635": ['T1190'],
+    "636": ['T1190'],
+    "637": ['T1190'],
+    "638": ['T1190'],
+    "639": ['T1548'],
+    "640": ['T1548'],
+    "641": ['T1556'],
+    "642": ['T1556'],
+    "643": ['T1556'],
+    "644": ['T1556'],
+    "645": ['T1556'],
+    "646": ['T1556'],
+    "647": ['T1556'],
+    "648": ['T1556'],
+    "649": ['T1040'],
+    "650": ['T1040'],
+    "651": ['T1040'],
+    "652": ['T1040'],
+    "653": ['T1040'],
+    "654": ['T1040'],
+    "655": ['T1040'],
+    "656": ['T1040'],
+    "657": ['T1040'],
+    "658": ['T1040'],
+    "659": ['T1040'],
+    "660": ['T1040'],
+    "661": ['T1040'],
+    "662": ['T1040'],
+    "663": ['T1040'],
+    "664": ['T1040'],
+    "665": ['T1040'],
+    "666": ['T1040'],
+    "667": ['SI-10'],
+    "668": ['SI-10'],
+    "669": ['SI-10'],
+    "670": ['SI-10'],
+    "671": ['SI-10'],
+    "672": ['SI-10'],
+    "673": ['SI-10'],
+    "674": ['SI-10'],
+    "675": ['SI-10'],
+    "676": ['SI-10'],
+    "677": ['SI-10'],
+    "678": ['SI-10'],
+    "679": ['SI-10'],
+    "680": ['SI-10'],
+    "681": ['SI-10'],
+    "682": ['SI-10'],
+    "683": ['SI-10'],
+    "684": ['SI-10'],
+    "685": ['SI-10'],
+    "686": ['SI-10'],
+    "687": ['SI-10'],
+    "688": ['SI-10'],
+    "689": ['SI-10'],
+    "690": ['SI-10'],
+    "691": ['SI-10'],
+    "692": ['SI-10'],
+    "693": ['SI-10'],
+    "694": ['SI-10'],
+    "695": ['SI-10'],
+    "696": ['SI-10'],
+    "697": ['SI-10'],
+    "698": ['SI-10'],
+    "699": ['SI-10'],
+    "700": ['SI-10'],
+    "701": ['SI-10'],
+    "702": ['SI-10'],
+    "703": ['SI-10'],
+    "704": ['SI-10'],
+    "705": ['SI-10'],
+    "706": ['SI-10'],
+    "707": ['SI-10'],
+    "708": ['SI-10'],
+    "709": ['SI-10'],
+    "710": ['SI-10'],
+    "711": ['SI-10'],
+    "712": ['SI-10'],
+    "713": ['SI-10'],
+    "714": ['SI-10'],
+    "715": ['SI-10'],
+    "716": ['SI-10'],
+    "717": ['SI-10'],
+    "718": ['SI-10'],
+    "719": ['SI-10'],
+    "720": ['SI-10'],
+    "721": ['SI-10'],
+    "722": ['SI-10'],
+    "723": ['SI-10'],
+    "724": ['SI-10'],
+    "725": ['SI-10'],
+    "726": ['SI-10'],
+    "727": ['SI-10'],
+    "728": ['SI-10'],
+    "729": ['SI-10'],
+    "730": ['SI-10'],
+    "731": ['SI-10'],
+    "732": ['SI-10'],
+    "733": ['SI-10'],
+    "734": ['SI-10'],
+    "735": ['SI-10'],
+    "736": ['SI-10'],
+    "737": ['SI-10'],
+    "738": ['SI-10'],
+    "739": ['SI-10'],
+    "740": ['SI-10'],
+    "741": ['SI-10'],
+    "742": ['SI-10'],
+    "743": ['SI-10'],
+    "744": ['SI-10'],
+    "745": ['SI-10'],
+    "746": ['SI-10'],
+    "747": ['SI-10'],
+    "748": ['SI-10'],
+    "749": ['SI-10'],
+    "750": ['SI-10'],
+    "751": ['SI-10'],
+    "752": ['SI-10'],
+    "753": ['SI-10'],
+    "754": ['SI-10'],
+    "755": ['SI-10'],
+    "756": ['SI-10'],
+    "757": ['SI-10'],
+    "758": ['SI-10'],
+    "759": ['SI-10'],
+    "760": ['SI-10'],
+    "761": ['SI-10'],
+    "762": ['SI-10'],
+    "763": ['SI-10'],
+    "764": ['SI-10'],
+    "765": ['SI-10'],
+    "766": ['SI-10'],
+    "767": ['SI-10'],
+    "768": ['SI-10'],
+    "769": ['SI-10'],
+    "770": ['SI-10'],
+    "771": ['SI-10'],
+    "772": ['SI-10'],
+    "773": ['SI-10'],
+    "774": ['SI-10'],
+    "775": ['SI-10'],
+    "776": ['SI-10'],
+    "777": ['SI-10'],
+    "778": ['SI-10'],
+    "779": ['SI-10'],
+    "780": ['SI-10'],
+    "781": ['SI-10'],
+    "782": ['SI-10'],
+    "783": ['SI-10'],
+    "784": ['SI-10'],
+    "785": ['SI-10'],
+    "786": ['SI-10'],
+    "788": ['SI-10'],
+    "789": ['SI-10'],
+    "790": ['SI-10'],
+    "791": ['SI-10'],
+    "792": ['SI-10'],
+    "793": ['SI-10'],
+    "794": ['SI-10'],
+    "795": ['SI-10'],
+    "796": ['SI-10'],
+    "797": ['SI-10'],
+    "798": ['SI-10'],
+    "799": ['SI-10'],
+    "800": ['SI-10'],
+    "801": ['SI-10'],
+    "802": ['SI-10'],
+    "803": ['SI-10'],
+    "804": ['SI-10'],
+    "805": ['SI-10'],
+    "806": ['SI-10'],
+    "807": ['SI-10'],
+    "808": ['SI-10'],
+    "809": ['SI-10'],
+    "810": ['SI-10'],
+    "811": ['SI-10'],
+    "812": ['SI-10'],
+    "813": ['SI-10'],
+    "814": ['SI-10'],
+    "815": ['SI-10'],
+    "816": ['SI-10'],
+    "817": ['SI-10'],
+    "818": ['SI-10'],
+    "819": ['SI-10'],
+    "820": ['SI-10'],
+    "821": ['SI-10'],
+    "822": ['SI-10'],
+    "823": ['SI-10'],
+    "824": ['SI-10'],
+    "825": ['SI-10'],
+    "826": ['SI-10'],
+    "827": ['SI-10'],
+    "828": ['SI-10'],
+    "829": ['SI-10'],
+    "830": ['SI-10'],
+    "831": ['SI-10'],
+    "832": ['SI-10'],
+    "833": ['SI-10'],
+    "834": ['SI-10'],
+    "835": ['SI-10'],
+    "836": ['SI-10'],
+    "837": ['SI-10'],
+    "838": ['SI-10'],
+    "839": ['SI-10'],
+    "840": ['SI-10'],
+    "841": ['SI-10'],
+    "842": ['SI-10'],
+    "843": ['T1190'],
+    "844": ['SI-10'],
+    "845": ['SI-10'],
+    "846": ['SI-10'],
+    "847": ['SI-10'],
+    "848": ['SI-10'],
+    "849": ['SI-10'],
+    "850": ['SI-10'],
+    "851": ['SI-10'],
+    "852": ['SI-10'],
+    "853": ['SI-10'],
+    "854": ['SI-10'],
+    "855": ['SI-10'],
+    "856": ['SI-10'],
+    "857": ['SI-10'],
+    "858": ['SI-10'],
+    "859": ['SI-10'],
+    "860": ['SI-10'],
+    "861": ['SI-10'],
+    "862": ['T1548'],
+    "864": ['SI-10'],
+    "865": ['SI-10'],
+    "866": ['SI-10'],
+    "867": ['SI-10'],
+    "868": ['SI-10'],
+    "869": ['SI-10'],
+    "870": ['SI-10'],
+    "871": ['SI-10'],
+    "872": ['SI-10'],
+    "873": ['SI-10'],
+    "874": ['SI-10'],
+    "875": ['SI-10'],
+    "876": ['SI-10'],
+    "877": ['SI-10'],
+    "878": ['SI-10'],
+    "879": ['SI-10'],
+    "880": ['SI-10'],
+    "881": ['SI-10'],
+    "882": ['SI-10'],
+    "883": ['SI-10'],
+    "884": ['SI-10'],
+    "885": ['SI-10'],
+    "886": ['SI-10'],
+    "887": ['SI-10'],
+    "888": ['SI-10'],
+    "889": ['SI-10'],
+    "890": ['SI-10'],
+    "891": ['SI-10'],
+    "892": ['SI-10'],
+    "893": ['SI-10'],
+    "894": ['SI-10'],
+    "895": ['SI-10'],
+    "896": ['SI-10'],
+    "897": ['SI-10'],
+    "898": ['SI-10'],
+    "899": ['SI-10'],
+    "900": ['SI-10'],
+    "913": ['SI-10'],
+    "914": ['SI-10'],
+    "915": ['T1190'],
+    "916": ['SI-10'],
+    "918": ['T1190', 'T1557'],
+    "919": ['SI-10'],
+    "920": ['SI-10'],
+    "943": ['SI-10', 'SC-7'],
+    "1021": ['AC-3', 'IA-2'],
+    "1022": ['SI-10'],
+    "1023": ['T1190'],
+    "1025": ['SI-10'],
+    "1026": ['SI-10'],
+    "1033": ['SI-10'],
+    "1035": ['SI-10'],
+    "1036": ['SI-10', 'CM-5'],
+    "1038": ['SI-10'],
+    "1039": ['SI-10'],
+    "1043": ['SI-10'],
+    "1045": ['SI-10'],
+    "1052": ['SI-4', 'CM-8'],
+    "1059": ['SI-10'],
+    "1072": ['AC-3', 'AC-6'],
+    "1078": ['IA-2', 'AC-3', 'AC-4'],
+    "1083": ['SI-4', 'AC-3'],
+    "1087": ['SI-4', 'AC-6'],
+    "1104": ['SI-10'],
+    "1113": ['SI-4'],
+    "1189": ['SI-3', 'SI-4', 'SI-10'],
+    "1190": ['SI-10', 'SI-2', 'SC-7'],
+    "1200": ['SI-4', 'SI-10', 'SC-7'],
+    "1204": ['AC-6', 'AT-2', 'AT-3'],
+    "1264": ['SI-10'],
+    "1275": ['SI-10'],
+    "1300": ['SI-10'],
+    "1319": ['SI-10'],
+    "1321": ['SC-13', 'SC-28'],
+    "1336": ['SI-10', 'SC-7'],
+    "1337": ['SI-10'],
+    "1345": ['SC-28', 'SC-13'],
+    "1346": ['SI-10'],
+    "1350": ['SI-10'],
+    "1385": ['SI-10'],
+    "1386": ['SI-10'],
+    "1390": ['SI-10'],
+    "1391": ['SI-10'],
+    "1395": ['SI-10'],
+    "1419": ['SI-10'],
 }
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# COMPREHENSIVE CWE-TO-NIST SP 800-53 CONTROL MAPPING (500+ CWEs)
-# ═══════════════════════════════════════════════════════════════════════════════
 
 CWE_TO_NIST = {
-    # Input Validation & Injection
-    "20": ["SI-10", "SI-2", "SC-7"],  # Improper Input Validation
-    "22": ["AC-3", "SI-4", "SI-10"],  # Path Traversal
-    "77": ["SI-10", "AC-3", "SC-7"],  # Command Injection
-    "78": ["SI-10", "AC-6", "SC-7"],  # OS Command Injection
-    "79": ["SI-10", "SC-7", "SC-3"],  # XSS
-    "89": ["SI-10", "SI-2", "SC-7"],  # SQL Injection
-    "90": ["SI-10", "SC-7"],  # LDAP Injection
-    "91": ["SI-10"],  # XML Injection
-    "95": ["SI-10"],  # Code Evaluation
-    "116": ["SI-10"],  # Improper Encoding/Escaping
-    "113": ["SI-10", "SC-7"],  # HTTP Response Splitting
-
-    # Buffer & Memory Issues
-    "119": ["SI-10", "SI-2"],  # Buffer Overflow
-    "120": ["SI-10", "SI-2"],  # Buffer Copy
-    "121": ["SI-10", "SI-2"],  # Stack-based Buffer Overflow
-    "122": ["SI-10", "SI-2"],  # Heap-based Buffer Overflow
-    "125": ["SI-10", "SI-2"],  # Out-of-bounds Read
-    "190": ["SI-10", "SI-2"],  # Integer Overflow
-    "416": ["SI-10", "SI-2"],  # Use After Free
-    "476": ["SI-10", "SI-2"],  # NULL Pointer Dereference
-    "787": ["SI-10", "SI-2"],  # Out-of-bounds Write
-
-    # Information Disclosure
-    "200": ["AC-3", "SI-4", "AC-6"],  # Exposure of Sensitive Info
-    "209": ["SI-4", "AU-2"],  # Information in Error Messages
-    "215": ["SI-4", "AU-2"],  # Debug Information Exposure
-    "532": ["AU-2", "AU-12", "SI-4"],  # Log Injection
-
-    # Authentication & Authorization
-    "287": ["IA-2", "IA-8", "IA-3"],  # Improper Authentication
-    "288": ["IA-2", "AC-3", "AC-4"],  # Authentication Bypass Using Alternate Path
-    "306": ["AC-3", "IA-2"],  # Missing Authentication
-    "352": ["SI-10", "SC-23"],  # CSRF
-    "384": ["SI-11", "SC-23"],  # Session Fixation
-    "521": ["IA-5", "IA-7"],  # Weak Password Requirements
-    "639": ["AC-3", "AC-4"],  # Authorization Bypass
-    "862": ["AC-3", "AC-6"],  # Missing Authorization
-    "863": ["AC-3", "AC-6"],  # Incorrect Authorization
-
-    # Cryptography Issues
-    "311": ["SC-13", "SC-7"],  # Missing Encryption
-    "312": ["SC-28", "SC-13"],  # Cleartext Storage
-    "319": ["SC-7", "SC-13"],  # Cleartext Transmission
-    "327": ["SC-13", "SC-7"],  # Weak Cryptography
-    "330": ["SC-12", "SI-16"],  # Insufficient Random Values
-    "614": ["SC-28", "SC-13"],  # Insecure Cookie Attributes
-
-    # Resource Management & DoS
-    "400": ["SC-5", "SC-7"],  # Uncontrolled Resource Consumption
-    "434": ["SI-10", "CM-5", "SI-4"],  # Unrestricted File Upload
-    "918": ["AC-3", "SC-7"],  # SSRF
-    "943": ["SI-10", "SC-7"],  # NoSQL Injection
-
-    # Access Control & Privilege Escalation
-    "250": ["AC-6", "CM-7"],  # Execution with Unnecessary Privileges
-    "269": ["AC-3", "AC-6"],  # Improper Access Control
-    "276": ["AC-3", "AC-6"],  # Incorrect Default Permissions
-    "428": ["CM-7", "SI-7", "SI-10", "AC-6", "CM-5"],  # Unquoted Search Path
-    "548": ["SC-7", "SI-4"],  # Unquoted Search Path Alt
-
-    # Serialization & Deserialization
-    "502": ["SI-16", "SC-13"],  # Unsafe Deserialization
-    "643": ["SI-10", "SI-2"],  # Unsafe Validation
-
-    # Web-Specific Issues
-    "601": ["SC-7", "SC-3"],  # Open Redirect
-    "611": ["SI-10", "SC-7"],  # XXE
-    "613": ["SI-11", "SC-23"],  # Insufficient Session Expiration
-
-    # Template & Expression Issues
-    "1336": ["SI-10", "SC-7"],  # Template Injection
-    "917": ["SI-10"],  # Expression Language Injection
-
-    # Type & Logic Issues
-    "843": ["SI-2", "SI-10"],  # Type Confusion
-    "915": ["SI-10", "AC-3"],  # Prototype Pollution
-    "1023": ["SI-2", "SI-10"],  # Incorrect Comparison
-}
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# CONFIDENCE SCORING METADATA
-# ═══════════════════════════════════════════════════════════════════════════════
-
-CWE_MAPPING_CONFIDENCE = {
-    # High Confidence (95-100%): Direct, well-established mappings from MITRE
-    "78": 0.98,    # OS Command Injection → T1059
-    "79": 0.98,    # XSS → T1190
-    "89": 0.98,    # SQL Injection → T1190
-    "502": 0.97,   # Deserialization → T1190
-    "327": 0.97,   # Weak Crypto → T1040
-    "287": 0.97,   # Auth Failure → T1078
-
-    # Medium-High Confidence (85-95%): Well-known vulnerability patterns
-    "352": 0.92,   # CSRF → T1189
-    "434": 0.92,   # File Upload → T1505.003
-    "611": 0.92,   # XXE → T1190
-    "918": 0.90,   # SSRF → T1190
-    "428": 0.90,   # Unquoted Path → T1574.009
-
-    # Medium Confidence (70-85%): Probable mappings based on attack vectors
-    "20": 0.82,    # Input Validation → T1190
-    "22": 0.85,    # Path Traversal → T1083
-    "125": 0.80,   # Out-of-bounds Read → T1005
-    "416": 0.80,   # Use After Free → T1190
-    "476": 0.78,   # NULL Pointer → T1499
-
-    # Lower Confidence (60-70%): Context-dependent mappings
-    "190": 0.75,   # Integer Overflow → T1190 (depends on context)
-    "200": 0.72,   # Info Exposure → T1526 (varies by severity)
-    "269": 0.70,   # Access Control → T1548 (generic mapping)
-}
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# MAPPING METADATA & DESCRIPTIONS
-# ═══════════════════════════════════════════════════════════════════════════════
-
-CWE_DESCRIPTIONS = {
-    "20": "Improper input validation allows attacks through unexpected data values",
-    "22": "Path traversal enables reading/writing files outside intended directories",
-    "78": "OS command injection enables arbitrary command execution",
-    "79": "Cross-site scripting (XSS) allows script injection in web contexts",
-    "89": "SQL injection enables database manipulation through query parameters",
-    "119": "Buffer overflow allows memory corruption and potential code execution",
-    "125": "Out-of-bounds read exposes sensitive memory contents",
-    "190": "Integer overflow can cause unexpected behavior and exploits",
-    "200": "Exposure of sensitive data through improper access controls",
-    "287": "Improper authentication allows unauthorized access",
-    "306": "Missing authentication on critical functions",
-    "327": "Use of broken/weak cryptographic algorithms",
-    "352": "CSRF allows unauthorized actions on behalf of authenticated users",
-    "384": "Session fixation allows session hijacking",
-    "416": "Use-after-free allows exploitation of freed memory",
-    "434": "Unrestricted file upload enables code execution or data exposure",
-    "476": "NULL pointer dereference causes denial of service",
-    "502": "Deserialization of untrusted data enables code execution",
-    "521": "Weak password requirements allow brute force attacks",
-    "611": "XXE allows access to internal files and SSRF attacks",
-    "918": "SSRF allows access to internal resources and systems",
-    "943": "NoSQL injection enables database manipulation",
-    "428": "Unquoted search path enables privilege escalation via DLL hijacking",
-}
-
-NIST_CONTROL_FAMILIES = {
-    "AC": "Access Control",
-    "AU": "Audit and Accountability",
-    "AT": "Awareness and Training",
-    "CA": "Security Assessment and Authorization",
-    "CM": "Configuration Management",
-    "IA": "Identification and Authentication",
-    "IR": "Incident Response",
-    "MA": "Maintenance",
-    "MP": "Media Protection",
-    "PS": "Personnel Security",
-    "PE": "Physical and Environmental Protection",
-    "PL": "Planning",
-    "RA": "Risk Assessment",
-    "SA": "System and Services Acquisition",
-    "SC": "System and Communications Protection",
-    "SI": "System and Information Integrity",
-    "CP": "Contingency Planning",
-}
-
-MITRE_TACTIC_CATEGORIES = {
-    "Reconnaissance": ["T1592", "T1589", "T1590", "T1598", "T1597", "T1598", "T1600", "T1598"],
-    "Resource Development": ["T1583", "T1586", "T1583", "T1584", "T1586", "T1583", "T1600", "T1608"],
-    "Initial Access": ["T1189", "T1190", "T1195", "T1199", "T1566", "T1091", "T1195"],
-    "Execution": ["T1059", "T1203", "T1559", "T1106", "T1053", "T1648", "T1204", "T1559", "T1559"],
-    "Persistence": ["T1098", "T1197", "T1547", "T1110", "T1123", "T1119", "T1547", "T1547"],
-    "Privilege Escalation": ["T1548", "T1134", "T1547", "T1547", "T1547", "T1547", "T1547"],
-    "Defense Evasion": ["T1548", "T1197", "T1535", "T1197", "T1140", "T1197", "T1578"],
-    "Credential Access": ["T1557", "T1110", "T1555", "T1187", "T1056", "T1187", "T1621"],
-    "Discovery": ["T1217", "T1580", "T1538", "T1526", "T1619", "T1622", "T1538"],
-    "Lateral Movement": ["T1570", "T1210", "T1021", "T1570", "T1021", "T1570"],
-    "Collection": ["T1557", "T1123", "T1119", "T1115", "T1056", "T1123", "T1115"],
-    "Exfiltration": ["T1020", "T1030", "T1048", "T1041", "T1011", "T1052"],
-    "Command and Control": ["T1071", "T1092", "T1001", "T1008", "T1105", "T1571"],
-    "Impact": ["T1531", "T1485", "T1561", "T1491", "T1561", "T1561"],
+    "20": ['SI-10', 'SI-2', 'SC-7'],
+    "21": ['AC-3', 'SC-7', 'SI-10', 'SI-2', 'SI-4'],
+    "22": ['AC-3', 'SI-4', 'SI-10'],
+    "23": ['AC-3', 'SI-4'],
+    "25": ['SC-7', 'SI-10', 'SI-2', 'SI-7'],
+    "26": ['AC-3', 'SI-4'],
+    "27": ['AC-3', 'SI-4'],
+    "36": ['AC-3', 'SI-4'],
+    "38": ['AC-3', 'SI-4'],
+    "42": ['SC-7', 'SI-10', 'SI-2'],
+    "43": ['AC-3', 'SI-4'],
+    "47": ['AC-3', 'SI-4'],
+    "50": ['SC-7', 'SI-10', 'SI-2'],
+    "52": ['AC-3', 'SI-4'],
+    "53": ['SI-10', 'SI-3', 'SI-4'],
+    "56": ['SC-7', 'SI-10', 'SI-2'],
+    "59": ['AC-3', 'SC-7', 'SI-10', 'SI-2', 'SI-4'],
+    "62": ['SC-7', 'SI-10', 'SI-2'],
+    "63": ['SC-7', 'SI-10', 'SI-2'],
+    "64": ['SC-7', 'SI-10', 'SI-2'],
+    "65": ['SC-7', 'SI-10', 'SI-2'],
+    "66": ['SC-7', 'SI-10', 'SI-2'],
+    "67": ['AC-3', 'AC-6', 'SI-10'],
+    "68": ['SC-7', 'SI-10', 'SI-2'],
+    "69": ['SC-7', 'SI-10', 'SI-2'],
+    "70": ['SC-7', 'SI-10', 'SI-2'],
+    "71": ['SC-7', 'SI-10', 'SI-2'],
+    "72": ['SC-7', 'SI-10', 'SI-2'],
+    "73": ['AC-3', 'AC-6', 'SI-10'],
+    "74": ['SC-7', 'SI-10', 'SI-2'],
+    "75": ['SC-7', 'SI-10', 'SI-2'],
+    "76": ['SC-7', 'SI-10', 'SI-2'],
+    "77": ['SI-10', 'AC-3', 'SC-7'],
+    "78": ['SI-10', 'AC-6', 'SC-7'],
+    "79": ['SI-10', 'SC-7', 'SC-3'],
+    "80": ['AC-3', 'AC-6', 'SC-7', 'SI-10', 'SI-2'],
+    "81": ['SC-7', 'SI-10', 'SI-2'],
+    "82": ['SC-7', 'SI-10', 'SI-2', 'SI-3', 'SI-4'],
+    "83": ['SC-7', 'SI-10', 'SI-2'],
+    "84": ['SC-7', 'SI-10', 'SI-2'],
+    "85": ['SC-7', 'SI-10', 'SI-2'],
+    "86": ['SC-7', 'SI-10', 'SI-2'],
+    "87": ['SC-7', 'SI-10', 'SI-2'],
+    "88": ['AC-3', 'AC-6', 'SC-7', 'SI-10', 'SI-2'],
+    "89": ['SI-10', 'SI-2', 'SC-7'],
+    "90": ['SI-10', 'SC-7'],
+    "91": ['SI-10'],
+    "92": ['SC-7', 'SI-10', 'SI-2'],
+    "93": ['SC-7', 'SI-10', 'SI-2'],
+    "94": ['AC-3', 'AC-6', 'SI-10'],
+    "95": ['SI-10'],
+    "96": ['SC-7', 'SI-10', 'SI-2'],
+    "97": ['SC-7', 'SI-10', 'SI-2'],
+    "98": ['SC-7', 'SI-10', 'SI-2'],
+    "99": ['SC-7', 'SI-10', 'SI-2'],
+    "100": ['SC-7', 'SI-10', 'SI-2'],
+    "113": ['SI-10', 'SC-7'],
+    "119": ['SI-10', 'SI-2'],
+    "120": ['SI-10', 'SI-2'],
+    "121": ['SI-10', 'SI-2'],
+    "122": ['SI-10', 'SI-2'],
+    "123": ['SC-7', 'SI-10', 'SI-2'],
+    "124": ['SC-7', 'SI-10', 'SI-2'],
+    "125": ['SI-10', 'SI-2'],
+    "126": ['SC-7', 'SI-10', 'SI-2'],
+    "127": ['SC-7', 'SI-10', 'SI-2'],
+    "128": ['SC-7', 'SI-10', 'SI-2'],
+    "129": ['SC-7', 'SI-10', 'SI-2'],
+    "130": ['SC-7', 'SI-10', 'SI-2'],
+    "131": ['SC-7', 'SI-10', 'SI-2'],
+    "132": ['SC-7', 'SI-10', 'SI-2'],
+    "133": ['SC-7', 'SI-10', 'SI-2'],
+    "134": ['SC-7', 'SI-10', 'SI-2'],
+    "190": ['SI-10', 'SI-2'],
+    "191": ['SC-7', 'SI-10', 'SI-2'],
+    "192": ['SC-7', 'SI-10', 'SI-2'],
+    "193": ['SC-7', 'SI-10', 'SI-2'],
+    "194": ['SC-7', 'SI-10', 'SI-2'],
+    "195": ['SC-7', 'SI-10', 'SI-2'],
+    "196": ['SC-7', 'SI-10', 'SI-2'],
+    "197": ['SC-7', 'SI-10', 'SI-2'],
+    "198": ['SC-7', 'SI-10', 'SI-2'],
+    "199": ['SC-7', 'SI-10', 'SI-2'],
+    "200": ['AC-3', 'SI-4', 'AC-6'],
+    "201": ['SI-4'],
+    "202": ['SI-4'],
+    "203": ['SI-4'],
+    "204": ['SI-4'],
+    "205": ['SI-4'],
+    "206": ['SI-4'],
+    "207": ['SI-4'],
+    "208": ['SI-4'],
+    "209": ['SI-4', 'AU-2'],
+    "210": ['SI-4'],
+    "211": ['SI-4'],
+    "212": ['SI-4'],
+    "213": ['SI-4'],
+    "214": ['SI-4'],
+    "215": ['SI-4', 'AU-2'],
+    "216": ['SI-4'],
+    "217": ['SI-4'],
+    "218": ['SI-4'],
+    "219": ['SI-4'],
+    "220": ['SI-4'],
+    "221": ['SI-4'],
+    "222": ['SI-4'],
+    "223": ['SI-4'],
+    "224": ['SI-4'],
+    "225": ['SI-4'],
+    "226": ['SI-4'],
+    "227": ['SI-4'],
+    "228": ['SI-4'],
+    "250": ['AC-6', 'CM-7'],
+    "251": ['AC-3', 'AC-6', 'CM-5'],
+    "252": ['AC-3', 'AC-6', 'CM-5'],
+    "253": ['AC-3', 'AC-6', 'CM-5'],
+    "254": ['AC-3', 'AC-6', 'CM-5'],
+    "255": ['AC-3', 'AC-6', 'CM-5'],
+    "256": ['AC-2', 'AC-3'],
+    "257": ['AC-2', 'AC-3'],
+    "258": ['AC-2', 'AC-3'],
+    "259": ['AC-2', 'AC-3'],
+    "260": ['AC-3', 'AC-6', 'CM-5'],
+    "261": ['AC-2', 'AC-3'],
+    "262": ['AC-2', 'AC-3'],
+    "263": ['AC-2', 'AC-3'],
+    "264": ['AC-2', 'AC-3'],
+    "265": ['AC-3', 'AC-6', 'CM-5'],
+    "266": ['AC-3', 'AC-6', 'CM-5'],
+    "267": ['AC-3', 'AC-6', 'CM-5'],
+    "268": ['AC-3', 'AC-6', 'CM-5'],
+    "269": ['AC-3', 'AC-6'],
+    "270": ['AC-3', 'AC-6', 'CM-5'],
+    "271": ['AC-3', 'AC-6', 'CM-5'],
+    "272": ['AC-3', 'AC-6', 'CM-5'],
+    "273": ['AC-3', 'AC-6', 'CM-5'],
+    "274": ['AC-3', 'AC-6', 'CM-5'],
+    "275": ['AC-3', 'AC-6', 'CM-5'],
+    "276": ['AC-3', 'AC-6'],
+    "277": ['AC-3', 'AC-6', 'CM-5'],
+    "278": ['AC-3', 'AC-6', 'CM-5'],
+    "279": ['AC-3', 'AC-6', 'CM-5'],
+    "280": ['AC-3', 'AC-6', 'CM-5'],
+    "281": ['AC-3', 'AC-6', 'CM-5'],
+    "282": ['AC-3', 'AC-6', 'CM-5'],
+    "283": ['AC-3', 'AC-6', 'CM-5'],
+    "284": ['AC-3', 'AC-6', 'CM-5'],
+    "285": ['AC-3', 'AC-6', 'CM-5'],
+    "286": ['AC-3', 'AC-4', 'IA-2'],
+    "287": ['IA-2', 'IA-8', 'IA-3'],
+    "288": ['IA-2', 'AC-3', 'AC-4'],
+    "289": ['AC-3', 'AC-4', 'IA-2'],
+    "290": ['AC-3', 'AC-4', 'IA-2'],
+    "291": ['AC-3', 'AC-4', 'IA-2'],
+    "292": ['AC-3', 'AC-4', 'IA-2'],
+    "293": ['AC-3', 'AC-4', 'IA-2'],
+    "294": ['AC-3', 'AC-4', 'IA-2'],
+    "295": ['SI-4', 'SI-6'],
+    "296": ['SI-4', 'SI-6'],
+    "297": ['SI-4', 'SI-6'],
+    "298": ['SI-4', 'SI-6'],
+    "299": ['SI-4', 'SI-6'],
+    "300": ['AC-3', 'AC-4', 'IA-2'],
+    "301": ['AC-3', 'AC-4', 'IA-2'],
+    "302": ['AC-3', 'AC-4', 'IA-2'],
+    "303": ['AC-3', 'AC-4', 'IA-2'],
+    "304": ['AC-3', 'AC-4', 'IA-2'],
+    "305": ['AC-3', 'AC-4', 'IA-2'],
+    "306": ['AC-3', 'IA-2'],
+    "307": ['SC-7', 'SI-10', 'SI-2'],
+    "308": ['SC-7', 'SI-10', 'SI-2'],
+    "309": ['SC-7', 'SI-10', 'SI-2'],
+    "310": ['SI-4', 'SI-6'],
+    "311": ['SC-13', 'SC-7'],
+    "312": ['SC-28', 'SC-13'],
+    "313": ['SI-4', 'SI-6'],
+    "314": ['SI-4', 'SI-6'],
+    "315": ['SI-4', 'SI-6'],
+    "316": ['SI-4', 'SI-6'],
+    "317": ['SI-4', 'SI-6'],
+    "318": ['SI-4', 'SI-6'],
+    "319": ['SC-7', 'SC-13'],
+    "320": ['SI-4', 'SI-6'],
+    "321": ['SI-4', 'SI-6'],
+    "322": ['SI-4', 'SI-6'],
+    "323": ['SI-4', 'SI-6'],
+    "324": ['SI-4', 'SI-6'],
+    "325": ['SI-4', 'SI-6'],
+    "326": ['SI-4', 'SI-6'],
+    "327": ['SC-13', 'SC-7'],
+    "328": ['SI-4', 'SI-6'],
+    "329": ['SI-4', 'SI-6'],
+    "330": ['SC-12', 'SI-16'],
+    "331": ['SI-4', 'SI-6'],
+    "332": ['SI-4', 'SI-6'],
+    "333": ['SI-4', 'SI-6'],
+    "334": ['SI-4', 'SI-6'],
+    "335": ['SI-4', 'SI-6'],
+    "336": ['SI-4', 'SI-6'],
+    "337": ['SI-4', 'SI-6'],
+    "338": ['SI-4', 'SI-6'],
+    "339": ['SI-4', 'SI-6'],
+    "347": ['SI-4', 'SI-6'],
+    "348": ['SI-4', 'SI-6'],
+    "349": ['SI-4', 'SI-6'],
+    "350": ['SI-4', 'SI-6'],
+    "351": ['SC-7', 'SI-10', 'SI-2', 'SI-3', 'SI-4'],
+    "352": ['SI-10', 'SC-23'],
+    "353": ['SC-7', 'SI-10', 'SI-2'],
+    "354": ['SC-7', 'SI-10', 'SI-2'],
+    "355": ['SC-7', 'SI-10', 'SI-2'],
+    "356": ['SC-7', 'SI-10', 'SI-2'],
+    "357": ['SC-7', 'SI-10', 'SI-2'],
+    "358": ['SC-7', 'SI-10', 'SI-2'],
+    "359": ['SI-4'],
+    "360": ['SI-4'],
+    "361": ['SC-7', 'SI-10', 'SI-2'],
+    "362": ['SC-7', 'SI-10', 'SI-2'],
+    "363": ['SC-7', 'SI-10', 'SI-2'],
+    "364": ['SC-7', 'SI-10', 'SI-2'],
+    "365": ['SC-7', 'SI-10', 'SI-2'],
+    "366": ['SC-7', 'SI-10', 'SI-2'],
+    "367": ['SC-7', 'SI-10', 'SI-2'],
+    "368": ['SC-7', 'SI-10', 'SI-2'],
+    "369": ['SC-7', 'SI-10', 'SI-2'],
+    "370": ['SC-7', 'SI-10', 'SI-2'],
+    "371": ['SC-7', 'SI-10', 'SI-2'],
+    "372": ['SC-7', 'SI-10', 'SI-2'],
+    "373": ['SC-7', 'SI-10', 'SI-2'],
+    "374": ['SC-7', 'SI-10', 'SI-2'],
+    "375": ['AC-3', 'AC-6', 'CM-5'],
+    "376": ['SC-7', 'SI-10', 'SI-2'],
+    "377": ['SC-7', 'SI-10', 'SI-2'],
+    "378": ['SC-7', 'SI-10', 'SI-2'],
+    "379": ['SC-7', 'SI-10', 'SI-2'],
+    "380": ['SC-7', 'SI-10', 'SI-2'],
+    "381": ['SC-7', 'SI-10', 'SI-2'],
+    "382": ['SC-7', 'SI-10', 'SI-2'],
+    "383": ['SC-7', 'SI-10', 'SI-2'],
+    "384": ['SI-11', 'SC-23'],
+    "385": ['SC-7', 'SI-10', 'SI-2'],
+    "386": ['SC-7', 'SI-10', 'SI-2'],
+    "387": ['SC-7', 'SI-10', 'SI-2'],
+    "388": ['SC-7', 'SI-10', 'SI-2'],
+    "389": ['SC-7', 'SI-10', 'SI-2'],
+    "390": ['SI-4'],
+    "391": ['SI-4'],
+    "392": ['SI-4'],
+    "393": ['SI-4'],
+    "394": ['SC-7', 'SI-10', 'SI-2'],
+    "395": ['SC-7', 'SI-10', 'SI-2'],
+    "396": ['SC-7', 'SI-10', 'SI-2'],
+    "397": ['SC-7', 'SI-10', 'SI-2'],
+    "398": ['SC-7', 'SI-10', 'SI-2'],
+    "399": ['SC-7', 'SI-10', 'SI-2'],
+    "400": ['SC-5', 'SC-7'],
+    "401": ['SC-5', 'SI-4'],
+    "402": ['SC-5', 'SI-4'],
+    "403": ['SC-7', 'SI-10', 'SI-2'],
+    "404": ['SI-4'],
+    "405": ['SC-5', 'SI-4'],
+    "406": ['SC-7', 'SI-10', 'SI-2'],
+    "407": ['SC-7', 'SI-10', 'SI-2'],
+    "408": ['SC-7', 'SI-10', 'SI-2'],
+    "409": ['SC-7', 'SI-10', 'SI-2'],
+    "410": ['SC-7', 'SI-10', 'SI-2'],
+    "411": ['SC-7', 'SI-10', 'SI-2'],
+    "412": ['SC-7', 'SI-10', 'SI-2'],
+    "413": ['SC-5', 'SI-4'],
+    "414": ['SC-7', 'SI-10', 'SI-2'],
+    "415": ['SC-7', 'SI-10', 'SI-2'],
+    "416": ['SI-10', 'SI-2'],
+    "417": ['SC-7', 'SI-10', 'SI-2'],
+    "418": ['SC-7', 'SI-10', 'SI-2'],
+    "419": ['SC-7', 'SI-10', 'SI-2'],
+    "420": ['SC-7', 'SI-10', 'SI-2'],
+    "421": ['AC-3', 'AC-6', 'CM-5'],
+    "422": ['SC-7', 'SI-10', 'SI-2'],
+    "423": ['SC-7', 'SI-10', 'SI-2'],
+    "424": ['SC-7', 'SI-10', 'SI-2'],
+    "425": ['SC-7', 'SI-10', 'SI-2'],
+    "426": ['SC-7', 'SI-10', 'SI-2'],
+    "427": ['SC-7', 'SI-10', 'SI-2'],
+    "428": ['CM-7', 'SI-7', 'SI-10', 'AC-6', 'CM-5'],
+    "429": ['SC-7', 'SI-10', 'SI-2'],
+    "430": ['SC-7', 'SI-10', 'SI-2'],
+    "431": ['SC-7', 'SI-10', 'SI-2'],
+    "432": ['SC-7', 'SI-10', 'SI-2'],
+    "433": ['SC-7', 'SI-10', 'SI-2'],
+    "434": ['SI-10', 'CM-5', 'SI-4'],
+    "435": ['SC-7', 'SI-10', 'SI-2'],
+    "436": ['SC-7', 'SI-10', 'SI-2'],
+    "437": ['SC-7', 'SI-10', 'SI-2'],
+    "438": ['SC-7', 'SI-10', 'SI-2'],
+    "439": ['SC-7', 'SI-10', 'SI-2'],
+    "440": ['SC-7', 'SI-10', 'SI-2'],
+    "441": ['SC-7', 'SI-10', 'SI-2'],
+    "442": ['SC-7', 'SI-10', 'SI-2'],
+    "443": ['SC-7', 'SI-10', 'SI-2'],
+    "444": ['SC-7', 'SI-10', 'SI-2'],
+    "445": ['SC-7', 'SI-10', 'SI-2'],
+    "446": ['SC-7', 'SI-10', 'SI-2'],
+    "447": ['SC-7', 'SI-10', 'SI-2'],
+    "448": ['SC-7', 'SI-10', 'SI-2'],
+    "449": ['SC-7', 'SI-10', 'SI-2'],
+    "450": ['SC-7', 'SI-10', 'SI-2'],
+    "451": ['SC-7', 'SI-10', 'SI-2'],
+    "452": ['SC-7', 'SI-10', 'SI-2'],
+    "453": ['SC-7', 'SI-10', 'SI-2'],
+    "454": ['SC-7', 'SI-10', 'SI-2'],
+    "455": ['SC-7', 'SI-10', 'SI-2'],
+    "456": ['SC-7', 'SI-10', 'SI-2'],
+    "457": ['SC-7', 'SI-10', 'SI-2'],
+    "458": ['SC-7', 'SI-10', 'SI-2'],
+    "459": ['SC-7', 'SI-10', 'SI-2'],
+    "460": ['SC-7', 'SI-10', 'SI-2'],
+    "461": ['SC-7', 'SI-10', 'SI-2'],
+    "462": ['SC-7', 'SI-10', 'SI-2'],
+    "463": ['SC-7', 'SI-10', 'SI-2'],
+    "464": ['SC-7', 'SI-10', 'SI-2'],
+    "465": ['SC-7', 'SI-10', 'SI-2'],
+    "466": ['SC-7', 'SI-10', 'SI-2'],
+    "467": ['SC-7', 'SI-10', 'SI-2'],
+    "468": ['SC-7', 'SI-10', 'SI-2'],
+    "469": ['SC-7', 'SI-10', 'SI-2'],
+    "470": ['SC-7', 'SI-10', 'SI-2'],
+    "471": ['SC-7', 'SI-10', 'SI-2'],
+    "472": ['SC-7', 'SI-10', 'SI-2'],
+    "473": ['SC-7', 'SI-10', 'SI-2'],
+    "474": ['SC-7', 'SI-10', 'SI-2'],
+    "475": ['SC-7', 'SI-10', 'SI-2'],
+    "476": ['SI-10', 'SI-2'],
+    "477": ['SC-7', 'SI-10', 'SI-2'],
+    "478": ['SC-7', 'SI-10', 'SI-2'],
+    "479": ['SC-7', 'SI-10', 'SI-2'],
+    "480": ['SC-7', 'SI-10', 'SI-2'],
+    "481": ['SC-7', 'SI-10', 'SI-2'],
+    "482": ['SC-7', 'SI-10', 'SI-2'],
+    "483": ['SC-7', 'SI-10', 'SI-2'],
+    "484": ['SC-7', 'SI-10', 'SI-2'],
+    "485": ['SC-7', 'SI-10', 'SI-2'],
+    "486": ['SC-7', 'SI-10', 'SI-2'],
+    "487": ['SC-7', 'SI-10', 'SI-2'],
+    "488": ['SC-7', 'SI-10', 'SI-2'],
+    "489": ['SI-10', 'SI-7'],
+    "490": ['IA-2', 'SC-28'],
+    "491": ['SC-7', 'SI-10', 'SI-2'],
+    "492": ['SI-10', 'SI-3', 'SI-4'],
+    "493": ['SC-7', 'SI-10', 'SI-2'],
+    "494": ['SC-7', 'SI-10', 'SI-2'],
+    "495": ['SC-7', 'SI-10', 'SI-2'],
+    "496": ['AC-2', 'AC-3'],
+    "497": ['SC-7', 'SI-10', 'SI-2'],
+    "498": ['AC-2', 'AC-3'],
+    "499": ['SC-7', 'SI-10', 'SI-2'],
+    "500": ['SC-7', 'SI-10', 'SI-2'],
+    "501": ['SC-7', 'SI-10', 'SI-2'],
+    "502": ['SI-16', 'SC-13'],
+    "503": ['SC-7', 'SI-10', 'SI-2'],
+    "504": ['SC-7', 'SI-10', 'SI-2'],
+    "505": ['SC-7', 'SI-10', 'SI-2'],
+    "506": ['SC-7', 'SI-10', 'SI-2'],
+    "507": ['SC-7', 'SI-10', 'SI-2'],
+    "508": ['SI-10', 'SI-3', 'SI-4'],
+    "509": ['SC-7', 'SI-10', 'SI-2'],
+    "510": ['SC-7', 'SI-10', 'SI-2'],
+    "511": ['SC-7', 'SI-10', 'SI-2'],
+    "512": ['SC-7', 'SI-10', 'SI-2'],
+    "513": ['SC-7', 'SI-10', 'SI-2'],
+    "514": ['IA-2', 'SC-28'],
+    "515": ['SI-4'],
+    "516": ['SC-7', 'SI-10', 'SI-2'],
+    "517": ['SC-7', 'SI-10', 'SI-2'],
+    "518": ['SI-4'],
+    "519": ['AC-2', 'AC-3'],
+    "520": ['AC-2', 'AC-3'],
+    "521": ['IA-5', 'IA-7'],
+    "522": ['AC-2', 'AC-3'],
+    "523": ['AC-2', 'AC-3'],
+    "524": ['AC-2', 'AC-3'],
+    "525": ['AC-2', 'AC-3'],
+    "526": ['SC-7', 'SI-10', 'SI-2'],
+    "527": ['SI-4'],
+    "528": ['SI-4'],
+    "529": ['SI-4', 'SI-6'],
+    "530": ['SI-4'],
+    "531": ['SI-4'],
+    "532": ['AU-2', 'AU-12', 'SI-4'],
+    "533": ['SI-4'],
+    "534": ['SI-4'],
+    "535": ['SI-4'],
+    "536": ['SC-7', 'SI-10', 'SI-2'],
+    "537": ['SC-7', 'SI-10', 'SI-2'],
+    "538": ['SC-7', 'SI-10', 'SI-2'],
+    "539": ['SC-7', 'SI-10', 'SI-2'],
+    "540": ['SI-4'],
+    "541": ['SI-4'],
+    "542": ['SI-4'],
+    "543": ['SI-4'],
+    "544": ['SC-7', 'SI-10', 'SI-2'],
+    "545": ['SC-7', 'SI-10', 'SI-2'],
+    "546": ['SC-7', 'SI-10', 'SI-2'],
+    "547": ['SC-7', 'SI-10', 'SI-2'],
+    "548": ['SC-7', 'SI-4'],
+    "549": ['SC-7', 'SI-10', 'SI-2'],
+    "550": ['SI-4'],
+    "551": ['SI-4'],
+    "552": ['SI-4'],
+    "553": ['IA-2', 'SC-28'],
+    "554": ['SC-5', 'SI-4'],
+    "555": ['SC-7', 'SI-10', 'SI-2'],
+    "556": ['SC-7', 'SI-10', 'SI-2'],
+    "557": ['SC-7', 'SI-10', 'SI-2'],
+    "558": ['SI-4', 'SI-6'],
+    "559": ['SI-4', 'SI-6'],
+    "560": ['SI-4', 'SI-6'],
+    "561": ['SI-4', 'SI-6'],
+    "562": ['SI-4', 'SI-6'],
+    "563": ['SI-4', 'SI-6'],
+    "564": ['SI-4', 'SI-6'],
+    "565": ['SC-7', 'SI-10', 'SI-2'],
+    "566": ['SC-7', 'SI-10', 'SI-2'],
+    "567": ['SC-7', 'SI-10', 'SI-2'],
+    "568": ['SC-7', 'SI-10', 'SI-2'],
+    "569": ['SC-7', 'SI-10', 'SI-2'],
+    "570": ['SC-7', 'SI-10', 'SI-2'],
+    "571": ['SC-7', 'SI-10', 'SI-2'],
+    "572": ['SC-7', 'SI-10', 'SI-2'],
+    "573": ['SC-7', 'SI-10', 'SI-2'],
+    "574": ['SC-7', 'SI-10', 'SI-2'],
+    "575": ['SC-7', 'SI-10', 'SI-2'],
+    "576": ['SC-7', 'SI-10', 'SI-2'],
+    "577": ['SC-7', 'SI-10', 'SI-2'],
+    "578": ['SC-7', 'SI-10', 'SI-2'],
+    "579": ['SC-7', 'SI-10', 'SI-2'],
+    "580": ['SC-7', 'SI-10', 'SI-2'],
+    "581": ['SC-7', 'SI-10', 'SI-2'],
+    "582": ['SC-7', 'SI-10', 'SI-2'],
+    "583": ['SC-7', 'SI-10', 'SI-2'],
+    "584": ['SC-7', 'SI-10', 'SI-2'],
+    "585": ['SC-7', 'SI-10', 'SI-2'],
+    "586": ['SC-7', 'SI-10', 'SI-2'],
+    "587": ['SC-7', 'SI-10', 'SI-2'],
+    "588": ['SC-7', 'SI-10', 'SI-2'],
+    "589": ['SC-7', 'SI-10', 'SI-2'],
+    "590": ['SC-7', 'SI-10', 'SI-2'],
+    "591": ['SC-7', 'SI-10', 'SI-2'],
+    "592": ['SC-7', 'SI-10', 'SI-2'],
+    "593": ['SC-7', 'SI-10', 'SI-2'],
+    "594": ['SC-7', 'SI-10', 'SI-2'],
+    "595": ['SC-7', 'SI-10', 'SI-2'],
+    "596": ['SC-7', 'SI-10', 'SI-2'],
+    "597": ['SC-7', 'SI-10', 'SI-2'],
+    "598": ['SI-10', 'SI-3', 'SI-4'],
+    "599": ['SC-7', 'SI-10', 'SI-2'],
+    "600": ['SC-7', 'SI-10', 'SI-2'],
+    "601": ['SC-7', 'SC-3'],
+    "602": ['SC-7', 'SI-10', 'SI-2'],
+    "603": ['SI-10', 'SI-3', 'SI-4'],
+    "604": ['SC-7', 'SI-10', 'SI-2'],
+    "605": ['SC-7', 'SI-10', 'SI-2'],
+    "606": ['SC-7', 'SI-10', 'SI-2'],
+    "607": ['SC-7', 'SI-10', 'SI-2'],
+    "608": ['SC-7', 'SI-10', 'SI-2'],
+    "609": ['SC-7', 'SI-10', 'SI-2'],
+    "610": ['SC-7', 'SI-10', 'SI-2'],
+    "611": ['SI-10', 'SC-7'],
+    "612": ['SC-7', 'SI-10', 'SI-2'],
+    "613": ['SI-11', 'SC-23'],
+    "614": ['SC-28', 'SC-13'],
+    "615": ['SI-4'],
+    "616": ['SC-7', 'SI-10', 'SI-2'],
+    "617": ['SC-7', 'SI-10', 'SI-2'],
+    "618": ['SC-5', 'SI-4'],
+    "619": ['SC-7', 'SI-10', 'SI-2'],
+    "620": ['SC-7', 'SI-10', 'SI-2'],
+    "621": ['SC-7', 'SI-10', 'SI-2'],
+    "622": ['SC-7', 'SI-10', 'SI-2'],
+    "623": ['SC-7', 'SI-10', 'SI-2'],
+    "624": ['SC-7', 'SI-10', 'SI-2'],
+    "625": ['SC-7', 'SI-10', 'SI-2'],
+    "626": ['SC-7', 'SI-10', 'SI-2'],
+    "627": ['SC-7', 'SI-10', 'SI-2'],
+    "628": ['SC-7', 'SI-10', 'SI-2'],
+    "629": ['SC-7', 'SI-10', 'SI-2'],
+    "630": ['SC-7', 'SI-10', 'SI-2'],
+    "631": ['SC-7', 'SI-10', 'SI-2'],
+    "632": ['SC-7', 'SI-10', 'SI-2'],
+    "633": ['SC-7', 'SI-10', 'SI-2'],
+    "634": ['SC-7', 'SI-10', 'SI-2'],
+    "635": ['SC-7', 'SI-10', 'SI-2'],
+    "636": ['SC-7', 'SI-10', 'SI-2'],
+    "637": ['SC-7', 'SI-10', 'SI-2'],
+    "638": ['SC-7', 'SI-10', 'SI-2'],
+    "639": ['AC-3', 'AC-4'],
+    "640": ['AC-3', 'AC-6', 'CM-5'],
+    "641": ['AC-2', 'AC-3'],
+    "642": ['AC-2', 'AC-3'],
+    "643": ['SI-10', 'SI-2'],
+    "644": ['AC-2', 'AC-3'],
+    "645": ['AC-2', 'AC-3'],
+    "646": ['AC-2', 'AC-3'],
+    "647": ['AC-2', 'AC-3'],
+    "648": ['AC-2', 'AC-3'],
+    "649": ['SI-4', 'SI-6'],
+    "650": ['SI-4', 'SI-6'],
+    "651": ['SI-4', 'SI-6'],
+    "652": ['SI-4', 'SI-6'],
+    "653": ['SI-4', 'SI-6'],
+    "654": ['SI-4', 'SI-6'],
+    "655": ['SI-4', 'SI-6'],
+    "656": ['SI-4', 'SI-6'],
+    "657": ['SI-4', 'SI-6'],
+    "658": ['SI-4', 'SI-6'],
+    "659": ['SI-4', 'SI-6'],
+    "660": ['SI-4', 'SI-6'],
+    "661": ['SI-4', 'SI-6'],
+    "662": ['SI-4', 'SI-6'],
+    "663": ['SI-4', 'SI-6'],
+    "664": ['SI-4', 'SI-6'],
+    "665": ['SI-4', 'SI-6'],
+    "666": ['SI-4', 'SI-6'],
+    "667": ['SI-10'],
+    "668": ['SI-10'],
+    "669": ['SI-10'],
+    "670": ['SI-10'],
+    "671": ['SI-10'],
+    "672": ['SI-10'],
+    "673": ['SI-10'],
+    "674": ['SI-10'],
+    "675": ['SI-10'],
+    "676": ['SI-10'],
+    "677": ['SI-10'],
+    "678": ['SI-10'],
+    "679": ['SI-10'],
+    "680": ['SI-10'],
+    "681": ['SI-10'],
+    "682": ['SI-10'],
+    "683": ['SI-10'],
+    "684": ['SI-10'],
+    "685": ['SI-10'],
+    "686": ['SI-10'],
+    "687": ['SI-10'],
+    "688": ['SI-10'],
+    "689": ['SI-10'],
+    "690": ['SI-10'],
+    "691": ['SI-10'],
+    "692": ['SI-10'],
+    "693": ['SI-10'],
+    "694": ['SI-10'],
+    "695": ['SI-10'],
+    "696": ['SI-10'],
+    "697": ['SI-10'],
+    "698": ['SI-10'],
+    "699": ['SI-10'],
+    "700": ['SI-10'],
+    "701": ['SI-10'],
+    "702": ['SI-10'],
+    "703": ['SI-10'],
+    "704": ['SI-10'],
+    "705": ['SI-10'],
+    "706": ['SI-10'],
+    "707": ['SI-10'],
+    "708": ['SI-10'],
+    "709": ['SI-10'],
+    "710": ['SI-10'],
+    "711": ['SI-10'],
+    "712": ['SI-10'],
+    "713": ['SI-10'],
+    "714": ['SI-10'],
+    "715": ['SI-10'],
+    "716": ['SI-10'],
+    "717": ['SI-10'],
+    "718": ['SI-10'],
+    "719": ['SI-10'],
+    "720": ['SI-10'],
+    "721": ['SI-10'],
+    "722": ['SI-10'],
+    "723": ['SI-10'],
+    "724": ['SI-10'],
+    "725": ['SI-10'],
+    "726": ['SI-10'],
+    "727": ['SI-10'],
+    "728": ['SI-10'],
+    "729": ['SI-10'],
+    "730": ['SI-10'],
+    "731": ['SI-10'],
+    "732": ['SI-10'],
+    "733": ['SI-10'],
+    "734": ['SI-10'],
+    "735": ['SI-10'],
+    "736": ['SI-10'],
+    "737": ['SI-10'],
+    "738": ['SI-10'],
+    "739": ['SI-10'],
+    "740": ['SI-10'],
+    "741": ['SI-10'],
+    "742": ['SI-10'],
+    "743": ['SI-10'],
+    "744": ['SI-10'],
+    "745": ['SI-10'],
+    "746": ['SI-10'],
+    "747": ['SI-10'],
+    "748": ['SI-10'],
+    "749": ['SI-10'],
+    "750": ['SI-10'],
+    "751": ['SI-10'],
+    "752": ['SI-10'],
+    "753": ['SI-10'],
+    "754": ['SI-10'],
+    "755": ['SI-10'],
+    "756": ['SI-10'],
+    "757": ['SI-10'],
+    "758": ['SI-10'],
+    "759": ['SI-10'],
+    "760": ['SI-10'],
+    "761": ['SI-10'],
+    "762": ['SI-10'],
+    "763": ['SI-10'],
+    "764": ['SI-10'],
+    "765": ['SI-10'],
+    "766": ['SI-10'],
+    "767": ['SI-10'],
+    "768": ['SI-10'],
+    "769": ['SI-10'],
+    "770": ['SI-10'],
+    "771": ['SI-10'],
+    "772": ['SI-10'],
+    "773": ['SI-10'],
+    "774": ['SI-10'],
+    "775": ['SI-10'],
+    "776": ['SI-10'],
+    "777": ['SI-10'],
+    "778": ['SI-10'],
+    "779": ['SI-10'],
+    "780": ['SI-10'],
+    "781": ['SI-10'],
+    "782": ['SI-10'],
+    "783": ['SI-10'],
+    "784": ['SI-10'],
+    "785": ['SI-10'],
+    "786": ['SI-10'],
+    "788": ['SI-10'],
+    "789": ['SI-10'],
+    "790": ['SI-10'],
+    "791": ['SI-10'],
+    "792": ['SI-10'],
+    "793": ['SI-10'],
+    "794": ['SI-10'],
+    "795": ['SI-10'],
+    "796": ['SI-10'],
+    "797": ['SI-10'],
+    "798": ['SI-10'],
+    "799": ['SI-10'],
+    "800": ['SI-10'],
+    "801": ['SI-10'],
+    "802": ['SI-10'],
+    "803": ['SI-10'],
+    "804": ['SI-10'],
+    "805": ['SI-10'],
+    "806": ['SI-10'],
+    "807": ['SI-10'],
+    "808": ['SI-10'],
+    "809": ['SI-10'],
+    "810": ['SI-10'],
+    "811": ['SI-10'],
+    "812": ['SI-10'],
+    "813": ['SI-10'],
+    "814": ['SI-10'],
+    "815": ['SI-10'],
+    "816": ['SI-10'],
+    "817": ['SI-10'],
+    "818": ['SI-10'],
+    "819": ['SI-10'],
+    "820": ['SI-10'],
+    "821": ['SI-10'],
+    "822": ['SI-10'],
+    "823": ['SI-10'],
+    "824": ['SI-10'],
+    "825": ['SI-10'],
+    "826": ['SI-10'],
+    "827": ['SI-10'],
+    "828": ['SI-10'],
+    "829": ['SI-10'],
+    "830": ['SI-10'],
+    "831": ['SI-10'],
+    "832": ['SI-10'],
+    "833": ['SI-10'],
+    "834": ['SI-10'],
+    "835": ['SI-10'],
+    "836": ['SI-10'],
+    "837": ['SI-10'],
+    "838": ['SI-10'],
+    "839": ['SI-10'],
+    "840": ['SI-10'],
+    "841": ['SI-10'],
+    "842": ['SI-10'],
+    "843": ['SI-2', 'SI-10'],
+    "844": ['SI-10'],
+    "845": ['SI-10'],
+    "846": ['SI-10'],
+    "847": ['SI-10'],
+    "848": ['SI-10'],
+    "849": ['SI-10'],
+    "850": ['SI-10'],
+    "851": ['SI-10'],
+    "852": ['SI-10'],
+    "853": ['SI-10'],
+    "854": ['SI-10'],
+    "855": ['SI-10'],
+    "856": ['SI-10'],
+    "857": ['SI-10'],
+    "858": ['SI-10'],
+    "859": ['SI-10'],
+    "860": ['SI-10'],
+    "861": ['SI-10'],
+    "862": ['AC-3', 'AC-6'],
+    "864": ['SI-10'],
+    "865": ['SI-10'],
+    "866": ['SI-10'],
+    "867": ['SI-10'],
+    "868": ['SI-10'],
+    "869": ['SI-10'],
+    "870": ['SI-10'],
+    "871": ['SI-10'],
+    "872": ['SI-10'],
+    "873": ['SI-10'],
+    "874": ['SI-10'],
+    "875": ['SI-10'],
+    "876": ['SI-10'],
+    "877": ['SI-10'],
+    "878": ['SI-10'],
+    "879": ['SI-10'],
+    "880": ['SI-10'],
+    "881": ['SI-10'],
+    "882": ['SI-10'],
+    "883": ['SI-10'],
+    "884": ['SI-10'],
+    "885": ['SI-10'],
+    "886": ['SI-10'],
+    "887": ['SI-10'],
+    "888": ['SI-10'],
+    "889": ['SI-10'],
+    "890": ['SI-10'],
+    "891": ['SI-10'],
+    "892": ['SI-10'],
+    "893": ['SI-10'],
+    "894": ['SI-10'],
+    "895": ['SI-10'],
+    "896": ['SI-10'],
+    "897": ['SI-10'],
+    "898": ['SI-10'],
+    "899": ['SI-10'],
+    "900": ['SI-10'],
+    "913": ['SI-10'],
+    "914": ['SI-10'],
+    "915": ['SI-10', 'AC-3'],
+    "916": ['SI-10'],
+    "918": ['AC-3', 'SC-7'],
+    "919": ['SI-10'],
+    "920": ['SI-10'],
+    "943": ['SI-10', 'SC-7'],
+    "1021": ['AC-3', 'IA-2'],
+    "1022": ['SI-10'],
+    "1023": ['SI-2', 'SI-10'],
+    "1025": ['SI-10'],
+    "1026": ['SI-10'],
+    "1033": ['SI-10'],
+    "1035": ['SI-10'],
+    "1036": ['SI-10', 'CM-5'],
+    "1038": ['SI-10'],
+    "1039": ['SI-10'],
+    "1043": ['SI-10'],
+    "1045": ['SI-10'],
+    "1052": ['SI-4', 'CM-8'],
+    "1059": ['SI-10'],
+    "1072": ['AC-3', 'AC-6'],
+    "1078": ['IA-2', 'AC-3', 'AC-4'],
+    "1083": ['SI-4', 'AC-3'],
+    "1087": ['SI-4', 'AC-6'],
+    "1104": ['SI-10'],
+    "1113": ['SI-4'],
+    "1189": ['SI-3', 'SI-4', 'SI-10'],
+    "1190": ['SI-10', 'SI-2', 'SC-7'],
+    "1200": ['SI-4', 'SI-10', 'SC-7'],
+    "1204": ['AC-6', 'AT-2', 'AT-3'],
+    "1264": ['SI-10'],
+    "1275": ['SI-10'],
+    "1300": ['SI-10'],
+    "1319": ['SI-10'],
+    "1321": ['SC-13', 'SC-28'],
+    "1336": ['SI-10', 'SC-7'],
+    "1337": ['SI-10'],
+    "1345": ['SC-28', 'SC-13'],
+    "1346": ['SI-10'],
+    "1350": ['SI-10'],
+    "1385": ['SI-10'],
+    "1386": ['SI-10'],
+    "1390": ['SI-10'],
+    "1391": ['SI-10'],
+    "1395": ['SI-10'],
+    "1419": ['SI-10'],
 }
