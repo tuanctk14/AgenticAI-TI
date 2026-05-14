@@ -769,6 +769,25 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
             lines.append(f"      Department: {dept}")
             lines.append(f"      Phần mềm bị ảnh hưởng: {affected_sw} (version: {device_version})")
             lines.append(f"      Risk Level: {risk}")
+
+            # Show Multi-Source Intel metadata when MSI drove the match
+            cve_src = match.get("cve_source", "")
+            msi_conf = match.get("msi_confidence")
+            if cve_src == "multi_source_intel" and msi_conf is not None:
+                conf_pct = int(msi_conf * 100)
+                lines.append(f"      Nguồn: Multi-Source Intel ({conf_pct}% confidence)")
+                agreeing = match.get("msi_sources_agreeing", [])
+                if agreeing:
+                    lines.append(f"      Signals agreed: {', '.join(agreeing)}")
+                breakdown = match.get("msi_source_breakdown", {})
+                if breakdown:
+                    lines.append("      Signal breakdown:")
+                    for src_name, src_info in breakdown.items():
+                        top = src_info.get("top_candidate")
+                        if top:
+                            vk, c = top
+                            lines.append(f"        {src_name:<22}: {vk} ({c:.0%})")
+
             lines.append("")
     else:
         lines.append("  Không có thiết bị nào trong CMDB bị ảnh hưởng bởi CVE này.")

@@ -15,6 +15,10 @@ from datetime import datetime
 from packaging import version as pkg_version
 from tools.product_extractor import extract_product_metadata, match_confidence_score
 from tools.date_validator import DateValidator
+from tools.multi_source_intel import MultiSourceIntel, CONFIDENCE_HIGH, CONFIDENCE_MEDIUM
+
+# Initialize Multi-Source Intelligence engine
+_msi = MultiSourceIntel()
 
 # Software normalization layer (ANALYST-GRADE)
 SOFTWARE_NORMALIZATION = {
@@ -355,6 +359,23 @@ def parse_cve_metadata(cve_dict: dict) -> dict:
             result["normalized_software_id"] = selected_entry.get("normalized_id")
             result["source"] = "gold_cpe"
             return result
+
+    # ────────────────────────────────────────────────────────────
+    # PHASE 1.5: MULTI-SOURCE INTELLIGENCE (NO-CPE FALLBACK)
+    # ────────────────────────────────────────────────────────────
+    msi = _msi.infer_vendor(cve_dict)
+    msi_conf = msi.get("confidence", 0.0)
+    if msi_conf >= CONFIDENCE_MEDIUM and msi.get("vendor"):
+        result["vendor"] = msi["vendor"]
+        result["product"] = msi.get("product")
+        result["normalized_software_id"] = f"{msi['vendor']}:{msi['product']}" if msi.get("product") else None
+        result["source"] = "multi_source_intel"
+        result["extraction_confidence"] = msi_conf
+        result["needs_analyst_review"] = msi_conf < CONFIDENCE_HIGH
+        result["msi_source_breakdown"] = msi.get("source_breakdown", {})
+        result["msi_sources_agreeing"] = msi.get("sources_agreeing", [])
+        result["msi_sources_disagreeing"] = msi.get("sources_disagreeing", [])
+        return result
 
     # ────────────────────────────────────────────────────────────
     # PHASE 2: PRODUCT EXTRACTION (ANALYST-GRADE INFERENCE)

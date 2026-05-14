@@ -90,6 +90,17 @@ def match_cves_with_cmdb(cve_list: list) -> dict:
 
                 if match_result.get("matched"):
                     risk = _calculate_risk(cve_score)
+                    # Blend match confidence: structural match (60%) + MSI confidence (40%)
+                    base_match_conf = match_result.get("confidence", 0)
+                    if cve_source == "multi_source_intel" and cve_metadata.get("extraction_confidence"):
+                        blended_conf = int(
+                            base_match_conf * 0.6 +
+                            cve_metadata.get("extraction_confidence", 0) * 100 * 0.4
+                        )
+                        match_confidence = min(blended_conf, 100)
+                    else:
+                        match_confidence = base_match_conf
+
                     matches.append({
                         "cve_id":              cve_id,
                         "cvss_score":          cve_score,
@@ -104,7 +115,7 @@ def match_cves_with_cmdb(cve_list: list) -> dict:
                         "os":                  f"{device['os']} {device['os_version']}",
                         "location":            device["location"],
                         "match_type":          match_result.get("match_type", "unknown"),
-                        "match_confidence":    match_result.get("confidence", 0),
+                        "match_confidence":    match_confidence,
                         "match_source":        "normalized_id",  # NEW: track match source
                         "component":           match_result.get("component"),
                         "component_type":      match_result.get("component_type"),
@@ -114,6 +125,9 @@ def match_cves_with_cmdb(cve_list: list) -> dict:
                         "cwe_ids":             cwe_analysis.get("cwe_ids", []),
                         "mitre_techniques":    cwe_analysis.get("mitre_techniques", []),
                         "nist_controls":       cwe_analysis.get("nist_controls", []),
+                        "msi_confidence":      cve_metadata.get("extraction_confidence") if cve_source == "multi_source_intel" else None,
+                        "msi_source_breakdown": cve_metadata.get("msi_source_breakdown", {}) if cve_source == "multi_source_intel" else {},
+                        "msi_sources_agreeing": cve_metadata.get("msi_sources_agreeing", []) if cve_source == "multi_source_intel" else [],
                     })
 
     # Sắp xếp theo nguy cơ
