@@ -166,7 +166,8 @@ def _print_chat_response(result: dict):
     if "ANSWER:" in last_response:
         answer_text = last_response.split("ANSWER:")[1].strip()
         print(f"ATI: {answer_text}\n")
-    elif last_response and not is_full_report and not is_ioc_search:
+    elif last_response and not is_full_report:
+        # For IOC search and other cases, print response with ATI prefix
         print(f"ATI: {last_response}\n")
 
     # If agent_matcher or agent_ti_extended output full results, just print metadata and return
