@@ -7,6 +7,7 @@ import re
 from datetime import datetime
 from config import REPORTS_DIR
 from tools.doc_store import load_knowledge_base
+from tools.risk_scorer import RiskScorer
 
 # Lưu trong memory để tra cứu trong session
 REPORTS_STORE: dict[str, dict] = {}
@@ -162,10 +163,13 @@ def _build_report_from_state(
     lines = []
     t = title or report_type.replace("_", " ").title()
 
+    # Format report type name
+    report_type_display = "threat_intelligence_report" if report_type == "executive_summary" else report_type
+
     lines += [
         f"# {t}",
         f"\n**Ngày tạo:** {ts.strftime('%d/%m/%Y %H:%M')}",
-        f"**Loại báo cáo:** {report_type}",
+        f"**Loại báo cáo:** {report_type_display}",
         f"**Hệ thống:** ATI-AgenticThreatIntelligence (Ollama Local)",
         "\n---",
     ]
@@ -450,12 +454,25 @@ def _build_report_from_state(
                 }
             device_map[dev_id]["cves"].append(d)
 
-        # Calculate risk level for each device
+        # Calculate risk level for each device using analyst-grade risk scoring
         device_risk = {}
+        device_risk_scores = {}
         for dev_id, dev_info in device_map.items():
-            risk_level = max([c.get("risk_level", "MEDIUM") for c in dev_info["cves"]],
-                            key=lambda x: (x == "CRITICAL", x == "HIGH", x == "MEDIUM"))
+            # Determine asset context
+            is_dc = dev_info.get("is_dc", False)
+            is_production = dev_info.get("is_production", True)
+            internet_exposed = dev_info.get("internet_exposed", False)
+
+            # Calculate risk score based on CVEs
+            risk_score, risk_level = RiskScorer.calculate_device_risk_score(
+                cves=dev_info["cves"],
+                device_criticality=dev_info.get("criticality", "MEDIUM"),
+                internet_exposed=internet_exposed,
+                is_dc=is_dc,
+                is_production=is_production,
+            )
             device_risk[dev_id] = risk_level
+            device_risk_scores[dev_id] = risk_score
 
         # Sort devices by risk level (CRITICAL > HIGH > MEDIUM > LOW)
         risk_order = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
@@ -463,14 +480,15 @@ def _build_report_from_state(
                                key=lambda x: risk_order.get(device_risk[x[0]], 4))
 
         # Bảng tóm tắt thiết bị (hiển thị đầy đủ, không giới hạn)
-        lines.append("| STT | Thiết Bị | IP | OS | CVE Count | Mức Độ |")
-        lines.append("|---|----------|----|----|-----------|--------|")
+        lines.append("| STT | Thiết Bị | IP | OS | CVE Count | Risk Score | Mức Độ |")
+        lines.append("|---|----------|----|----|-----------|------------|--------|")
         for idx, (dev_id, dev_info) in enumerate(sorted_devices, 1):
             cve_count = len(dev_info["cves"])
-            risk = device_risk[dev_id]
+            risk_level = device_risk[dev_id]
+            risk_score = device_risk_scores[dev_id]
             lines.append(
                 f"| {idx} | {dev_info['hostname']} | {dev_info['ip']} | {dev_info['os']} "
-                f"| {cve_count} | {risk} |"
+                f"| {cve_count} | {risk_score:.1f} | {risk_level} |"
             )
         lines.append("")
 
@@ -478,11 +496,21 @@ def _build_report_from_state(
         lines += ["\n### Chi Tiết Khắc Phục Từng Thiết Bị", ""]
 
         # Render each device in sorted order
-        for dev_id, dev_info in sorted_devices:
+        for idx, (dev_id, dev_info) in enumerate(sorted_devices):
             risk_level = device_risk[dev_id]
-            lines.append(f"\n#### {dev_info['hostname']} ({dev_info['ip']}) - {risk_level}")
+            risk_score = device_risk_scores[dev_id]
+
+            # Get risk level color
+            risk_color = RiskScorer.get_risk_color(risk_level)
+            timeline = RiskScorer.get_remediation_timeline(risk_level)
+
+            # Add separator line between devices (except first one)
+            if idx > 0:
+                lines.append("\n---")
+
+            # Device name and IP with colors, Risk Score with color beside
+            lines.append(f"\n#### <span style='color: #66ddff'><b>{dev_info['hostname']}</b></span> | <span style='color: #66ddff'>{dev_info['ip']}</span> | <span style='color: {risk_color}'><b>{risk_level} ({risk_score:.1f})</b></span>")
             lines.append(f"- **OS**: {dev_info['os']}")
-            lines.append(f"- **Criticality**: {dev_info['criticality']}")
             lines.append("")
 
             # Danh sách CVEs ảnh hưởng
@@ -494,63 +522,9 @@ def _build_report_from_state(
                 lines.append(f"- **{cve_id}** (CVSS: {cvss}, Phần Mềm: {software})")
 
             lines.append("")
-            lines.append("**Hướng khắc phục:**")
 
-            # Collect all affected software
-            all_software = set()
-            for cve_match in dev_info["cves"]:
-                software = cve_match.get("affected_software", "")
-                if software and software != "N/A":
-                    all_software.add(software)
-
-            # Add priority based on highest risk CVE
-            highest_risk_cve = max(dev_info["cves"], key=lambda x: float(x.get("cvss_score", 0)) if isinstance(x.get("cvss_score"), (int, float, str)) and str(x.get("cvss_score")).replace('.', '', 1).isdigit() else 0)
-            cvss = highest_risk_cve.get("cvss_score", 0)
-            cve_info = cves_dict.get(highest_risk_cve["cve_id"], {})
-            desc = cve_info.get("description", "").lower()
-
-            try:
-                cvss_float = float(cvss) if cvss and cvss != "N/A" else 0
-            except (ValueError, TypeError):
-                cvss_float = 0
-
-            # Timeline priority
-            if cvss_float >= 9.0:
-                lines.append("-  **Ưu tiên CRITICAL**: Xử lý ngay trong 24 giờ")
-            elif cvss_float >= 7.0:
-                lines.append("-  **Ưu tiên HIGH**: Xử lý trong 72 giờ")
-            else:
-                lines.append("-  **Ưu tiên MEDIUM**: Lên lịch xử lý trong 2 tuần")
-
-            # Update all affected software
-            for software in sorted(all_software):
-                lines.append(f"- **Cập nhật phần mềm**: Nâng cấp {software} lên phiên bản mới nhất")
-
-            # Specific remediation based on vulnerability type
-            if "rce" in desc or "remote code execution" in desc:
-                lines.append("- **RCE Detection**: Scan hệ thống bằng antivirus/EDR để phát hiện backdoor, shell scripts")
-                lines.append("- **Firewall rules**: Kiểm tra và tightening inbound connections từ internet")
-                lines.append("- **Kiểm tra logs**: Tìm kiếm dấu hiệu bị khai thác (suspicious activities, error patterns)")
-            elif "sql" in desc:
-                lines.append("- **SQL Injection mitigation**: Review và sanitize tất cả SQL queries, dùng parameterized statements")
-                lines.append("- **Database audit**: Kiểm tra access logs của database, xóa suspicious accounts")
-            elif "auth" in desc or "bypass" in desc:
-                lines.append("- **Credential reset**: Reset tất cả passwords, invalidate sessions nếu cần")
-                lines.append("- **MFA enforcement**: Enable Multi-Factor Authentication nếu chưa có")
-                lines.append("- **Kiểm tra logs**: Tìm kiếm dấu hiệu truy cập bất hợp pháp (unauthorized access attempts)")
-            elif "path traversal" in desc or "directory traversal" in desc:
-                lines.append("- **File access audit**: Kiểm tra web server logs cho directory traversal attempts")
-                lines.append("- **Access control**: Đảm bảo proper file permissions và không expose sensitive directories")
-            elif "xss" in desc or "cross-site" in desc:
-                lines.append("- **Input validation**: Implement proper input sanitization và output encoding")
-                lines.append("- **CSP headers**: Thiết lập Content Security Policy headers")
-            elif "csrf" in desc or "cross-site request" in desc:
-                lines.append("- **CSRF tokens**: Implement CSRF protection tokens trên tất cả state-changing operations")
-                lines.append("- **SameSite cookies**: Thiết lập SameSite attribute trên cookies")
-            else:
-                # Default remediation for unknown vulnerability types
-                lines.append("- **Kiểm tra logs**: Tìm kiếm dấu hiệu bị khai thác (suspicious activities)")
-                lines.append("- **Network segmentation**: Giới hạn truy cập từ bên ngoài nếu chưa có")
+            # Add priority note based on calculated risk level
+            lines.append(f"<span style='color: {risk_color}'><strong>Lưu ý {risk_level}</strong></span>: {timeline}")
 
             lines.append("")
 

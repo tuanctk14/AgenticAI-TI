@@ -769,7 +769,7 @@ def interactive_mode():
             run_query(query)
 
         elif choice == "2":
-            # Menu 2: Interactive report generation with date range
+            # Menu 2: Interactive report generation with date range (same as before)
             start_date, end_date, days_back = _ask_time_range()
             state = _run_report_pipeline(start_date, end_date, days_back)
             _ask_and_export(state, start_date, end_date)
@@ -803,13 +803,13 @@ def interactive_mode():
                         print(f"   {cat_name:10s}: {count:3d} records | Chua upload")
 
         elif choice == "4":
-            # Menu 4: Free query - Interactive chat mode with conversation history
+            # Menu 4: Chat mode with run_query (same logic as Menu 1)
             print("\n╔════════════════════════════════════════════════════════╗")
             print("║           CHAT MODE - ATI THREAT INTELLIGENCE          ║")
             print("║  (Gõ 'exit' hoặc 'quit' để quay lại menu chính)       ║")
             print("╚════════════════════════════════════════════════════════╝\n")
 
-            conversation_history = []  # Maintain history across queries
+            conversation_history = []
 
             while True:
                 query = input("Bạn: ").strip()
@@ -825,7 +825,10 @@ def interactive_mode():
                 # Add user query to conversation history
                 conversation_history.append({"role": "user", "content": query})
 
+                # Run query through supervisor (same as Menu 1 logic)
                 result = run_query(query, verbose=False, chat_mode=True, conversation_history=conversation_history)
+
+                # Print chat response with details
                 _print_chat_response(result)
 
                 # Add assistant response to conversation history
