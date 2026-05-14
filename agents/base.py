@@ -610,11 +610,6 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
         except Exception as e:
             pass  # Fall back to "not found" message
 
-    lines.append("═" * 60)
-    lines.append(" PHÂN TÍCH MITRE ATT&CK")
-    lines.append("═" * 60)
-    lines.append("")
-
     if techniques:
         for tech in techniques:
             tech_id = tech.get("id", "")
