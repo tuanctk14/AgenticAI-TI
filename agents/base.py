@@ -553,6 +553,7 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
             desc = cve.get("description", "Không có mô tả")
             published = cve.get("published", "N/A")
             cwe_ids = cve.get("cwe_ids", [])
+            references = cve.get("references", [])
 
             lines.append(f"{'─' * 50}")
             lines.append(f"  CVE #{i}: {cve_id}")
@@ -561,6 +562,12 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
             if cwe_ids:
                 lines.append(f"  CWE: {', '.join(cwe_ids)}")
             lines.append(f"  Description: {desc}")
+            if references:
+                lines.append(f"  References:")
+                for ref in references[:3]:
+                    lines.append(f"    - {ref}")
+                if len(references) > 3:
+                    lines.append(f"    ... and {len(references) - 3} more references")
             lines.append("")
 
     # ════════════════════════════════════════════════════════════

@@ -316,34 +316,6 @@ def _print_summary(result: dict):
     print(f"Agents đã dùng: {' → '.join(history)}")
     print(f"Số bước: {result.get('num_steps', 0)}\n")
 
-    # ── CVE Data - TẤT CẢ ────────────────────────────────────────────────────
-    cves = result.get("collected_cves") or []
-    if cves:
-        print("=" * 70)
-        print(" CVE DETAILS - TẤT CẢ")
-        print("=" * 70)
-        print(f"Tổng cộng: {len(cves)} CVEs\n")
-        for i, cve in enumerate(cves, 1):
-            cve_id = cve.get("id", "Unknown")
-            cvss = cve.get("cvss_score", "N/A")
-            severity = cve.get("severity", "UNKNOWN")
-            desc = cve.get("description", "No description")
-            published = cve.get("published", "Unknown")
-            references = cve.get("references", [])
-
-            print(f"{i}. {cve_id}")
-            print(f"   CVSS Score: {cvss}")
-            print(f"   Severity: {severity}")
-            print(f"   Published: {published}")
-            print(f"   Description: {desc}")
-            if references:
-                print(f"   References:")
-                for ref in references[:3]:  # Show first 3 references
-                    print(f"     - {ref}")
-                if len(references) > 3:
-                    print(f"     ... and {len(references) - 3} more references")
-            print()
-
     # ── IOC/Malware Data - TẤT CẢ ──────────────────────────────────────────
     indicators = result.get("collected_indicators") or []
     if indicators:
