@@ -159,15 +159,18 @@ def _print_chat_response(result: dict):
                       "THIẾT BỊ BỊ ẢNH HƯỞNG" in last_response or
                       "agent_matcher" in last_agent)
 
+    # Check if agent_ti_extended produced IOC/Malware search results
+    is_ioc_search = "agent_ti_extended" in last_agent or "Kết quả tìm kiếm" in last_response
+
     # Extract ANSWER text nếu có
     if "ANSWER:" in last_response:
         answer_text = last_response.split("ANSWER:")[1].strip()
         print(f"ATI: {answer_text}\n")
-    elif last_response and not is_full_report:
+    elif last_response and not is_full_report and not is_ioc_search:
         print(f"ATI: {last_response}\n")
 
-    # If agent_matcher output full report, just print metadata and return
-    if is_full_report:
+    # If agent_matcher or agent_ti_extended output full results, just print metadata and return
+    if is_full_report or is_ioc_search:
         print("\n" + "=" * 70)
         history = result.get("agent_history", [])
         print(f" Agents: {' → '.join(history)} | Bước: {result.get('num_steps', 0)}")
