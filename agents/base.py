@@ -541,8 +541,10 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
     Build comprehensive output for CVE analysis with MITRE/NIST and device matching.
     Used by agent_matcher to output final result.
 
-    NEW FLOW: Always includes CVE + MITRE/NIST + (devices if available)
+    NEW FLOW: Always includes CVE + MITRE/NIST + Remediation + (devices if available)
+    CWE fallback: If CVE-direct mapping empty, use CWE-to-MITRE/NIST mapping
     """
+    from tools.cwe_mapper import CWEMapper
     lines = []
 
     # ════════════════════════════════════════════════════════════
@@ -581,21 +583,99 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
     lines.append("═" * 60)
     lines.append("")
 
+    # Try CVE-direct mapping first
     attack_ctx = {}
     if attack_info and isinstance(attack_info, dict):
         attack_ctx = attack_info.get("context", {})
-
     techniques = attack_ctx.get("techniques", [])
+
+    # If no techniques found, try CWE mapping
+    if not techniques and cves:
+        try:
+            mapper = CWEMapper()
+            # Collect all CWE IDs from CVEs
+            all_cwes = set()
+            for cve in cves:
+                cwe_ids = cve.get("cwe_ids", [])
+                for cwe in cwe_ids:
+                    cwe_num = cwe.replace("CWE-", "") if isinstance(cwe, str) else str(cwe)
+                    all_cwes.add(cwe_num)
+
+            # Map CWEs to MITRE techniques
+            tech_ids_set = set()
+            for cwe_num in all_cwes:
+                from tools.cwe_mapper import CWE_TO_MITRE
+                tech_ids = CWE_TO_MITRE.get(cwe_num, [])
+                tech_ids_set.update(tech_ids)
+
+            # Build technique objects from IDs
+            if tech_ids_set:
+                mitre_data = mapper.mitre_data.get("techniques", {})
+                for tech_id in tech_ids_set:
+                    tech_data = mitre_data.get(tech_id, {})
+                    techniques.append({
+                        "id": tech_id,
+                        "name": tech_data.get("name", f"Technique {tech_id}"),
+                        "tactic": tech_data.get("tactics", [""])[0] if tech_data.get("tactics") else ""
+                    })
+        except Exception as e:
+            pass  # Fall back to "not found" message
+
+    lines.append("═" * 60)
+    lines.append(" PHÂN TÍCH MITRE ATT&CK")
+    lines.append("═" * 60)
+    lines.append("")
+
     if techniques:
         for tech in techniques:
             tech_id = tech.get("id", "")
             tech_name = tech.get("name", "")
             tactic = tech.get("tactic", "")
-            lines.append(f"  • {tech_id}: {tech_name} ({tactic})")
+            if tactic:
+                lines.append(f"  {tech_id:<15} {tech_name:<40} {tactic}")
+            else:
+                lines.append(f"  • {tech_id}: {tech_name}")
     else:
         lines.append("  Không tìm thấy mapping MITRE ATT&CK trong database.")
 
     lines.append("")
+
+    # Try CVE-direct NIST mapping
+    nist_ctx = {}
+    if nist_info and isinstance(nist_info, dict):
+        nist_ctx = nist_info.get("context", {})
+    controls = nist_ctx.get("controls", [])
+
+    # If no controls found, try CWE mapping
+    if not controls and cves:
+        try:
+            from tools.cwe_mapper import CWE_TO_NIST
+            # Collect all CWE IDs from CVEs
+            all_cwes = set()
+            for cve in cves:
+                cwe_ids = cve.get("cwe_ids", [])
+                for cwe in cwe_ids:
+                    cwe_num = cwe.replace("CWE-", "") if isinstance(cwe, str) else str(cwe)
+                    all_cwes.add(cwe_num)
+
+            # Map CWEs to NIST controls
+            ctrl_ids_set = set()
+            for cwe_num in all_cwes:
+                ctrl_ids = CWE_TO_NIST.get(cwe_num, [])
+                ctrl_ids_set.update(ctrl_ids)
+
+            # Build control objects from IDs
+            if ctrl_ids_set:
+                mapper = CWEMapper()
+                nist_data = mapper.nist_data.get("controls", {})
+                for ctrl_id in ctrl_ids_set:
+                    ctrl_data = nist_data.get(ctrl_id, {})
+                    controls.append({
+                        "id": ctrl_id,
+                        "title": ctrl_data.get("title", f"Control {ctrl_id}")
+                    })
+        except Exception as e:
+            pass  # Fall back to "not found" message
 
     # ════════════════════════════════════════════════════════════
     # SECTION 3: NIST SP 800-53 CONTROLS
@@ -605,26 +685,63 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
     lines.append("═" * 60)
     lines.append("")
 
-    nist_ctx = {}
-    if nist_info and isinstance(nist_info, dict):
-        nist_ctx = nist_info.get("context", {})
-
-    controls = nist_ctx.get("controls", [])
     if controls:
-        priority = nist_ctx.get("priority", "N/A")
-        lines.append(f"  Priority: {priority}")
-        lines.append("")
         for ctrl in controls:
             ctrl_id = ctrl.get("id", "")
             ctrl_title = ctrl.get("title", "")
-            lines.append(f"  • {ctrl_id}: {ctrl_title}")
+            if ctrl_id:
+                lines.append(f"  {ctrl_id:<10} {ctrl_title}")
     else:
         lines.append("  Không tìm thấy mapping NIST controls trong database.")
 
     lines.append("")
 
     # ════════════════════════════════════════════════════════════
-    # SECTION 4: THIẾT BỊ BỊ ẢNH HƯỞNG
+    # SECTION 4: REMEDIATION ACTIONS (per technique + control)
+    # ════════════════════════════════════════════════════════════
+    lines.append("═" * 60)
+    lines.append(" HƯỚNG KHẮC PHỤC")
+    lines.append("═" * 60)
+    lines.append("")
+
+    if techniques:
+        lines.append(" Theo MITRE ATT&CK Techniques:")
+        lines.append("")
+        for tech in techniques:
+            tech_id = tech.get("id", "")
+            tech_name = tech.get("name", "")
+            if tech_id:
+                lines.append(f"  {tech_id} - {tech_name}:")
+                actions = FALLBACK_TECHNIQUE_ACTIONS.get(tech_id, ["Thực hiện biện pháp kiểm soát phù hợp"])
+                for i, action in enumerate(actions, 1):
+                    lines.append(f"    {i}. {action}")
+                lines.append("")
+
+    if controls:
+        lines.append(" Theo NIST SP 800-53 Controls:")
+        lines.append("")
+        for ctrl in controls:
+            ctrl_id = ctrl.get("id", "")
+            ctrl_title = ctrl.get("title", "")
+            if ctrl_id:
+                lines.append(f"  {ctrl_id} - {ctrl_title}:")
+                actions = FALLBACK_CONTROL_ACTIONS.get(ctrl_id, ["Thực hiện biện pháp kiểm soát theo tiêu chuẩn"])
+                for i, action in enumerate(actions, 1):
+                    lines.append(f"    {i}. {action}")
+                lines.append("")
+
+    if not techniques and not controls:
+        lines.append("  Hướng khắc phục chung:")
+        lines.append("    1. Cập nhật phần mềm/thành phần lên phiên bản mới nhất")
+        lines.append("    2. Áp dụng các biện pháp giảm nhẹ công bố bởi nhà cung cấp")
+        lines.append("    3. Giám sát các chỉ báo tấn công được công bố")
+        lines.append("")
+
+    lines.append("═" * 60)
+    lines.append("")
+
+    # ════════════════════════════════════════════════════════════
+    # SECTION 5: THIẾT BỊ BỊ ẢNH HƯỞNG
     # ════════════════════════════════════════════════════════════
     lines.append("═" * 60)
     lines.append(" THIẾT BỊ BỊ ẢNH HƯỞNG")
@@ -661,60 +778,6 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
         lines.append("  được triển khai trong tương lai.")
 
     lines.append("")
-
-    # ════════════════════════════════════════════════════════════
-    # SECTION 5: REMEDIATION ACTIONS (per technique + control)
-    # ════════════════════════════════════════════════════════════
-    lines.append("═" * 60)
-    lines.append(" HƯỚNG KHẮC PHỤC")
-    lines.append("═" * 60)
-    lines.append("")
-
-    # Per-technique remediation
-    attack_ctx = {}
-    if attack_info and isinstance(attack_info, dict):
-        attack_ctx = attack_info.get("context", {})
-    techniques = attack_ctx.get("techniques", [])
-
-    if techniques:
-        lines.append(" Theo MITRE ATT&CK Techniques:")
-        lines.append("")
-        for tech in techniques:
-            tech_id = tech.get("id", "")
-            tech_name = tech.get("name", "")
-            if tech_id:
-                lines.append(f"  {tech_id} - {tech_name}:")
-                actions = FALLBACK_TECHNIQUE_ACTIONS.get(tech_id, ["Thực hiện biện pháp kiểm soát phù hợp"])
-                for i, action in enumerate(actions, 1):
-                    lines.append(f"    {i}. {action}")
-                lines.append("")
-
-    # Per-control remediation
-    nist_ctx = {}
-    if nist_info and isinstance(nist_info, dict):
-        nist_ctx = nist_info.get("context", {})
-    controls = nist_ctx.get("controls", [])
-
-    if controls:
-        lines.append(" Theo NIST SP 800-53 Controls:")
-        lines.append("")
-        for ctrl in controls:
-            ctrl_id = ctrl.get("id", "")
-            ctrl_title = ctrl.get("title", "")
-            if ctrl_id:
-                lines.append(f"  {ctrl_id} - {ctrl_title}:")
-                actions = FALLBACK_CONTROL_ACTIONS.get(ctrl_id, ["Thực hiện biện pháp kiểm soát theo tiêu chuẩn"])
-                for i, action in enumerate(actions, 1):
-                    lines.append(f"    {i}. {action}")
-                lines.append("")
-
-    if not techniques and not controls:
-        lines.append("  Hướng khắc phục chung:")
-        lines.append("    1. Cập nhật phần mềm/thành phần lên phiên bản mới nhất")
-        lines.append("    2. Áp dụng các biện pháp giảm nhẹ công bố bởi nhà cung cấp")
-        lines.append("    3. Giám sát các chỉ báo tấn công được công bố")
-        lines.append("")
-
     lines.append("═" * 60)
 
     return "\n".join(lines)

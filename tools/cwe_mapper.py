@@ -83,6 +83,9 @@ CWE_TO_MITRE = {
 
     # Logging & Observability
     "532": ["T1526"],  # CWE-532 Log Injection -> Information Disclosure
+
+    # ───── PRIVILEGE ESCALATION & PATH HIJACKING ─────
+    "428": ["T1574.009", "T1574", "T1548", "T1059"],  # CWE-428 Unquoted Search Path
 }
 
 # Ensure no duplicates in the expanded mappings
@@ -143,6 +146,9 @@ CWE_TO_NIST = {
 
     # Additional File Upload coverage
     "434": ["SI-10", "CM-5", "SI-4"],  # File upload with monitoring
+
+    # ───── PRIVILEGE ESCALATION & PATH HIJACKING ─────
+    "428": ["CM-7", "SI-7", "SI-10", "AC-6", "CM-5"],  # CWE-428 Unquoted Search Path
 }
 
 
