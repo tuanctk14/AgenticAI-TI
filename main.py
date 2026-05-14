@@ -764,30 +764,79 @@ def interactive_mode():
             break
 
         elif choice == "1":
-            # Menu 1: CVE scan
-            keyword = input("\nNhập từ khóa CVE (ví dụ: log4j): ").strip()
-            query = PRESET_QUERIES["1"].format(keyword) if keyword else PRESET_QUERIES["1"].format("CVE")
-            run_query(query)
+            # Menu 1: CVE scan - Loop mode (exit/quit to return)
+            print("\n╔════════════════════════════════════════════════════════╗")
+            print("║       MENU 1 - QUÉT CVE VÀ TÌM THIẾT BỊ ẢNH HƯỞNG      ║")
+            print("║  (Gõ 'exit' hoặc 'quit' để quay lại menu chính)       ║")
+            print("╚════════════════════════════════════════════════════════╝\n")
+
+            while True:
+                keyword = input("Nhập từ khóa CVE (ví dụ: log4j): ").strip()
+
+                if keyword.lower() in ["exit", "quit", "thoát"]:
+                    print("\nQuay lại menu chính...\n")
+                    break
+
+                if not keyword:
+                    print("Vui lòng nhập từ khóa CVE.\n")
+                    continue
+
+                query = PRESET_QUERIES["1"].format(keyword)
+                run_query(query)
+                input("\n[Enter để tiếp tục]")
 
         elif choice == "2":
-            # Menu 2: Interactive report generation with date range (same as before)
-            start_date, end_date, days_back = _ask_time_range()
-            state = _run_report_pipeline(start_date, end_date, days_back)
-            _ask_and_export(state, start_date, end_date)
+            # Menu 2: Interactive report generation - Loop mode (exit/quit to return)
+            print("\n╔════════════════════════════════════════════════════════╗")
+            print("║            MENU 2 - TẠO BÁO CÁO LỖ HỔNG                ║")
+            print("║  (Gõ 'exit' hoặc 'quit' để quay lại menu chính)       ║")
+            print("╚════════════════════════════════════════════════════════╝\n")
+
+            while True:
+                time_choice = input("Chọn khoảng thời gian:\n1. 30 ngày gần nhất (default)\n2. Tuỳ chọn\nChọn (1-2 hoặc 'exit'): ").strip().lower()
+
+                if time_choice in ["exit", "quit", "thoát"]:
+                    print("\nQuay lại menu chính...\n")
+                    break
+
+                if time_choice == "2":
+                    start_date, end_date, days_back = _ask_time_range()
+                else:
+                    start_date, end_date, days_back = None, None, 30
+
+                if start_date or days_back:
+                    state = _run_report_pipeline(start_date, end_date, days_back)
+                    _ask_and_export(state, start_date, end_date)
+                    input("\n[Enter để tiếp tục]")
 
         elif choice == "3":
-            # Menu 3: Upload document
-            print("\n UPLOAD DOCUMENT (CVE/IOC/Malware)")
-            print("Hỗ trợ: .json, .txt (chứa CVE IDs), .csv")
-            file_path = input("Nhập đường dẫn file: ").strip().strip('"')
-            if file_path:
-                from tools.doc_store import upload_document, get_knowledge_base_stats
+            # Menu 3: Upload document - Loop mode (exit/quit to return)
+            print("\n╔════════════════════════════════════════════════════════╗")
+            print("║    MENU 3 - UPLOAD / XỬ LÝ TÀI LIỆU NỘI BỘ             ║")
+            print("║  (Gõ 'exit' hoặc 'quit' để quay lại menu chính)       ║")
+            print("╚════════════════════════════════════════════════════════╝\n")
+
+            from tools.doc_store import upload_document, get_knowledge_base_stats
+
+            while True:
+                print("Hỗ trợ: .json, .txt (chứa CVE IDs), .csv")
+                file_path = input("Nhập đường dẫn file (hoặc 'exit'): ").strip().strip('"')
+
+                if file_path.lower() in ["exit", "quit", "thoát"]:
+                    print("\nQuay lại menu chính...\n")
+                    break
+
+                if not file_path:
+                    print("Vui lòng nhập đường dẫn file hoặc gõ 'exit'.\n")
+                    continue
+
                 result = upload_document(file_path)
                 if "error" in result:
                     print(f" {result['error']}")
                 else:
                     saved = result.get("context", {})
                     print(f" Đã lưu: CVEs={saved.get('cves',0)}, IOCs={saved.get('iocs',0)}, Malwares={saved.get('malwares',0)}")
+
                 stats = get_knowledge_base_stats()
                 s = stats.get("context", {})
 
@@ -801,7 +850,9 @@ def interactive_mode():
                     if latest:
                         print(f"   {cat_name:10s}: {count:3d} records | Last upload: {latest}")
                     else:
-                        print(f"   {cat_name:10s}: {count:3d} records | Chua upload")
+                        print(f"   {cat_name:10s}: {count:3d} records | Chưa upload")
+
+                input("\n[Enter để tiếp tục]")
 
         elif choice == "4":
             # Menu 4: Chat mode with run_query (same logic as Menu 1)
@@ -843,8 +894,7 @@ def interactive_mode():
 
         else:
             print("Lựa chọn không hợp lệ.")
-
-        input("\n[Enter để tiếp tục]")
+            input("\n[Enter để tiếp tục]")
 
 
 # ── CLI ────────────────────────────────────────────────────────────────────
