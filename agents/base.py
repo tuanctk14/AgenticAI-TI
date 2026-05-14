@@ -865,6 +865,7 @@ def call_agent(state: dict, agent_name: str) -> dict:
         has_hash_pattern = any(len(w) in [32, 40, 64] and all(c in "0123456789abcdef" for c in w)
                                for w in query_words)
         has_ip_pattern = any("." in w and all(p.isdigit() or p == "." for p in w) for w in query_words)
+        has_ioc_pattern = query_lower.startswith(("ioc-", "mal-"))
 
         # PRIORITY 1: CVE pattern or CVE keyword (with or without device) → route to agent_ti
         if has_cve_pattern or has_cve_keyword:
@@ -893,7 +894,7 @@ def call_agent(state: dict, agent_name: str) -> dict:
             return state
 
         # PRIORITY 3: IOC/Malware/Hash patterns → route to agent_ti_extended
-        if has_hash_pattern or has_ip_pattern:
+        if has_hash_pattern or has_ip_pattern or has_ioc_pattern:
             response = "HANDOFF: agent_ti_extended"
             print(f"\n{'='*55}")
             print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
