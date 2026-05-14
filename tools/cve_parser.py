@@ -358,6 +358,12 @@ def parse_cve_metadata(cve_dict: dict) -> dict:
             result["version_end_excluding"] = selected_entry.get("version_end_excluding")
             result["normalized_software_id"] = selected_entry.get("normalized_id")
             result["source"] = "gold_cpe"
+            # Add MSI-style metadata for gold_cpe (for analyst reporting)
+            result["extraction_confidence"] = 1.0  # 100% confidence for NVD CPE
+            result["msi_source_breakdown"] = {
+                "nvd_cpe": {"top_candidate": (selected_entry.get("vendor"), 1.0)},
+            }
+            result["msi_sources_agreeing"] = ["nvd_cpe"]
             return result
 
     # ────────────────────────────────────────────────────────────

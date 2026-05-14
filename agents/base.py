@@ -779,15 +779,24 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
             lines.append(f"      Phần mềm bị ảnh hưởng: {affected_sw} (version: {device_version})")
             lines.append(f"      Risk Level: {risk}")
 
-            # Show Multi-Source Intel metadata when MSI drove the match
-            cve_src = match.get("cve_source", "")
-            msi_conf = match.get("msi_confidence")
-            if cve_src == "multi_source_intel" and msi_conf is not None:
+            # Show Multi-Source Intel metadata (for all matches, including NVD)
+            msi_conf = match.get("msi_confidence", 1.0)
+            if msi_conf is not None:
+                cve_src = match.get("cve_source", "")
+                if cve_src == "multi_source_intel":
+                    source_name = "Multi-Source Intel"
+                elif cve_src == "gold_cpe":
+                    source_name = "NVD CPE"
+                else:
+                    source_name = "Intelligence Source"
+
                 conf_pct = int(msi_conf * 100)
-                lines.append(f"      Nguồn: Multi-Source Intel ({conf_pct}% confidence)")
+                lines.append(f"      Nguồn: {source_name} ({conf_pct}% confidence)")
+
                 agreeing = match.get("msi_sources_agreeing", [])
                 if agreeing:
                     lines.append(f"      Signals agreed: {', '.join(agreeing)}")
+
                 breakdown = match.get("msi_source_breakdown", {})
                 if breakdown:
                     lines.append("      Signal breakdown:")
