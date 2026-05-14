@@ -298,9 +298,12 @@ def _print_chat_response(result: dict):
 def _print_summary(result: dict):
     """In tóm tắt kết quả sau khi chạy xong - CHI TIẾT ĐẦY ĐỦ."""
     last_response = result.get("last_agent_response", "")
+    collected_cves = result.get("collected_cves") or []
 
-    # Nếu agent_matcher đã output đầy đủ (có section markers) → chỉ in metadata
-    if "KẾT QUẢ QUÉT LỖ HỔNG" in last_response or "THIẾT BỊ BỊ ẢNH HƯỞNG" in last_response:
+    # Nếu agent_matcher đã output đầy đủ (có section markers) hoặc CVEs đã có
+    # → chỉ in metadata, không in lại CVE DETAILS
+    if ("KẾT QUẢ QUÉT LỖ HỔNG" in last_response or "THIẾT BỊ BỊ ẢNH HƯỞNG" in last_response
+        or collected_cves):
         print("\n" + "="*70)
         history = result.get("agent_history", [])
         print(f" Agents: {' → '.join(history)} | Bước: {result.get('num_steps', 0)}")
