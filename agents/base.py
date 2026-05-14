@@ -13,8 +13,7 @@ from tools.doc_store        import (
     upload_document, load_knowledge_base, get_knowledge_base_stats,
     fetch_kb_indicators, fetch_kb_cves
 )
-from tools.mitre            import get_mitre_attack_info
-from tools.nist             import get_nist_controls
+from tools.cwe_mapper       import get_mitre_attack_info, get_nist_controls
 
 # ── Tool registry ──────────────────────────────────────────────────────────
 TOOLS_MAPPING = {
