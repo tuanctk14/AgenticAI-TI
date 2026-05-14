@@ -150,15 +150,31 @@ def _get_remediation_steps(cve_description: str) -> list[str]:
 def _print_chat_response(result: dict):
     """Extract và print response cho chat mode với full details."""
     last_response = result.get("last_agent_response", "")
+    last_agent = result.get("last_agent", "")
+
+    # Check if agent_matcher produced full report (has multiple sections)
+    is_full_report = ("PHÂN TÍCH MITRE ATT&CK" in last_response or
+                      "NIST SP 800-53 CONTROLS" in last_response or
+                      "HƯỚNG KHẮC PHỤC" in last_response or
+                      "THIẾT BỊ BỊ ẢNH HƯỞNG" in last_response or
+                      "agent_matcher" in last_agent)
 
     # Extract ANSWER text nếu có
     if "ANSWER:" in last_response:
         answer_text = last_response.split("ANSWER:")[1].strip()
         print(f"ATI: {answer_text}\n")
-    elif last_response:
+    elif last_response and not is_full_report:
         print(f"ATI: {last_response}\n")
 
-    # Print summary header
+    # If agent_matcher output full report, just print metadata and return
+    if is_full_report:
+        print("\n" + "=" * 70)
+        history = result.get("agent_history", [])
+        print(f" Agents: {' → '.join(history)} | Bước: {result.get('num_steps', 0)}")
+        print("=" * 70)
+        return
+
+    # Print summary header for non-full-report cases
     print("=" * 70)
     print(" KẾT QUẢ CHI TIẾT ĐẦY ĐỦ")
     print("=" * 70)
