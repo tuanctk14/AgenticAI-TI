@@ -2,16 +2,32 @@
 tools/nvd_client.py - Lấy CVE từ NVD API (với fallback mock)
 """
 import requests
+import asyncio
 from config import NVD_API_KEY
 
 # Dữ liệu mock dự phòng (hiện tại không dùng - chỉ lấy từ API thực)
 MOCK_CVES = []
 
+# Enrichment orchestrator (lazy-loaded)
+_enrichment_orchestrator = None
 
-def fetch_cve_by_id(cve_id: str) -> dict:
+def _get_orchestrator():
+    """Lazy-load enrichment orchestrator"""
+    global _enrichment_orchestrator
+    if _enrichment_orchestrator is None:
+        from tools.enrichment.orchestrator import EnrichmentOrchestrator
+        _enrichment_orchestrator = EnrichmentOrchestrator()
+    return _enrichment_orchestrator
+
+
+def fetch_cve_by_id(cve_id: str, enrich: bool = True) -> dict:
     """
     Tra cứu một CVE cụ thể từ NVD API.
     Fallback sang mock data nếu không có internet.
+
+    Args:
+        cve_id: CVE ID (e.g., "CVE-2021-44228")
+        enrich: If True, fetch enriched data from EPSS/KEV/VulnCheck
     """
     print(f"  [NVD] Looking up: CVE={cve_id}")
 
@@ -66,6 +82,43 @@ def fetch_cve_by_id(cve_id: str) -> dict:
                 result[0]["cvss_vector"] = metrics["cvssMetricV31"][0]["cvssData"].get("vectorString")
             elif "cvssMetricV30" in metrics:
                 result[0]["cvss_vector"] = metrics["cvssMetricV30"][0]["cvssData"].get("vectorString")
+
+            # Enrich with EPSS/KEV/VulnCheck if requested
+            if enrich:
+                try:
+                    orchestrator = _get_orchestrator()
+                    unified = asyncio.run(orchestrator.enrich_cve(cve_id))
+                    # Add enrichment data to CVE dict
+                    enrichment = {
+                        "epss": None,
+                        "kev": None,
+                        "vulncheck": None,
+                        "unified_risk_score": unified.unified_risk_score,
+                        "enrichment_summary": unified.enrichment_summary,
+                    }
+                    if unified.epss and unified.epss.available:
+                        enrichment["epss"] = {
+                            "score": unified.epss.score,
+                            "percentile": unified.epss.percentile
+                        }
+                    if unified.kev:
+                        enrichment["kev"] = {
+                            "listed": unified.kev.listed,
+                            "date_added": unified.kev.date_added,
+                            "source": unified.kev.source
+                        }
+                    if unified.vulncheck:
+                        enrichment["vulncheck"] = {
+                            "public_exploit": unified.vulncheck.public_exploit_available,
+                            "metasploit": unified.vulncheck.metasploit_available,
+                            "exploit_maturity": unified.vulncheck.exploit_maturity,
+                            "ransomware_activity": unified.vulncheck.ransomware_activity,
+                        }
+                    result[0]["enrichment"] = enrichment
+                except Exception as e:
+                    print(f"  [Enrichment] Error enriching {cve_id}: {e}")
+                    result[0]["enrichment"] = None
+
             print(f"  [NVD]  Found {cve_id}")
             return {"context": result, "source": "NVD-LIVE", "total": 1}
 

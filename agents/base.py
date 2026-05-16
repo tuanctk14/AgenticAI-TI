@@ -557,6 +557,7 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
             published = cve.get("published", "N/A")
             cwe_ids = cve.get("cwe_ids", [])
             references = cve.get("references", [])
+            enrichment = cve.get("enrichment", {})
 
             lines.append(f"{'─' * 50}")
             lines.append(f"  CVE #{i}: {cve_id}")
@@ -565,6 +566,51 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
             if cwe_ids:
                 lines.append(f"  CWE: {', '.join(cwe_ids)}")
             lines.append(f"  Description: {desc}")
+
+            # Add enrichment data if available
+            if enrichment:
+                lines.append("")
+                lines.append(f"  [ENRICHMENT DATA]")
+
+                # EPSS
+                epss_data = enrichment.get("epss")
+                if epss_data and isinstance(epss_data, dict):
+                    score = epss_data.get("score")
+                    percentile = epss_data.get("percentile")
+                    if score is not None:
+                        lines.append(f"    EPSS: {score:.4f} (Percentile: {percentile:.1f}%)")
+
+                # KEV
+                kev_data = enrichment.get("kev")
+                if kev_data and isinstance(kev_data, dict):
+                    listed = kev_data.get("listed", False)
+                    source = kev_data.get("source", "unknown")
+                    if listed:
+                        lines.append(f"    KEV Listed: YES (via {source})")
+                    else:
+                        lines.append(f"    KEV Listed: NO")
+
+                # VulnCheck exploit intelligence
+                vc_data = enrichment.get("vulncheck")
+                if vc_data and isinstance(vc_data, dict):
+                    if vc_data.get("public_exploit"):
+                        lines.append(f"    Public Exploit: AVAILABLE")
+                    if vc_data.get("metasploit"):
+                        lines.append(f"    Metasploit Module: AVAILABLE")
+                    if vc_data.get("exploit_maturity"):
+                        lines.append(f"    Exploit Maturity: {vc_data.get('exploit_maturity')}")
+                    if vc_data.get("ransomware_activity"):
+                        lines.append(f"    Ransomware Activity: OBSERVED")
+
+                # Risk summary
+                risk_score = enrichment.get("unified_risk_score")
+                if risk_score is not None:
+                    lines.append(f"    Unified Risk Score: {risk_score:.2f}/100")
+
+                summary = enrichment.get("enrichment_summary")
+                if summary:
+                    lines.append(f"    Summary: {summary}")
+
             if references:
                 lines.append(f"  References:")
                 for ref in references[:3]:
