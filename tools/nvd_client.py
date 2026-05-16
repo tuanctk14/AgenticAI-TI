@@ -235,6 +235,44 @@ def fetch_nvd_cves(keyword: str = "", severity: str = "HIGH", days_back: int = 3
             time.sleep(0.6)
 
         print(f"  [NVD]  Lấy được {len(all_cves)} CVE từ NVD API (tổng: {total_results})")
+
+        # Enrich CVEs with EPSS/KEV/VulnCheck data for reports
+        if all_cves:
+            print(f"  [Enrichment] Enriching {len(all_cves)} CVEs with threat intelligence...")
+            from tools.enrichment.orchestrator import EnrichmentOrchestrator
+
+            orchestrator = EnrichmentOrchestrator()
+            enriched_cves = []
+
+            for i, cve in enumerate(all_cves, 1):
+                cve_id = cve.get("id", "")
+                if cve_id:
+                    try:
+                        unified = asyncio.run(orchestrator.enrich_cve(cve_id))
+                        # Add enrichment to CVE dict
+                        cve["enrichment"] = {
+                            "epss_score": unified.epss.score if unified.epss and unified.epss.available else None,
+                            "epss_percentile": unified.epss.percentile if unified.epss and unified.epss.available else None,
+                            "kev_listed": unified.kev.listed if unified.kev else False,
+                            "kev_source": unified.kev.source if unified.kev else None,
+                            "public_exploit": unified.vulncheck.public_exploit_available if unified.vulncheck else False,
+                            "metasploit": unified.vulncheck.metasploit_available if unified.vulncheck else False,
+                            "ransomware_activity": unified.vulncheck.ransomware_activity if unified.vulncheck else False,
+                            "unified_risk_score": unified.unified_risk_score,
+                            "enrichment_summary": unified.enrichment_summary,
+                        }
+                        enriched_cves.append(cve)
+                    except Exception as e:
+                        # If enrichment fails, keep CVE without enrichment
+                        cve["enrichment"] = None
+                        enriched_cves.append(cve)
+
+                if i % 10 == 0:
+                    print(f"    Enriched {i}/{len(all_cves)} CVEs...")
+
+            all_cves = enriched_cves
+            print(f"  [Enrichment] Enrichment completed")
+
         return {"context": all_cves, "source": "NVD-LIVE", "total": total_results}
 
     except Exception as e:
