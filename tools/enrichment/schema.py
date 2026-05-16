@@ -52,23 +52,21 @@ class EPSSData(BaseModel):
 
 
 class KEVData(BaseModel):
-    """CISA Known Exploited Vulnerabilities (with VulnCheck fallback)"""
+    """CISA Known Exploited Vulnerabilities. Always from CISA, not Vulners."""
     listed: bool = False
     date_added: Optional[str] = None  # YYYY-MM-DD
     due_date: Optional[str] = None
     known_ransomware_campaign_use: bool = False
-    source: str = "cisa"  # "cisa" or "vulncheck"
+    source: str = "cisa"  # Always CISA official feed
 
 
-class VulnCheckData(BaseModel):
-    """Exploit intelligence from VulnCheck"""
+class VulnersData(BaseModel):
+    """Exploit intelligence from Vulners API. Always from Vulners, not other sources."""
     public_exploit_available: bool = False
     metasploit_available: bool = False
-    exploit_maturity: Optional[str] = None  # "active", "functional", "poc", "unproven"
-    ransomware_activity: bool = False
-    threat_actor_references: List[str] = Field(default_factory=list)
-    botnet_activity: bool = False
-    exploitation_observed: bool = False
+    exploit_count: int = 0
+    exploit_sources: List[str] = Field(default_factory=list)  # e.g., ["exploit-db", "github", "metasploit"]
+    exploit_references: List[str] = Field(default_factory=list)  # URLs to exploits
 
 
 class DataQuality(BaseModel):
@@ -101,7 +99,7 @@ class UnifiedCVE(BaseModel):
     # Enrichment data
     epss: Optional[EPSSData] = None
     kev: Optional[KEVData] = None
-    vulncheck: Optional[VulnCheckData] = None
+    vulncheck: Optional[VulnersData] = None  # Now contains Vulners exploit intelligence
 
     # Computed risk
     unified_risk_score: float = 0.0

@@ -14,11 +14,9 @@ from .base import BaseProvider, ProviderResult
 
 class KEVProvider(BaseProvider):
     """
-    CISA Known Exploited Vulnerabilities provider.
+    CISA Known Exploited Vulnerabilities provider (official feed only).
 
-    Primary: CISA official JSON feed (cached locally)
-    Fallback: VulnCheck API if CISA unavailable
-
+    Source: https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json
     Returns: listed, date_added, due_date, known_ransomware_campaign_use, source
     """
 
@@ -64,22 +62,10 @@ class KEVProvider(BaseProvider):
         except Exception:
             return None
 
-    async def _fetch_from_vulncheck(self, cve_id: str):
-        """
-        Fallback: Fetch KEV data from VulnCheck API.
-
-        Note: VulnCheckProvider is a sibling, not imported to avoid circular dep.
-        This is called via orchestrator's fallback chain.
-        """
-        # Placeholder - actual VulnCheck fallback is coordinated by orchestrator
-        return None
-
     async def _fetch_impl(self, cve_id: str) -> ProviderResult:
         """
-        Fetch KEV data for CVE.
+        Fetch KEV data for CVE from CISA official feed.
 
-        Primary: CISA JSON feed (with local caching)
-        Fallback: VulnCheck (via orchestrator)
         Returns: {listed, date_added, due_date, known_ransomware_campaign_use, source}
         """
         # Load CISA KEV if not cached
@@ -102,9 +88,9 @@ class KEVProvider(BaseProvider):
                 source="kev"
             )
         else:
-            # Not found in CISA KEV - fallback is orchestrator's responsibility
+            # Not found in CISA KEV feed
             return ProviderResult(
                 success=False,
-                error=f"CVE not found in CISA KEV feed (fallback to VulnCheck required)",
+                error=f"CVE not found in CISA KEV feed",
                 source="kev"
             )

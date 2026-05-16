@@ -27,7 +27,7 @@ def fetch_cve_by_id(cve_id: str, enrich: bool = True) -> dict:
 
     Args:
         cve_id: CVE ID (e.g., "CVE-2021-44228")
-        enrich: If True, fetch enriched data from EPSS/KEV/VulnCheck
+        enrich: If True, fetch enriched data from EPSS/KEV/Vulners
     """
     print(f"  [NVD] Looking up: CVE={cve_id}")
 
@@ -83,37 +83,24 @@ def fetch_cve_by_id(cve_id: str, enrich: bool = True) -> dict:
             elif "cvssMetricV30" in metrics:
                 result[0]["cvss_vector"] = metrics["cvssMetricV30"][0]["cvssData"].get("vectorString")
 
-            # Enrich with EPSS/KEV/VulnCheck if requested
+            # Enrich with EPSS/KEV/Vulners if requested
             if enrich:
                 try:
                     orchestrator = _get_orchestrator()
                     unified = asyncio.run(orchestrator.enrich_cve(cve_id))
-                    # Add enrichment data to CVE dict
+                    # Add enrichment data to CVE dict (flat structure)
                     enrichment = {
-                        "epss": None,
-                        "kev": None,
-                        "vulncheck": None,
+                        "epss_score": unified.epss.score if unified.epss and unified.epss.available else None,
+                        "epss_percentile": unified.epss.percentile if unified.epss and unified.epss.available else None,
+                        "kev_listed": unified.kev.listed if unified.kev else False,
+                        "kev_source": unified.kev.source if unified.kev else None,
+                        "public_exploit": unified.vulncheck.public_exploit_available if unified.vulncheck else False,
+                        "metasploit": unified.vulncheck.metasploit_available if unified.vulncheck else False,
+                        "exploit_count": unified.vulncheck.exploit_count if unified.vulncheck else 0,
+                        "exploit_sources": unified.vulncheck.exploit_sources if unified.vulncheck else [],
                         "unified_risk_score": unified.unified_risk_score,
                         "enrichment_summary": unified.enrichment_summary,
                     }
-                    if unified.epss and unified.epss.available:
-                        enrichment["epss"] = {
-                            "score": unified.epss.score,
-                            "percentile": unified.epss.percentile
-                        }
-                    if unified.kev:
-                        enrichment["kev"] = {
-                            "listed": unified.kev.listed,
-                            "date_added": unified.kev.date_added,
-                            "source": unified.kev.source
-                        }
-                    if unified.vulncheck:
-                        enrichment["vulncheck"] = {
-                            "public_exploit": unified.vulncheck.public_exploit_available,
-                            "metasploit": unified.vulncheck.metasploit_available,
-                            "exploit_maturity": unified.vulncheck.exploit_maturity,
-                            "ransomware_activity": unified.vulncheck.ransomware_activity,
-                        }
                     result[0]["enrichment"] = enrichment
                 except Exception as e:
                     print(f"  [Enrichment] Error enriching {cve_id}: {e}")
@@ -236,9 +223,9 @@ def fetch_nvd_cves(keyword: str = "", severity: str = "HIGH", days_back: int = 3
 
         print(f"  [NVD]  Lấy được {len(all_cves)} CVE từ NVD API (tổng: {total_results})")
 
-        # Enrich CVEs with EPSS/KEV/VulnCheck data for reports
+        # Enrich CVEs with EPSS/KEV/Vulners data for reports
         if all_cves:
-            print(f"  [Enrichment] Enriching {len(all_cves)} CVEs with threat intelligence...")
+            print(f"  [Enrichment] Enriching {len(all_cves)} CVEs with threat intelligence (Vulners)...")
             from tools.enrichment.orchestrator import EnrichmentOrchestrator
 
             orchestrator = EnrichmentOrchestrator()
@@ -249,7 +236,7 @@ def fetch_nvd_cves(keyword: str = "", severity: str = "HIGH", days_back: int = 3
                 if cve_id:
                     try:
                         unified = asyncio.run(orchestrator.enrich_cve(cve_id))
-                        # Add enrichment to CVE dict
+                        # Add enrichment to CVE dict (flat structure for Vulners)
                         cve["enrichment"] = {
                             "epss_score": unified.epss.score if unified.epss and unified.epss.available else None,
                             "epss_percentile": unified.epss.percentile if unified.epss and unified.epss.available else None,
@@ -257,7 +244,8 @@ def fetch_nvd_cves(keyword: str = "", severity: str = "HIGH", days_back: int = 3
                             "kev_source": unified.kev.source if unified.kev else None,
                             "public_exploit": unified.vulncheck.public_exploit_available if unified.vulncheck else False,
                             "metasploit": unified.vulncheck.metasploit_available if unified.vulncheck else False,
-                            "ransomware_activity": unified.vulncheck.ransomware_activity if unified.vulncheck else False,
+                            "exploit_count": unified.vulncheck.exploit_count if unified.vulncheck else 0,
+                            "exploit_sources": unified.vulncheck.exploit_sources if unified.vulncheck else [],
                             "unified_risk_score": unified.unified_risk_score,
                             "enrichment_summary": unified.enrichment_summary,
                         }

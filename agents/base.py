@@ -567,40 +567,36 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
                 lines.append(f"  CWE: {', '.join(cwe_ids)}")
             lines.append(f"  Description: {desc}")
 
-            # Add enrichment data if available
+            # Add enrichment data if available (flat structure)
             if enrichment:
                 lines.append("")
                 lines.append(f"  [ENRICHMENT DATA]")
 
                 # EPSS
-                epss_data = enrichment.get("epss")
-                if epss_data and isinstance(epss_data, dict):
-                    score = epss_data.get("score")
-                    percentile = epss_data.get("percentile")
-                    if score is not None:
-                        lines.append(f"    EPSS: {score:.4f} (Percentile: {percentile:.1f}%)")
+                epss_score = enrichment.get("epss_score")
+                epss_percentile = enrichment.get("epss_percentile")
+                if epss_score is not None:
+                    lines.append(f"    EPSS: {epss_score:.4f} (Percentile: {epss_percentile:.1f}%)" if epss_percentile else f"    EPSS: {epss_score:.4f}")
 
-                # KEV
-                kev_data = enrichment.get("kev")
-                if kev_data and isinstance(kev_data, dict):
-                    listed = kev_data.get("listed", False)
-                    source = kev_data.get("source", "unknown")
-                    if listed:
-                        lines.append(f"    KEV Listed: YES (via {source})")
+                # KEV (CISA official)
+                kev_listed = enrichment.get("kev_listed", False)
+                kev_source = enrichment.get("kev_source", "cisa")
+                if kev_listed:
+                    lines.append(f"    KEV Listed: YES (via {kev_source})")
+                else:
+                    lines.append(f"    KEV Listed: NO")
+
+                # Vulners exploit intelligence
+                public_exploit = enrichment.get("public_exploit", False)
+                metasploit = enrichment.get("metasploit", False)
+                exploit_count = enrichment.get("exploit_count", 0)
+                if public_exploit:
+                    if exploit_count > 0:
+                        lines.append(f"    Vulners Exploits: {exploit_count} available")
                     else:
-                        lines.append(f"    KEV Listed: NO")
-
-                # VulnCheck exploit intelligence
-                vc_data = enrichment.get("vulncheck")
-                if vc_data and isinstance(vc_data, dict):
-                    if vc_data.get("public_exploit"):
                         lines.append(f"    Public Exploit: AVAILABLE")
-                    if vc_data.get("metasploit"):
-                        lines.append(f"    Metasploit Module: AVAILABLE")
-                    if vc_data.get("exploit_maturity"):
-                        lines.append(f"    Exploit Maturity: {vc_data.get('exploit_maturity')}")
-                    if vc_data.get("ransomware_activity"):
-                        lines.append(f"    Ransomware Activity: OBSERVED")
+                if metasploit:
+                    lines.append(f"    Metasploit Module: AVAILABLE")
 
                 # Risk summary
                 risk_score = enrichment.get("unified_risk_score")

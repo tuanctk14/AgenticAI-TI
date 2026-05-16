@@ -12,7 +12,7 @@ from .schema import (
     CVEMetadata,
     EPSSData,
     KEVData,
-    VulnCheckData,
+    VulnersData,
     DataQuality,
 )
 from .cache import CacheProvider, SQLiteCacheProvider
@@ -23,7 +23,7 @@ __all__ = [
     "CVEMetadata",
     "EPSSData",
     "KEVData",
-    "VulnCheckData",
+    "VulnersData",
     "DataQuality",
     "CacheProvider",
     "SQLiteCacheProvider",
