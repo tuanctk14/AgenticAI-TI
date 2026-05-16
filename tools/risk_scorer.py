@@ -68,15 +68,18 @@ class RiskScorer:
         """
         Tính Risk Score cho một thiết bị dựa trên các CVE của nó.
 
-        Công thức (chỉ dùng dữ liệu có sẵn 100%):
+        Công thức (Enhanced với enrichment data):
         Risk Score = (
-          Max CVSS × 0.35
-          + Avg CVSS × 0.15
-          + Asset Criticality × 0.10
-          + Exposure × 0.05
+          Max CVSS × 0.25
+          + Avg CVSS × 0.10
+          + EPSS × 0.15        [NEW - nếu có enrichment]
+          + KEV Bonus × 0.10   [NEW - nếu có enrichment]
+          + Exploit Bonus × 0.10 [NEW - nếu có enrichment]
+          + Asset Criticality × 0.15
+          + Exposure × 0.10
         ) × 100
 
-        Ghi chú: Exploit, EPSS, KEV bỏ qua vì không có dữ liệu đầy đủ
+        Ghi chú: Nếu enrichment data không có, fallback to CVSS-only scoring
 
         Args:
             cves: Danh sách CVE dính vào thiết bị
@@ -91,12 +94,38 @@ class RiskScorer:
         if not cves:
             return (0.0, "LOW")
 
-        # Layer 1: Extract CVSS scores
+        # Layer 1: Extract CVSS scores + enrichment data
         cvss_scores = []
+        epss_scores = []
+        kev_count = 0
+        exploit_count = 0
+
         for cve in cves:
             cvss = RiskScorer.parse_cvss(cve.get("cvss_score", 0))
             if cvss > 0:
                 cvss_scores.append(cvss)
+
+            # Extract enrichment data if available
+            enrichment = cve.get("enrichment", {})
+            if enrichment:
+                # EPSS
+                epss = enrichment.get("epss_score")
+                if epss:
+                    try:
+                        epss_val = float(epss)
+                        epss_scores.append(epss_val)
+                    except (ValueError, TypeError):
+                        pass
+
+                # KEV bonus
+                if enrichment.get("kev_listed"):
+                    kev_count += 1
+
+                # Exploit indicators
+                if enrichment.get("public_exploit") or enrichment.get("metasploit"):
+                    exploit_count += 1
+                if enrichment.get("ransomware_activity"):
+                    exploit_count += 2  # Double weight for ransomware
 
         if not cvss_scores:
             return (0.0, "LOW")
@@ -124,14 +153,34 @@ class RiskScorer:
         # Layer 3: Exposure factor (0-1 scale)
         exposure_bonus = 1.0 if internet_exposed else 0.5
 
-        # Calculate final risk score using weighted formula (simplified)
-        # Trọng số: CVSS (50%) + Asset (10%) + Exposure (5%)
-        # Tổng: 65% (chỉ dùng dữ liệu có sẵn 100%)
+        # Layer 4: Enrichment bonuses (only if available)
+        epss_bonus = 0.0
+        kev_bonus = 0.0
+        exploit_bonus = 0.0
+
+        if epss_scores:
+            avg_epss = sum(epss_scores) / len(epss_scores)
+            epss_bonus = avg_epss * 0.15  # 0-15% weight
+
+        if kev_count > 0:
+            # Scale KEV bonus based on percentage of CVEs that are KEV-listed
+            kev_percentage = min(1.0, kev_count / len(cves))
+            kev_bonus = kev_percentage * 0.10  # 0-10% weight
+
+        if exploit_count > 0:
+            # Scale exploit bonus based on exploit indicators
+            exploit_percentage = min(1.0, exploit_count / (len(cves) * 2))
+            exploit_bonus = exploit_percentage * 0.10  # 0-10% weight
+
+        # Calculate final risk score using weighted formula
         risk_score = (
-            (max_cvss / 10.0) * 0.35  # Max CVSS
-            + (avg_cvss / 10.0) * 0.15  # Avg CVSS
-            + asset_criticality_bonus * 0.10  # Asset Criticality
-            + exposure_bonus * 0.05  # Exposure
+            (max_cvss / 10.0) * 0.25  # Max CVSS
+            + (avg_cvss / 10.0) * 0.10  # Avg CVSS
+            + epss_bonus  # EPSS (0-15%)
+            + kev_bonus  # KEV bonus (0-10%)
+            + exploit_bonus  # Exploit bonus (0-10%)
+            + asset_criticality_bonus * 0.15  # Asset Criticality
+            + exposure_bonus * 0.10  # Exposure
         ) * 100
 
         # Classify risk level
