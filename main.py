@@ -710,44 +710,41 @@ def _run_report_pipeline(start_date: str, end_date: str, days_back: int) -> dict
     state["collected_cves"] = filtered_kb_cves
     print(f"    Total: {len(state['collected_cves'])} CVEs collected")
 
-    # Enrich CVEs with EPSS/KEV/VulnCheck data
-    if state["collected_cves"]:
-        print(f"\n  Enriching CVEs with threat intelligence...")
+    # Note: CVEs from fetch_nvd_cves() already have enrichment data attached
+    # KB CVEs may not have enrichment - enrich them if needed
+    if filtered_kb_cves and len(filtered_kb_cves) > len(nvd_cves):
+        print(f"\n  Enriching KB CVEs with threat intelligence...")
         import asyncio
         from tools.enrichment.orchestrator import EnrichmentOrchestrator
 
         orchestrator = EnrichmentOrchestrator()
-        enriched_cves = []
 
         for i, cve in enumerate(state["collected_cves"], 1):
-            cve_id = cve.get("id", "")
-            if cve_id:
-                try:
-                    unified = asyncio.run(orchestrator.enrich_cve(cve_id))
-                    # Add enrichment to CVE dict (flat structure for Vulners)
-                    cve["enrichment"] = {
-                        "epss_score": unified.epss.score if unified.epss and unified.epss.available else None,
-                        "epss_percentile": unified.epss.percentile if unified.epss and unified.epss.available else None,
-                        "kev_listed": unified.kev.listed if unified.kev else False,
-                        "kev_source": unified.kev.source if unified.kev else None,
-                        "public_exploit": unified.vulncheck.public_exploit_available if unified.vulncheck else False,
-                        "metasploit": unified.vulncheck.metasploit_available if unified.vulncheck else False,
-                        "exploit_count": unified.vulncheck.exploit_count if unified.vulncheck else 0,
-                        "exploit_sources": unified.vulncheck.exploit_sources if unified.vulncheck else [],
-                        "unified_risk_score": unified.unified_risk_score,
-                        "enrichment_summary": unified.enrichment_summary,
-                    }
-                    enriched_cves.append(cve)
-                except Exception as e:
-                    # If enrichment fails, keep CVE without enrichment
-                    cve["enrichment"] = None
-                    enriched_cves.append(cve)
+            # Only enrich if missing enrichment data
+            if not cve.get("enrichment"):
+                cve_id = cve.get("id", "")
+                if cve_id:
+                    try:
+                        unified = asyncio.run(orchestrator.enrich_cve(cve_id))
+                        cve["enrichment"] = {
+                            "epss_score": unified.epss.score if unified.epss and unified.epss.available else None,
+                            "epss_percentile": unified.epss.percentile if unified.epss and unified.epss.available else None,
+                            "kev_listed": unified.kev.listed if unified.kev else False,
+                            "kev_source": unified.kev.source if unified.kev else None,
+                            "public_exploit": unified.vulncheck.public_exploit_available if unified.vulncheck else False,
+                            "metasploit": unified.vulncheck.metasploit_available if unified.vulncheck else False,
+                            "exploit_count": unified.vulncheck.exploit_count if unified.vulncheck else 0,
+                            "exploit_sources": unified.vulncheck.exploit_sources if unified.vulncheck else [],
+                            "unified_risk_score": unified.unified_risk_score,
+                            "enrichment_summary": unified.enrichment_summary,
+                        }
+                    except Exception as e:
+                        cve["enrichment"] = None
 
-                if i % 5 == 0:
-                    print(f"    Enriched {i}/{len(state['collected_cves'])} CVEs...")
+                    if i % 5 == 0:
+                        print(f"    Enriched {i}/{len(state['collected_cves'])} CVEs...")
 
-        state["collected_cves"] = enriched_cves
-        print(f"    Enrichment completed")
+        print(f"    KB enrichment completed")
 
     # Bước 2: Lấy IOC/Malware từ KB trước, sau đó OpenCTI
     print(f"\n  Lấy IOC/Malware...")
