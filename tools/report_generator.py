@@ -300,14 +300,16 @@ def _build_report_from_state(
                     else:
                         kev = "-"
 
-                    # Exploit
+                    # Exploit (from Vulners)
                     exploit_indicators = []
+                    exploit_count = enrichment.get("exploit_count", 0)
                     if enrichment.get("public_exploit"):
-                        exploit_indicators.append("POC")
+                        if exploit_count > 0:
+                            exploit_indicators.append(f"{exploit_count}x")
+                        else:
+                            exploit_indicators.append("POC")
                     if enrichment.get("metasploit"):
                         exploit_indicators.append("MSF")
-                    if enrichment.get("ransomware_activity"):
-                        exploit_indicators.append("⚠")
                     exploit = ",".join(exploit_indicators) if exploit_indicators else "-"
                 else:
                     epss = "-"
@@ -356,12 +358,14 @@ def _build_report_from_state(
                     # Exploitation indicators
                     if enrichment.get("kev_listed"):
                         context_items.append("🎯 KEV Listed (Active exploitation)")
+                    exploit_count = enrichment.get("exploit_count", 0)
                     if enrichment.get("public_exploit"):
-                        context_items.append("📌 Public exploit available")
+                        if exploit_count > 0:
+                            context_items.append(f"📌 {exploit_count} Vulners exploits available")
+                        else:
+                            context_items.append("📌 Public exploit available")
                     if enrichment.get("metasploit"):
                         context_items.append("📌 Metasploit module exists")
-                    if enrichment.get("ransomware_activity"):
-                        context_items.append("💀 Ransomware campaign activity observed")
 
                 context_str = " | ".join(context_items) if context_items else ""
 
@@ -623,15 +627,15 @@ def _build_report_from_state(
                     if enrichment.get("kev_listed"):
                         enrichment_details.append("✓ KEV Listed")
 
-                    # Exploit info
+                    # Exploit info (from Vulners)
+                    exploit_count = enrichment.get("exploit_count", 0)
                     if enrichment.get("public_exploit"):
-                        enrichment_details.append("✓ Public Exploit")
+                        if exploit_count > 0:
+                            enrichment_details.append(f"✓ {exploit_count} Exploits")
+                        else:
+                            enrichment_details.append("✓ Public Exploit")
                     if enrichment.get("metasploit"):
                         enrichment_details.append("✓ Metasploit")
-
-                    # Ransomware activity
-                    if enrichment.get("ransomware_activity"):
-                        enrichment_details.append("⚠ Ransomware Activity")
 
                 # Display CVE with all available info
                 if enrichment_details:

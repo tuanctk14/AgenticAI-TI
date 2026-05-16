@@ -663,7 +663,7 @@ def _run_report_pipeline(start_date: str, end_date: str, days_back: int) -> dict
             if cve_id:
                 try:
                     unified = asyncio.run(orchestrator.enrich_cve(cve_id))
-                    # Add enrichment to CVE dict
+                    # Add enrichment to CVE dict (flat structure for Vulners)
                     cve["enrichment"] = {
                         "epss_score": unified.epss.score if unified.epss and unified.epss.available else None,
                         "epss_percentile": unified.epss.percentile if unified.epss and unified.epss.available else None,
@@ -671,7 +671,8 @@ def _run_report_pipeline(start_date: str, end_date: str, days_back: int) -> dict
                         "kev_source": unified.kev.source if unified.kev else None,
                         "public_exploit": unified.vulncheck.public_exploit_available if unified.vulncheck else False,
                         "metasploit": unified.vulncheck.metasploit_available if unified.vulncheck else False,
-                        "ransomware_activity": unified.vulncheck.ransomware_activity if unified.vulncheck else False,
+                        "exploit_count": unified.vulncheck.exploit_count if unified.vulncheck else 0,
+                        "exploit_sources": unified.vulncheck.exploit_sources if unified.vulncheck else [],
                         "unified_risk_score": unified.unified_risk_score,
                         "enrichment_summary": unified.enrichment_summary,
                     }
