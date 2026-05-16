@@ -218,19 +218,31 @@ def _build_report_from_state(
         malware_count = len([i for i in indicators if i.get("entity_type") == "Malware"])
         attack_pattern_count = len([i for i in indicators if i.get("entity_type") == "Attack Pattern"])
 
-        # Tính Risk Score
+        # Tính Risk Score (Enhanced with enrichment data)
         risk_score = 0
         if cves:
             scores = []
             for c in cves:
-                score = c.get("cvss_score", 0) or 0
-                if score and score != "N/A":
-                    try:
-                        scores.append(float(score))
-                    except (ValueError, TypeError):
-                        pass
-            avg_cvss = sum(scores) / len(scores) if scores else 0.0
-            risk_score = min(100, int(avg_cvss * 10))
+                # First try enrichment risk score (từ EPSS + KEV + exploit intel)
+                enrichment = c.get("enrichment")
+                if enrichment and enrichment.get("unified_risk_score"):
+                    scores.append(enrichment.get("unified_risk_score"))
+                else:
+                    # Fallback to CVSS-based scoring
+                    score = c.get("cvss_score", 0) or 0
+                    if score and score != "N/A":
+                        try:
+                            cvss_val = float(score)
+                            # CVSS to 0-100 scale
+                            scores.append(min(100, cvss_val * 10))
+                        except (ValueError, TypeError):
+                            pass
+
+            if scores:
+                avg_score = sum(scores) / len(scores)
+                risk_score = min(100, int(avg_score))
+            else:
+                risk_score = 0
 
         risk_level = (
             "CRITICAL (9-10)" if risk_score >= 90 else
@@ -255,22 +267,59 @@ def _build_report_from_state(
         ]
 
 
-    # CVEs - hiển thị chỉ CRITICAL và HIGH
+    # CVEs - hiển thị chỉ CRITICAL và HIGH (with enrichment data)
     cves: list = state.get("collected_cves") or []
     if cves:
         critical_high_cves = [c for c in cves if c.get("severity", "").upper() in ("CRITICAL", "HIGH")]
         if critical_high_cves:
             lines += [f"\n## DANH SÁCH CVE ({len(critical_high_cves)} CVEs CRITICAL/HIGH)", ""]
-            lines.append("| STT | CVE ID | CVSS | Mức Độ | Ngày Công Bố |")
-            lines.append("|---|--------|------|--------|--------------|")
+            lines.append("| STT | CVE ID | CVSS | EPSS | KEV | Exploit | Mức Độ |")
+            lines.append("|---|--------|------|------|-----|---------|--------|")
             for i, c in enumerate(critical_high_cves, 1):
+                cve_id = c.get('id','N/A')
+                cvss = c.get('cvss_score','N/A')
+                severity = c.get('severity','N/A')
+
+                # Get enrichment data
+                enrichment = c.get("enrichment", {})
+                epss = ""
+                kev = ""
+                exploit = ""
+
+                if enrichment:
+                    # EPSS
+                    epss_score = enrichment.get("epss_score")
+                    if epss_score:
+                        epss = f"{epss_score:.3f}"
+                    else:
+                        epss = "-"
+
+                    # KEV
+                    if enrichment.get("kev_listed"):
+                        kev = "✓"
+                    else:
+                        kev = "-"
+
+                    # Exploit
+                    exploit_indicators = []
+                    if enrichment.get("public_exploit"):
+                        exploit_indicators.append("POC")
+                    if enrichment.get("metasploit"):
+                        exploit_indicators.append("MSF")
+                    if enrichment.get("ransomware_activity"):
+                        exploit_indicators.append("⚠")
+                    exploit = ",".join(exploit_indicators) if exploit_indicators else "-"
+                else:
+                    epss = "-"
+                    kev = "-"
+                    exploit = "-"
+
                 lines.append(
-                    f"| {i} | {c.get('id','N/A')} | {c.get('cvss_score','N/A')} "
-                    f"| {c.get('severity','N/A')} | {c.get('published','N/A')} |"
+                    f"| {i} | {cve_id} | {cvss} | {epss} | {kev} | {exploit} | {severity} |"
                 )
             lines.append("")
 
-        # Thêm chi tiết CVEs CRITICAL
+        # Thêm chi tiết CVEs CRITICAL (with enrichment context)
         critical_only = [c for c in cves if c.get("severity", "").upper() == "CRITICAL"]
         if critical_only:
             lines += ["\n### CVE Nghiêm Trọng Cần Ưu Tiên", ""]
@@ -279,6 +328,10 @@ def _build_report_from_state(
                 cvss = c.get("cvss_score", "N/A")
                 severity = c.get("severity", "N/A")
                 desc = c.get("description", "")
+
+                # Get enrichment context
+                enrichment = c.get("enrichment", {})
+
                 # Cắt ngắn description nhưng đảm bảo không bị cắt giữa câu
                 if desc and desc != "N/A":
                     # Chỉ lấy phần trước newline (loại bỏ "This issue affects..." part)
@@ -286,9 +339,43 @@ def _build_report_from_state(
                     # Cắt để tối đa 150 ký tự, tại whitespace cuối cùng
                     if len(desc) > 150:
                         desc = desc[:150].rsplit(" ", 1)[0]
-                    lines.append(f"- **{cve_id}** (CVSS: {cvss}, {severity}): {desc}...")
                 else:
-                    lines.append(f"- **{cve_id}** (CVSS: {cvss}, {severity})")
+                    desc = ""
+
+                # Build enrichment context line
+                context_items = []
+                if enrichment:
+                    # EPSS threat level
+                    epss_score = enrichment.get("epss_score")
+                    if epss_score:
+                        if epss_score > 0.9:
+                            context_items.append("🔥 Critical EPSS")
+                        elif epss_score > 0.7:
+                            context_items.append("⚠ High EPSS")
+
+                    # Exploitation indicators
+                    if enrichment.get("kev_listed"):
+                        context_items.append("🎯 KEV Listed (Active exploitation)")
+                    if enrichment.get("public_exploit"):
+                        context_items.append("📌 Public exploit available")
+                    if enrichment.get("metasploit"):
+                        context_items.append("📌 Metasploit module exists")
+                    if enrichment.get("ransomware_activity"):
+                        context_items.append("💀 Ransomware campaign activity observed")
+
+                context_str = " | ".join(context_items) if context_items else ""
+
+                # Display with enrichment context
+                if context_str:
+                    lines.append(f"- **{cve_id}** (CVSS: {cvss})")
+                    lines.append(f"  - **Nguy hiểm**: {context_str}")
+                    if desc:
+                        lines.append(f"  - **Mô tả**: {desc}...")
+                else:
+                    if desc:
+                        lines.append(f"- **{cve_id}** (CVSS: {cvss}, {severity}): {desc}...")
+                    else:
+                        lines.append(f"- **{cve_id}** (CVSS: {cvss}, {severity})")
             lines.append("")
 
     # IOC / Malware / Threat Intelligence
@@ -513,13 +600,45 @@ def _build_report_from_state(
             lines.append(f"- **OS**: {dev_info['os']}")
             lines.append("")
 
-            # Danh sách CVEs ảnh hưởng
+            # Danh sách CVEs ảnh hưởng (với enrichment data)
             lines.append("**CVEs Ảnh Hưởng:**")
             for cve_match in dev_info["cves"]:
                 cve_id = cve_match["cve_id"]
                 cvss = cve_match.get("cvss_score", "N/A")
                 software = cve_match.get("affected_software", "N/A")
-                lines.append(f"- **{cve_id}** (CVSS: {cvss}, Phần Mềm: {software})")
+
+                # Get enrichment info từ cves_dict nếu có
+                cve_full = cves_dict.get(cve_id, {})
+                enrichment = cve_full.get("enrichment", {})
+
+                # Build enrichment details
+                enrichment_details = []
+                if enrichment:
+                    # EPSS info
+                    epss_score = enrichment.get("epss_score")
+                    if epss_score:
+                        enrichment_details.append(f"EPSS: {epss_score:.4f}")
+
+                    # KEV info
+                    if enrichment.get("kev_listed"):
+                        enrichment_details.append("✓ KEV Listed")
+
+                    # Exploit info
+                    if enrichment.get("public_exploit"):
+                        enrichment_details.append("✓ Public Exploit")
+                    if enrichment.get("metasploit"):
+                        enrichment_details.append("✓ Metasploit")
+
+                    # Ransomware activity
+                    if enrichment.get("ransomware_activity"):
+                        enrichment_details.append("⚠ Ransomware Activity")
+
+                # Display CVE with all available info
+                if enrichment_details:
+                    details_str = " | ".join(enrichment_details)
+                    lines.append(f"- **{cve_id}** (CVSS: {cvss}) | {details_str}")
+                else:
+                    lines.append(f"- **{cve_id}** (CVSS: {cvss}, Phần Mềm: {software})")
 
             lines.append("")
 
