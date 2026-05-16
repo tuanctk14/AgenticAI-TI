@@ -222,6 +222,7 @@ def fetch_nvd_cves(keyword: str = "", severity: str = "HIGH", days_back: int = 3
             time.sleep(0.6)
 
         print(f"  [NVD]  Lấy được {len(all_cves)} CVE từ NVD API (tổng: {total_results})")
+        print(f"  [NVD]  (Filtered by NVD API lastModified date range)")
 
         # Enrich CVEs with EPSS/KEV/Vulners data for reports
         if all_cves:
