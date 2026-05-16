@@ -14,6 +14,7 @@ OLLAMA_MODEL    = os.getenv("OLLAMA_MODEL",    "qwen2.5:7b")
 NVD_API_KEY    = os.getenv("NVD_API_KEY",    "")
 OPENCTI_URL    = os.getenv("OPENCTI_URL",    "http://localhost:8080")
 OPENCTI_TOKEN  = os.getenv("OPENCTI_TOKEN",  "")
+VULNCHECK_API_KEY = os.getenv("VULNCHECK_API_KEY", "")
 
 # ── App ─────────────────────────────────────────────────────────────────────
 REPORTS_DIR    = os.getenv("REPORTS_DIR", "./reports")
