@@ -514,6 +514,60 @@ def _print_summary(result: dict):
 
 
 # ── Menu 2: Report pipeline helper functions ───────────────────────────────
+def _ask_time_range_from_input(user_input: str) -> tuple[str, str, int]:
+    """
+    Parse user input to extract date range.
+    Returns: (start_date_iso, end_date_iso, days_back)
+    """
+    end_dt = datetime.now(timezone.utc)
+    start_dt = None
+    days_back = 7
+
+    try:
+        if " to " in user_input:
+            date_parts = user_input.split(" to ")
+            start_str = date_parts[0].strip()
+            end_str = date_parts[1].strip()
+
+            # Try DD-MM-YYYY format first
+            try:
+                start_dt = datetime.strptime(start_str, "%d-%m-%Y")
+                end_dt = datetime.strptime(end_str, "%d-%m-%Y")
+            except ValueError:
+                # Fall back to YYYY-MM-DD format
+                start_dt = datetime.fromisoformat(start_str)
+                end_dt = datetime.fromisoformat(end_str)
+
+            # Make timezone aware
+            start_dt = start_dt.replace(tzinfo=timezone.utc)
+            end_dt = end_dt.replace(tzinfo=timezone.utc)
+            days_back = (end_dt.date() - start_dt.date()).days
+        else:
+            # Try single date
+            try:
+                start_dt = datetime.strptime(user_input.strip(), "%d-%m-%Y")
+            except ValueError:
+                start_dt = datetime.fromisoformat(user_input.strip())
+            start_dt = start_dt.replace(tzinfo=timezone.utc)
+            end_dt = datetime.now(timezone.utc)
+            days_back = (end_dt.date() - start_dt.date()).days
+    except ValueError:
+        print(" Format không hợp lệ, dùng 7 ngày mặc định")
+        end_dt = datetime.now(timezone.utc)
+        start_dt = end_dt - timedelta(days=7)
+        days_back = 7
+
+    # Convert to NVD API format
+    end_dt = end_dt.replace(hour=23, minute=59, second=59)
+    start_date = start_dt.strftime("%Y-%m-%dT%H:%M:%S.000")
+    end_date = end_dt.strftime("%Y-%m-%dT%H:%M:%S.000")
+
+    start_display = start_dt.strftime("%d-%m-%Y")
+    end_display = end_dt.strftime("%d-%m-%Y")
+    print(f"\n Khoảng thời gian: {start_display} → {end_display} ({days_back} ngày)")
+    return start_date, end_date, days_back
+
+
 def _ask_time_range() -> tuple[str, str, int]:
     """
     Hỏi người dùng khoảng thời gian cho báo cáo.
@@ -607,7 +661,14 @@ def _run_report_pipeline(start_date: str, end_date: str, days_back: int) -> dict
     # Bước 1: Lấy CVE từ KB + NVD (merge cả hai)
     print(f"\n  Lấy CVE...")
     from tools.doc_store import fetch_kb_cves, load_knowledge_base
-    from datetime import datetime
+    from datetime import datetime, timezone, timedelta
+
+    # Calculate dates if not provided
+    if start_date is None or end_date is None:
+        end_dt = datetime.now(timezone.utc)
+        start_dt = end_dt - timedelta(days=days_back)
+        start_date = start_dt.strftime("%Y-%m-%dT%H:%M:%S.000")
+        end_date = end_dt.strftime("%Y-%m-%dT%H:%M:%S.000")
 
     # Lấy từ KB
     kb_cves = fetch_kb_cves("").get("context", [])
@@ -832,21 +893,33 @@ def interactive_mode():
             print("╚════════════════════════════════════════════════════════╝\n")
 
             while True:
-                time_choice = input("Chọn khoảng thời gian:\n1. 30 ngày gần nhất (default)\n2. Tuỳ chọn\nChọn (1-2 hoặc 'exit'): ").strip().lower()
+                print("Chọn khoảng thời gian (gõ 'exit' hoặc 'quit' để quay lại menu chính):")
+                time_input = input("Nhập (VD: 01-04-2026 to 07-05-2026 hoặc số ngày): ").strip()
 
-                if time_choice in ["exit", "quit", "thoát"]:
+                if time_input.lower() in ["exit", "quit", "thoát"]:
                     print("\nQuay lại menu chính...\n")
                     break
 
-                if time_choice == "2":
-                    start_date, end_date, days_back = _ask_time_range()
-                else:
-                    start_date, end_date, days_back = None, None, 30
+                if time_input:
+                    # Parse the input as date range
+                    if " to " in time_input or "-" in time_input and time_input[0:2].isdigit():
+                        start_date, end_date, days_back = _ask_time_range_from_input(time_input)
+                    elif time_input.isdigit():
+                        # Just a number - treat as days back
+                        from datetime import datetime, timezone, timedelta
+                        days_back = int(time_input)
+                        end_dt = datetime.now(timezone.utc)
+                        start_dt = end_dt - timedelta(days=days_back)
+                        start_date = start_dt.strftime("%Y-%m-%dT%H:%M:%S.000")
+                        end_date = end_dt.strftime("%Y-%m-%dT%H:%M:%S.000")
+                    else:
+                        print("Định dạng không hợp lệ. Vui lòng nhập lại.\n")
+                        continue
 
-                if start_date or days_back:
-                    state = _run_report_pipeline(start_date, end_date, days_back)
-                    _ask_and_export(state, start_date, end_date)
-                    input("\n[Enter để tiếp tục]")
+                    if start_date:
+                        state = _run_report_pipeline(start_date, end_date, days_back)
+                        _ask_and_export(state, start_date, end_date)
+                        input("\n[Enter để tiếp tục]")
 
         elif choice == "3":
             # Menu 3: Upload document - Loop mode (exit/quit to return)
