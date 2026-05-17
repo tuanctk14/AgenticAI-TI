@@ -587,3 +587,52 @@ The real data testing suite validates the ATI system with production threat inte
 **Run:** `pytest tests/test_real_data_*.py -v -s`
 
 **Status:** ✅ All real data tests ready for production validation
+
+---
+
+## OpenCTI Integration - File Hash Search
+
+### Fix: Hash Detection and Pattern Filtering
+
+**Problem:** OpenCTI GraphQL API uses a generic `search` parameter that only searches the `name` field. File hashes (SHA-256, SHA-1, MD5) are stored in the `pattern` field, causing hash lookups to always return no results.
+
+**Solution:** Added hash detection and client-side pattern filtering:
+
+1. **Hash Detection** (`_is_file_hash()`)
+   - Detects MD5 (32 hex chars): `5d41402abc4b2a76b9719d911017c592`
+   - Detects SHA-1 (40 hex chars): `32a21398869e2e221552da49fe1d4beba11ad2ca`  
+   - Detects SHA-256 (64 hex chars): `fe624698a9736f0975d20550d6fccc9c83536710d5cd1abc86e17e2624f01450`
+
+2. **Pattern Filtering**
+   - When search_term is a hash, filter indicators to only return those where `pattern` contains the hash
+   - Ensures strict matching for file indicators
+
+3. **UTF-8 Compatibility**
+   - Added UTF-8 encoding setup for Windows compatibility
+   - Prevents Unicode encoding errors
+
+### Test Results
+
+```bash
+pytest tests/test_opencti_hash_search.py -v
+
+[PASS] Hash detection tests
+- MD5 (32 hex) ✓
+- SHA-1 (40 hex) ✓
+- SHA-256 (64 hex) ✓
+
+[PASS] OpenCTI hash search
+- Query: fe624698a9736f0975d20550d6fccc9c83536710d5cd1abc86e17e2624f01450
+- Result: 1 Indicator found
+  - Entity: Indicator
+  - Pattern: [file:hashes.'SHA-256' = 'fe624698a9736f0975d20550...']
+```
+
+### Files Modified
+- `tools/opencti_client.py` - Added hash detection and pattern filtering logic
+- `tests/test_opencti_hash_search.py` - New test suite for hash search validation
+
+### Impact
+Hash searches through `agent_ti_extended` now properly query OpenCTI and return matching file indicators. The system can now handle queries like:
+- User: "Bạn: fe624698a9736f0975d20550d6fccc9c83536710d5cd1abc86e17e2624f01450"
+- System: Returns matching Indicator(s) from OpenCTI with pattern details
