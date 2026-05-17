@@ -43,6 +43,13 @@ from core.temporal_intelligence import (
     CampaignTemporal,
 )
 from core.pattern_detection import PatternDetectionEngine
+from core.historical_context import (
+    HistoricalContextEngine,
+    ActorProfile,
+    ThreatTimeline,
+    RiskContext,
+    StatisticalBaseline,
+)
 
 __all__ = [
     # Schema - Core Entities
@@ -86,4 +93,10 @@ __all__ = [
     "CampaignTemporal",
     # Pattern Detection (NEW Week 2 Day 3)
     "PatternDetectionEngine",
+    # Historical Context (NEW Week 2 Day 4)
+    "HistoricalContextEngine",
+    "ActorProfile",
+    "ThreatTimeline",
+    "RiskContext",
+    "StatisticalBaseline",
 ]
