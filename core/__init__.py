@@ -70,6 +70,11 @@ from core.threat_intelligence_reasoner import (
     ThreatIntelligenceReasoner,
     ThreatAssessment,
 )
+from core.decision_support import (
+    DecisionSupportSystem,
+    PrioritizedThreat,
+    MitigationStrategy,
+)
 
 __all__ = [
     # Schema - Core Entities
@@ -138,4 +143,8 @@ __all__ = [
     # Threat Intelligence Reasoner (NEW Week 4 Day 1)
     "ThreatIntelligenceReasoner",
     "ThreatAssessment",
+    # Decision Support System (NEW Week 4 Day 2)
+    "DecisionSupportSystem",
+    "PrioritizedThreat",
+    "MitigationStrategy",
 ]
