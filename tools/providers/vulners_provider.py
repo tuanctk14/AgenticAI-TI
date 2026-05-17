@@ -37,9 +37,12 @@ class VulnersProvider(BaseProvider):
         try:
             async with aiohttp.ClientSession() as session:
                 # Test with a known CVE
+                headers = {"X-API-Key": self.api_key}
+                params = {"id": "CVE-2021-44228"}
                 async with session.get(
                     f"{self.base_url}/search/id/",
-                    params={"id": "CVE-2021-44228", "apiKey": self.api_key},
+                    params=params,
+                    headers=headers,
                     timeout=aiohttp.ClientTimeout(total=5)
                 ) as resp:
                     return resp.status in (200, 400, 401)  # Any response = API accessible
@@ -62,14 +65,14 @@ class VulnersProvider(BaseProvider):
         try:
             async with aiohttp.ClientSession() as session:
                 # Vulners API endpoint for CVE lookup
-                params = {
-                    "id": cve_id,
-                    "apiKey": self.api_key
-                }
+                # API key must be in X-API-Key header, not query param
+                headers = {"X-API-Key": self.api_key}
+                params = {"id": cve_id}
 
                 async with session.get(
                     f"{self.base_url}/search/id/",
                     params=params,
+                    headers=headers,
                     timeout=aiohttp.ClientTimeout(total=self.timeout)
                 ) as resp:
                     if resp.status == 200:
