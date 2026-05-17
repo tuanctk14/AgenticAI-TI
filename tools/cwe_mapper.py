@@ -1,18 +1,35 @@
 """
 tools/cwe_mapper.py - Map CWE to MITRE ATT&CK techniques and NIST controls
-CONSOLIDATED VERSION: Merges cwe_mapper.py + cwe_mapper_expanded.py
-Uses 500+ CWEs from expanded version + CWEMapper class
+CONSOLIDATED VERSION: Unified CWE mapper with external JSON data storage
+Uses 802 CWEs with complete MITRE and NIST coverage
 """
 import json
 import os
 from typing import Dict, List, Optional
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# COMPREHENSIVE CWE-TO-MITRE ATT&CK MAPPING (500+ CWEs from expanded version)
+# Load CWE mappings from JSON (data externalized for easier updates)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Import expanded CWE mappings
-from tools.cwe_mapper_expanded import CWE_TO_MITRE, CWE_TO_NIST
+def _load_cwe_mappings() -> tuple:
+    """Load CWE->MITRE and CWE->NIST mappings from JSON file"""
+    try:
+        mapping_path = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "data",
+            "cwe_mappings.json"
+        )
+        with open(mapping_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return data.get("cwe_to_mitre", {}), data.get("cwe_to_nist", {})
+    except Exception as e:
+        print(f"Warning: Could not load CWE mappings from JSON: {e}")
+        print("Falling back to empty mappings")
+        return {}, {}
+
+# Load mappings at module level
+CWE_TO_MITRE, CWE_TO_NIST = _load_cwe_mappings()
 
 # CWEMapper class (unchanged)
 class CWEMapper:
