@@ -54,6 +54,7 @@ from core.agent_memory_bridge import (
     MemoryAwareThreatsAgent,
     MemoryAwareAgentState,
 )
+from core.graph_query_engine import GraphQueryEngine
 
 __all__ = [
     # Schema - Core Entities
@@ -106,4 +107,6 @@ __all__ = [
     # Memory-Aware Agent Bridge (NEW Week 2 Day 5)
     "MemoryAwareThreatsAgent",
     "MemoryAwareAgentState",
+    # Graph Query Engine (NEW Week 3 Day 1)
+    "GraphQueryEngine",
 ]
