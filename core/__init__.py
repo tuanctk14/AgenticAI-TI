@@ -82,6 +82,14 @@ from core.response_automation import (
     ResponseWorkflow,
     ActionStatus,
 )
+from core.knowledge_graph import (
+    KnowledgeGraph,
+    GraphNode,
+    GraphEdge,
+    NodeType,
+    EdgeType,
+)
+from core.graph_integration import GraphIntegrationEngine
 
 __all__ = [
     # Schema - Core Entities
@@ -160,4 +168,11 @@ __all__ = [
     "Playbook",
     "ResponseWorkflow",
     "ActionStatus",
+    # Knowledge Graph (NEW Week 4 Day 4)
+    "KnowledgeGraph",
+    "GraphNode",
+    "GraphEdge",
+    "NodeType",
+    "EdgeType",
+    "GraphIntegrationEngine",
 ]
