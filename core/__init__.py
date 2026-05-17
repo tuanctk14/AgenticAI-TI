@@ -60,6 +60,10 @@ from core.community_detection import (
     ActorCommunity,
     CampaignCluster,
 )
+from core.actor_profiling import (
+    ActorProfilingEngine,
+    ActorProfile,
+)
 
 __all__ = [
     # Schema - Core Entities
@@ -118,4 +122,7 @@ __all__ = [
     "CommunityDetectionEngine",
     "ActorCommunity",
     "CampaignCluster",
+    # Actor Profiling (NEW Week 3 Day 3)
+    "ActorProfilingEngine",
+    "ActorProfile",
 ]
