@@ -64,6 +64,7 @@ from core.actor_profiling import (
     ActorProfilingEngine,
     ActorProfile,
 )
+from core.trend_analysis import TrendAnalyzer
 
 __all__ = [
     # Schema - Core Entities
@@ -125,4 +126,6 @@ __all__ = [
     # Actor Profiling (NEW Week 3 Day 3)
     "ActorProfilingEngine",
     "ActorProfile",
+    # Trend Analysis (NEW Week 3 Day 4)
+    "TrendAnalyzer",
 ]
