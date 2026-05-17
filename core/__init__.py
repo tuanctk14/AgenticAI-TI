@@ -66,6 +66,10 @@ from core.actor_profiling import (
 )
 from core.trend_analysis import TrendAnalyzer
 from core.anomaly_detection import AnomalyDetector
+from core.threat_intelligence_reasoner import (
+    ThreatIntelligenceReasoner,
+    ThreatAssessment,
+)
 
 __all__ = [
     # Schema - Core Entities
@@ -131,4 +135,7 @@ __all__ = [
     "TrendAnalyzer",
     # Anomaly Detection (NEW Week 3 Day 5)
     "AnomalyDetector",
+    # Threat Intelligence Reasoner (NEW Week 4 Day 1)
+    "ThreatIntelligenceReasoner",
+    "ThreatAssessment",
 ]
