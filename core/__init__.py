@@ -50,6 +50,10 @@ from core.historical_context import (
     RiskContext,
     StatisticalBaseline,
 )
+from core.agent_memory_bridge import (
+    MemoryAwareThreatsAgent,
+    MemoryAwareAgentState,
+)
 
 __all__ = [
     # Schema - Core Entities
@@ -99,4 +103,7 @@ __all__ = [
     "ThreatTimeline",
     "RiskContext",
     "StatisticalBaseline",
+    # Memory-Aware Agent Bridge (NEW Week 2 Day 5)
+    "MemoryAwareThreatsAgent",
+    "MemoryAwareAgentState",
 ]
