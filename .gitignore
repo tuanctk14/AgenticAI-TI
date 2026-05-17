@@ -1,0 +1,10 @@
+# Test artifact databases - not used by system
+data/test_*.db
+data/*_example.db
+data/intelligence_real.db
+
+# Test report HTML files
+reports/executive_summary_*.html
+
+# Temporary files
+phase2_demo_output.txt
