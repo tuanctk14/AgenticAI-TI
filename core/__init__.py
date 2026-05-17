@@ -90,6 +90,7 @@ from core.knowledge_graph import (
     EdgeType,
 )
 from core.graph_integration import GraphIntegrationEngine
+from core.advanced_analytics import AnalyticsEngine, ThreatEscalationLevel
 
 __all__ = [
     # Schema - Core Entities
@@ -175,4 +176,7 @@ __all__ = [
     "NodeType",
     "EdgeType",
     "GraphIntegrationEngine",
+    # Advanced Analytics (NEW Week 4 Day 5)
+    "AnalyticsEngine",
+    "ThreatEscalationLevel",
 ]
