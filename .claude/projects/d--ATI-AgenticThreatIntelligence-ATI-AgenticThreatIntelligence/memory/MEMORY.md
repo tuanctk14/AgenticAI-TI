@@ -1,0 +1,3 @@
+- [Priority #1 Complete](priority1_completion.md) — All 3 phases delivered: relationship extraction, agent integration, IOC KB population (19/19 tests)
+- [Menu 1 Enrichment Display](menu1_enrichment_fix.md) — Malware/Campaign/Actor relationships now visible in Menu 1 after CVE details
+- [Relationship Validation Layer](relationship_validation_layer.md) — Anti-hallucination system: verified vs potential relationships, 4-layer validation (13/13 tests)

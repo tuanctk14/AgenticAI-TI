@@ -27,6 +27,8 @@ from tools.nvd_client import fetch_nvd_cves
 from tools.opencti_client import fetch_opencti_indicators
 from tools.cmdb import match_cves_with_cmdb
 from tools.report_generator import generate_report
+from tools.cve_relationship_tool import enrich_cve_relationships
+from tools.ioc_extractor import extract_iocs_from_enrichment
 from datetime import datetime, timedelta, timezone
 
 # ── Banner ─────────────────────────────────────────────────────────────────
@@ -147,6 +149,62 @@ def _get_remediation_steps(cve_description: str) -> list[str]:
     return steps
 
 
+def _print_enrichment_section(cve_id: str):
+    """Hiển thị phần enrichment từ Priority #1 (Relationships + IOCs)."""
+    try:
+        enrichment = enrich_cve_relationships(cve_id)
+
+        if enrichment.get("status") == "enriched" and enrichment.get("total_relationships", 0) > 0:
+            print("\n" + "=" * 70)
+            print(" THREAT RELATIONSHIPS (Priority #1 - Relationship Enrichment)")
+            print("=" * 70)
+
+            # Malware families
+            malwares = enrichment.get("relationships", {}).get("malwares", [])
+            if malwares:
+                print(f"\n[MALWARE FAMILIES] - {len(malwares)} found")
+                for mal in malwares[:10]:
+                    name = mal.get("name", "Unknown")
+                    conf = mal.get("confidence", 0)
+                    print(f"  - {name} (confidence: {conf}%)")
+                if len(malwares) > 10:
+                    print(f"  ... and {len(malwares) - 10} more")
+
+            # Campaigns
+            campaigns = enrichment.get("relationships", {}).get("campaigns", [])
+            if campaigns:
+                print(f"\n[ACTIVE CAMPAIGNS] - {len(campaigns)} found")
+                for camp in campaigns[:10]:
+                    name = camp.get("name", "Unknown")
+                    conf = camp.get("confidence", 0)
+                    print(f"  - {name} (confidence: {conf}%)")
+                if len(campaigns) > 10:
+                    print(f"  ... and {len(campaigns) - 10} more")
+
+            # Threat level
+            threat_level = enrichment.get("threat_level", "Unknown")
+            print(f"\n[THREAT LEVEL] {threat_level}")
+            print(f"[CONTEXT] {enrichment.get('exploitation_context', 'N/A')}")
+
+            # IOCs extracted
+            ioc_extraction = extract_iocs_from_enrichment({"id": cve_id, "relationships": enrichment.get("relationships", {})})
+            total_iocs = ioc_extraction.get("total_unique_iocs", 0)
+            if total_iocs > 0:
+                print(f"\n[IOC INDICATORS EXTRACTED] {total_iocs} IOCs")
+                for ioc in ioc_extraction.get("iocs_extracted", [])[:5]:
+                    ioc_type = ioc.get("type", "unknown").upper()
+                    value = ioc.get("value", "Unknown")
+                    conf = ioc.get("confidence", 0)
+                    source = ioc.get("source", "unknown")
+                    print(f"  - [{ioc_type}] {value} (confidence: {conf}%, source: {source})")
+                if total_iocs > 5:
+                    print(f"  ... and {total_iocs - 5} more IOCs in KB")
+
+    except Exception as e:
+        # Silent failure - enrichment is optional
+        pass
+
+
 def _print_chat_response(result: dict):
     """Extract và print response cho chat mode với full details."""
     last_response = result.get("last_agent_response", "")
@@ -207,6 +265,10 @@ def _print_chat_response(result: dict):
             print(f"   Severity: {severity}")
             print(f"   Published: {published}")
             print(f"   Description: {desc}")
+
+            # Thêm enrichment từ Priority #1
+            _print_enrichment_section(cve_id)
+
             if references:
                 print(f"   References:")
                 for ref in references[:3]:

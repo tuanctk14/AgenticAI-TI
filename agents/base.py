@@ -519,6 +519,20 @@ def call_tool(state: dict) -> dict:
         elif tool_name == "get_nist_controls" and isinstance(results, dict):
             # NEW: Save NIST controls info for agent_analyst
             state["nist_info"] = results
+        elif tool_name == "enrich_cve_relationships" and isinstance(results, dict):
+            # NEW: Save enrichment data and merge back into collected_cves
+            enrichment_result = results.get("context", results)
+            if enrichment_result and isinstance(enrichment_result, dict):
+                cve_id = enrichment_result.get("cve_id", "")
+                # Merge enrichment back into collected_cves
+                collected = state.get("collected_cves", [])
+                for cve in collected:
+                    if cve.get("id") == cve_id:
+                        # Store relationships in CVE object
+                        cve["relationships"] = enrichment_result.get("relationships", {})
+                        state["collected_cves"] = collected
+                        break
+            state["enrichment_result"] = enrichment_result
         elif tool_name == "aggregate_cves_by_device" and isinstance(ctx, dict):
             state["device_cve_map"] = ctx
         elif tool_name == "get_unique_cves_per_device" and isinstance(ctx, dict):
@@ -543,7 +557,7 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
     Build comprehensive output for CVE analysis with MITRE/NIST and device matching.
     Used by agent_matcher to output final result.
 
-    NEW FLOW: Always includes CVE + MITRE/NIST + Remediation + (devices if available)
+    NEW FLOW: Always includes CVE + Enrichment (Malware/Campaigns) + MITRE/NIST + Remediation + (devices if available)
     CWE fallback: If CVE-direct mapping empty, use CWE-to-MITRE/NIST mapping
     """
     from tools.cwe_mapper import CWEMapper
@@ -634,6 +648,115 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
                 if len(references) > 3:
                     lines.append(f"    ... and {len(references) - 3} more references")
             lines.append("")
+
+    # ════════════════════════════════════════════════════════════
+    # SECTION 1.5: THREAT RELATIONSHIPS ENRICHMENT (NEW Priority #1)
+    # ════════════════════════════════════════════════════════════
+    # Display malware families, campaigns, threat actors from OpenCTI
+    has_any_relationships = False
+    for cve in cves:
+        relationships = cve.get("relationships", {})
+        if relationships and (relationships.get("malwares") or relationships.get("campaigns") or relationships.get("threat_actors")):
+            has_any_relationships = True
+            break
+
+    if has_any_relationships:
+        lines.append("═" * 60)
+        lines.append(" THREAT RELATIONSHIPS (OpenCTI)")
+        lines.append("═" * 60)
+        lines.append("")
+
+        for cve in cves:
+            cve_id = cve.get("id", "Unknown")
+            relationships = cve.get("relationships", {})
+
+            if not relationships:
+                continue
+
+            malwares = relationships.get("malwares", [])
+            campaigns = relationships.get("campaigns", [])
+            threat_actors = relationships.get("threat_actors", [])
+            total_rel = relationships.get("total_relationships", 0)
+
+            lines.append(f"  [{cve_id}] Total relationships found: {total_rel}")
+            lines.append("")
+
+            # ANTI-HALLUCINATION: If OpenCTI returns zero relationships, show NO verified relationships
+            if total_rel == 0:
+                lines.append("  [VERIFIED RELATIONSHIPS] None")
+                lines.append("    No confirmed relationships found in OpenCTI")
+                lines.append("")
+
+                # Only show POTENTIAL CONTEXTUAL ENTITIES if any exist
+                if malwares or campaigns or threat_actors:
+                    lines.append("  [POTENTIAL CONTEXTUAL ENTITIES] ⚠ Weak Signals Only")
+                    lines.append("    Caution: These are contextual correlations, NOT operational intelligence")
+                    lines.append("")
+
+                    if malwares:
+                        lines.append(f"  Potential Malware ({len(malwares)}):")
+                        for malware in malwares[:10]:
+                            name = malware.get("name", "Unknown")
+                            confidence = malware.get("confidence", "N/A")
+                            lines.append(f"    - {name} (potential, {confidence}% weak signal)")
+                        if len(malwares) > 10:
+                            lines.append(f"    ... and {len(malwares) - 10} more")
+                        lines.append("")
+
+                    if campaigns:
+                        lines.append(f"  Potential Campaigns ({len(campaigns)}):")
+                        for campaign in campaigns[:8]:
+                            name = campaign.get("name", "Unknown")
+                            confidence = campaign.get("confidence", "N/A")
+                            lines.append(f"    - {name} (potential, {confidence}% weak signal)")
+                        if len(campaigns) > 8:
+                            lines.append(f"    ... and {len(campaigns) - 8} more")
+                        lines.append("")
+                else:
+                    lines.append("  [POTENTIAL CONTEXTUAL ENTITIES] None")
+                    lines.append("")
+            else:
+                # VERIFIED RELATIONSHIPS: total_rel > 0
+                # Malware families
+                if malwares:
+                    lines.append(f"  VERIFIED MALWARE FAMILIES ({len(malwares)}):")
+                    for malware in malwares[:20]:
+                        name = malware.get("name", "Unknown")
+                        confidence = malware.get("confidence", "N/A")
+                        mal_types = malware.get("malware_types", [])
+                        type_str = ", ".join(mal_types) if mal_types else "Unknown type"
+                        lines.append(f"    - {name}")
+                        lines.append(f"      Type: {type_str}")
+                        lines.append(f"      Confidence: {confidence}")
+                    if len(malwares) > 20:
+                        lines.append(f"    ... and {len(malwares) - 20} more malware families")
+                    lines.append("")
+
+                # Campaigns
+                if campaigns:
+                    lines.append(f"  VERIFIED ACTIVE CAMPAIGNS ({len(campaigns)}):")
+                    for campaign in campaigns[:15]:
+                        name = campaign.get("name", "Unknown")
+                        confidence = campaign.get("confidence", "N/A")
+                        lines.append(f"    - {name}")
+                        lines.append(f"      Confidence: {confidence}")
+                    if len(campaigns) > 15:
+                        lines.append(f"    ... and {len(campaigns) - 15} more campaigns")
+                    lines.append("")
+
+                # Threat actors
+                if threat_actors:
+                    lines.append(f"  VERIFIED THREAT ACTORS ({len(threat_actors)}):")
+                    for actor in threat_actors[:10]:
+                        name = actor.get("name", "Unknown")
+                        confidence = actor.get("confidence", "N/A")
+                        lines.append(f"    - {name}")
+                        lines.append(f"      Confidence: {confidence}")
+                    if len(threat_actors) > 10:
+                        lines.append(f"    ... and {len(threat_actors) - 10} more threat actors")
+                    lines.append("")
+
+        lines.append("")
 
     # ════════════════════════════════════════════════════════════
     # SECTION 2: MITRE ATT&CK ANALYSIS
@@ -922,12 +1045,18 @@ def call_agent(state: dict, agent_name: str) -> dict:
             "vulnerability", "scanning", "security", "assessment", "threat", "hunt",
             "incident", "breach", "compliance", "nvd", "cpe", "severity", "thông tin"
         }
-        query_clean = query_lower.replace("?", "").replace("!", "").replace(",", "")
+        query_clean = query_lower.replace("?", "").replace("!", "").replace(",", "").replace("(", "").replace(")", "").replace(":", "")
         query_words = set(query_clean.split())
         has_security_keyword = bool(query_words & security_keywords)
 
         # Check for CVE/device pattern even without keywords
         has_cve_pattern = "cve-" in query_lower or "cve " in query_lower
+        # Also detect CVE ID without prefix: YYYY-XXXXX (e.g., 2021-44228)
+        has_cve_id_pattern = any(len(w.split("-")) == 2 and
+                                w.split("-")[0].isdigit() and len(w.split("-")[0]) == 4 and
+                                w.split("-")[1].isdigit() and len(w.split("-")[1]) >= 4 and
+                                w != "khoảng" and w != "không"  # exclude words like "không-"
+                                for w in query_words)
         has_cve_keyword = any(kw in query_lower for kw in ["log4j", "apache", "exploit", "vulnerability", "lỗi hổng", "loi ho"])
 
         has_device_pattern = ("device" in query_lower or "srv-" in query_lower or "srv " in query_lower or
@@ -942,7 +1071,7 @@ def call_agent(state: dict, agent_name: str) -> dict:
         has_ioc_pattern = query_lower.startswith(("ioc-", "mal-"))
 
         # PRIORITY 1: CVE pattern or CVE keyword (with or without device) → route to agent_ti
-        if has_cve_pattern or has_cve_keyword:
+        if has_cve_pattern or has_cve_keyword or has_cve_id_pattern:
             response = "HANDOFF: agent_ti"
             print(f"\n{'='*55}")
             print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
@@ -955,7 +1084,7 @@ def call_agent(state: dict, agent_name: str) -> dict:
             return state
 
         # PRIORITY 2: Device-only query (no CVE) → route to agent_device
-        if has_device_pattern and not (has_cve_pattern or has_cve_keyword):
+        if has_device_pattern and not (has_cve_pattern or has_cve_keyword or has_cve_id_pattern):
             response = "HANDOFF: agent_device"
             print(f"\n{'='*55}")
             print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
@@ -1047,7 +1176,34 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
         state["analyst_iterations"]  = 0
         return state
 
-    # agent_analyst: on 2nd iteration (after tools), ALWAYS handoff to agent_matcher
+    # agent_analyst: 1st iteration - ALWAYS call enrichment + MITRE + NIST tools (deterministic, no LLM)
+    if agent_name == "agent_analyst" and state.get("last_agent") != "agent_analyst":
+        if cves:
+            # Build tool calls for each CVE
+            actions = []
+            for cve in cves:
+                cve_id = cve.get("id")
+                # Priority 1: Relationship enrichment
+                actions.append(f"ACTION: enrich_cve_relationships\nARGUMENTS: {{\"cve_id\": \"{cve_id}\"}}\n")
+                # Priority 2: MITRE
+                actions.append(f"ACTION: get_mitre_attack_info\nARGUMENTS: {{\"cve_id\": \"{cve_id}\"}}\n")
+                # Priority 3: NIST
+                actions.append(f"ACTION: get_nist_controls\nARGUMENTS: {{\"cve_id\": \"{cve_id}\"}}\n")
+
+            response = "\n".join(actions)
+            print(f"\n{'='*55}")
+            print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
+            print("="*55)
+            print(f"  Enriching {len(cves)} CVE(s) with relationships + MITRE + NIST...")
+            print(response)
+            state["last_agent_response"] = response
+            state["last_agent"]          = agent_name
+            state["num_steps"]           = state.get("num_steps", 0) + 1
+            state["agent_history"]       = state.get("agent_history", []) + [agent_name]
+            state["analyst_iterations"]  = 0  # Reset for this query
+            return state
+
+    # agent_analyst: 2nd iteration (after tools), ALWAYS handoff to agent_matcher
     if agent_name == "agent_analyst" and state.get("last_agent") == "agent_analyst":
         analyst_iters = state.get("analyst_iterations", 0)
         # If we've called tools once (iter 1), now handoff to matcher
@@ -1056,7 +1212,7 @@ Vui lòng đặt câu hỏi liên quan đến những chủ đề trên."""
             print(f"\n{'='*55}")
             print(f" {agent_name.upper()} (bước {state['num_steps'] + 1})")
             print("="*55)
-            print(f"  MITRE/NIST analysis complete (iterations: {analyst_iters})")
+            print(f"  Enrichment + MITRE/NIST analysis complete (iterations: {analyst_iters})")
             print(f"  → HANDOFF: agent_matcher (thiết bị matching)")
             print(response)
             state["last_agent_response"] = response

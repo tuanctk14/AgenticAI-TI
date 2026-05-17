@@ -105,7 +105,8 @@ def enrich_cve_relationships(cve_id: str) -> dict:
                     }
                     for a in relationships.get("threat_actors", [])
                 ],
-                "attack_techniques": relationships.get("attack_techniques", [])
+                "attack_techniques": relationships.get("attack_techniques", []),
+                "total_relationships": relationships.get("total_relationships", 0)
             },
             "threat_summary": {
                 "threat_level": threat_summary.get("threat_level"),
