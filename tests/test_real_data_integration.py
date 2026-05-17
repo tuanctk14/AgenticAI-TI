@@ -12,7 +12,7 @@ from typing import Optional, Dict, Any, List
 
 from core.threat_adapters import NVDAdapter, EPSSAdapter, KEVAdapter
 from core.threat_fusion import ThreatFusionEngine
-from core.threat_repository import SQLiteRepository
+from core.sqlite_repository import SQLiteRepository
 from core.advanced_analytics import AnalyticsEngine
 from core.graph_integration import GraphIntegrationEngine
 from core.response_automation import ResponseAutomationEngine
