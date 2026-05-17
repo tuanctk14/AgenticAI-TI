@@ -615,6 +615,12 @@ def _build_report_from_state(
                 cve_full = cves_dict.get(cve_id, {})
                 enrichment = cve_full.get("enrichment", {})
 
+                # Build base info
+                base_info = f"**{cve_id}** (CVSS: {cvss}"
+                if software and software != "N/A":
+                    base_info += f", Phần Mềm: {software}"
+                base_info += ")"
+
                 # Build enrichment details
                 enrichment_details = []
                 if enrichment:
@@ -637,12 +643,12 @@ def _build_report_from_state(
                     if enrichment.get("metasploit"):
                         enrichment_details.append("✓ Metasploit")
 
-                # Display CVE with all available info
+                # Display CVE with consistent format
                 if enrichment_details:
                     details_str = " | ".join(enrichment_details)
-                    lines.append(f"- **{cve_id}** (CVSS: {cvss}) | {details_str}")
+                    lines.append(f"- {base_info} | {details_str}")
                 else:
-                    lines.append(f"- **{cve_id}** (CVSS: {cvss}, Phần Mềm: {software})")
+                    lines.append(f"- {base_info}")
 
             lines.append("")
 
