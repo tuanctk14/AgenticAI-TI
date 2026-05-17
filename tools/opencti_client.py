@@ -1,8 +1,25 @@
+# -*- coding: utf-8 -*-
 """
-tools/opencti_client.py - Lấy Threat Intelligence từ OpenCTI (chỉ dùng API thật)
+tools/opencti_client.py - Lay Threat Intelligence tu OpenCTI (chi dung API that)
 """
 import requests
+import re
+import sys
+import io
 from config import OPENCTI_URL, OPENCTI_TOKEN
+
+# Setup UTF-8 stdout for Windows compatibility
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
+
+def _is_file_hash(text: str) -> bool:
+    """Detect if text is a file hash (MD5/SHA-1/SHA-256)"""
+    if not text:
+        return False
+    text = text.strip()
+    # MD5: 32 hex, SHA-1: 40 hex, SHA-256: 64 hex
+    return bool(re.match(r'^[a-fA-F0-9]{32}$|^[a-fA-F0-9]{40}$|^[a-fA-F0-9]{64}$', text))
 
 
 def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all", start_date: str = None, end_date: str = None, max_results: int = 50) -> dict:
@@ -36,6 +53,9 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
     if not OPENCTI_URL:
         print(f"  [OpenCTI]  OPENCTI_URL không được set")
         return {"context": [], "source": "OpenCTI-ERROR", "error": "Missing OPENCTI_URL"}
+
+    # Phát hiện nếu search_term là hash file (32+ hex chars = MD5/SHA-1/SHA-256)
+    is_hash = _is_file_hash(search_term)
 
     # Multi-query GraphQL: lấy indicators + malwares + threatActorsGroup + attackPatterns
     # Sắp xếp theo created_at desc (mới nhất trước)
@@ -80,6 +100,7 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
 
         results = []
         data_obj = data.get("data", {})
+        search_term_lower = search_term.lower()
 
         # Xử lý indicators - xử lý các giá trị None tiềm ẩn
         indicators_data = data_obj.get("indicators")
@@ -87,11 +108,19 @@ def fetch_opencti_indicators(search_term: str = "", indicator_type: str = "all",
             for edge in indicators_data.get("edges", []):
                 if edge and "node" in edge:
                     n = edge["node"]
+                    pattern = n.get("pattern", "")
+                    name = n.get("name", "Unknown")
+
+                    # Nếu search_term là hash, filter chặt chẽ: pattern phải chứa hash đó
+                    if is_hash:
+                        if not pattern or search_term_lower not in pattern.lower():
+                            continue
+
                     results.append({
-                        "id": n.get("id", "Unknown"), "name": n.get("name", "Unknown"),
+                        "id": n.get("id", "Unknown"), "name": name,
                         "entity_type": "Indicator",
                         "types": n.get("indicator_types", []),
-                        "pattern": n.get("pattern", "")[:200] if n.get("pattern") else "",
+                        "pattern": pattern[:200] if pattern else "",
                         "score": 75,
                         "confidence": n.get("confidence", 0),
                         "description": n.get("description", "")[:300] if n.get("description") else "",
