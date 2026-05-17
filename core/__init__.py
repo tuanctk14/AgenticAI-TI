@@ -91,6 +91,7 @@ from core.knowledge_graph import (
 )
 from core.graph_integration import GraphIntegrationEngine
 from core.advanced_analytics import AnalyticsEngine, ThreatEscalationLevel
+from core.system_health import SystemHealthMonitor, HealthStatus, ComponentType
 
 __all__ = [
     # Schema - Core Entities
@@ -179,4 +180,8 @@ __all__ = [
     # Advanced Analytics (NEW Week 4 Day 5)
     "AnalyticsEngine",
     "ThreatEscalationLevel",
+    # System Health Monitoring (NEW Week 5)
+    "SystemHealthMonitor",
+    "HealthStatus",
+    "ComponentType",
 ]
