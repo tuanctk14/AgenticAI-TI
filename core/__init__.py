@@ -55,6 +55,11 @@ from core.agent_memory_bridge import (
     MemoryAwareAgentState,
 )
 from core.graph_query_engine import GraphQueryEngine
+from core.community_detection import (
+    CommunityDetectionEngine,
+    ActorCommunity,
+    CampaignCluster,
+)
 
 __all__ = [
     # Schema - Core Entities
@@ -109,4 +114,8 @@ __all__ = [
     "MemoryAwareAgentState",
     # Graph Query Engine (NEW Week 3 Day 1)
     "GraphQueryEngine",
+    # Community Detection (NEW Week 3 Day 2)
+    "CommunityDetectionEngine",
+    "ActorCommunity",
+    "CampaignCluster",
 ]
