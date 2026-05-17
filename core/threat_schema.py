@@ -15,6 +15,7 @@ This is the foundation for:
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
+from uuid import uuid4
 from pydantic import BaseModel, Field
 
 
@@ -294,7 +295,7 @@ class Relationship(BaseModel):
     They are primary objects.
     """
     entity_type: EntityType = EntityType.RELATIONSHIP
-    id: str  # Unique relationship ID (auto-generated)
+    id: str = Field(default_factory=lambda: str(uuid4()))  # Unique relationship ID
 
     # Endpoints
     source_id: str  # Source entity ID
