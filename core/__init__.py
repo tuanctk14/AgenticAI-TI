@@ -36,6 +36,12 @@ from core.threat_memory import (
     InfrastructureReuseMemory,
     ExploitationPatternMemory,
 )
+from core.temporal_intelligence import (
+    TemporalIntelligenceEngine,
+    VulnerabilityTemporal,
+    IOCTemporal,
+    CampaignTemporal,
+)
 
 __all__ = [
     # Schema - Core Entities
@@ -65,11 +71,16 @@ __all__ = [
     "OpenCTIAdapter",
     # Fusion
     "ThreatFusionEngine",
-    # Memory (NEW Week 2)
+    # Memory (NEW Week 2 Day 1)
     "ThreatMemoryEngine",
     "RecurringIOCMemory",
     "CampaignPersistenceMemory",
     "AssetExposureHistoryMemory",
     "InfrastructureReuseMemory",
     "ExploitationPatternMemory",
+    # Temporal Intelligence (NEW Week 2 Day 2)
+    "TemporalIntelligenceEngine",
+    "VulnerabilityTemporal",
+    "IOCTemporal",
+    "CampaignTemporal",
 ]
