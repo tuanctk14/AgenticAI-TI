@@ -191,5 +191,73 @@
     "description": "Test IOC from CLI",
     "threat_actor": "APT-TEST",
     "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
+  },
+  {
+    "id": "IOC-DOMAIN-00015",
+    "type": "domain",
+    "value": "malware.com",
+    "description": "",
+    "confidence": 90,
+    "first_seen": "2026-05-17",
+    "relationships": [
+      {
+        "source": "malware",
+        "malware_name": "Conti",
+        "campaign_name": null,
+        "cve_id": null,
+        "confidence": 90,
+        "discovered_at": "2026-05-17T21:02:24.307941"
+      },
+      {
+        "source": "campaign",
+        "malware_name": null,
+        "campaign_name": "Campaign-X",
+        "cve_id": null,
+        "confidence": 85,
+        "discovered_at": "2026-05-17T21:02:24.319956"
+      }
+    ],
+    "created_at": "2026-05-17T21:02:24.307941",
+    "updated_at": "2026-05-17T21:02:24.319956"
+  },
+  {
+    "id": "IOC-DOMAIN-00016",
+    "type": "domain",
+    "value": "c2.attacker.com",
+    "description": "",
+    "confidence": 95,
+    "first_seen": "2026-05-17",
+    "relationships": [
+      {
+        "source": "malware",
+        "malware_name": "TestMalware",
+        "campaign_name": null,
+        "cve_id": "CVE-TEST-00001",
+        "confidence": 95,
+        "discovered_at": "2026-05-17T21:04:11.497586"
+      }
+    ],
+    "created_at": "2026-05-17T21:04:11.497586",
+    "updated_at": "2026-05-17T21:04:55.268484"
+  },
+  {
+    "id": "IOC-IPV4-00017",
+    "type": "ipv4",
+    "value": "192.168.1.100",
+    "description": "",
+    "confidence": 90,
+    "first_seen": "2026-05-17",
+    "relationships": [
+      {
+        "source": "campaign",
+        "malware_name": null,
+        "campaign_name": "TestCampaign",
+        "cve_id": "CVE-TEST-00001",
+        "confidence": 90,
+        "discovered_at": "2026-05-17T21:04:11.508490"
+      }
+    ],
+    "created_at": "2026-05-17T21:04:11.508490",
+    "updated_at": "2026-05-17T21:04:55.278475"
   }
 ]

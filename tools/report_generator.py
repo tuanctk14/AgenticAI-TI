@@ -9,6 +9,7 @@ from config import REPORTS_DIR
 from tools.doc_store import load_knowledge_base
 from tools.risk_scorer import RiskScorer
 from tools.cve_relationship_integrator import format_relationships_for_report
+from tools.kb_populator import KBPopulator
 
 # Lưu trong memory để tra cứu trong session
 REPORTS_STORE: dict[str, dict] = {}
@@ -155,6 +156,44 @@ def generate_report(
         "report_id": rid,
         "file_path": fpath,
     }
+
+
+def _format_iocs_for_report(cve_id: str) -> str:
+    """Format IOCs linked to CVE for report section."""
+    try:
+        populator = KBPopulator()
+        iocs = populator.get_iocs_by_cve(cve_id)
+
+        if not iocs:
+            return ""
+
+        lines = ["\n### Related IOCs and Infrastructure"]
+        ioc_by_type = {}
+        for ioc in iocs:
+            ioc_type = ioc.get("type", "unknown")
+            if ioc_type not in ioc_by_type:
+                ioc_by_type[ioc_type] = []
+            ioc_by_type[ioc_type].append(ioc)
+
+        for ioc_type in sorted(ioc_by_type.keys()):
+            type_label = ioc_type.upper()
+            ioc_list = ioc_by_type[ioc_type]
+            lines.append(f"\n**{type_label}:**")
+            for ioc in ioc_list[:5]:  # Limit to 5 per type
+                value = ioc.get("value", "Unknown")
+                confidence = ioc.get("confidence", 0)
+                rels = ioc.get("relationships", [])
+                rel_sources = set(r.get("source") for r in rels if r.get("source"))
+                rel_str = ", ".join(sorted(rel_sources)) if rel_sources else "unknown"
+                lines.append(f"- `{value}` (confidence: {confidence}%, from: {rel_str})")
+
+            if len(ioc_list) > 5:
+                lines.append(f"- ... and {len(ioc_list) - 5} more {ioc_type}s")
+
+        return "\n".join(lines)
+
+    except Exception as e:
+        return f""
 
 
 def _build_report_from_state(
@@ -391,6 +430,16 @@ def _build_report_from_state(
                         for rel_line in rel_lines:
                             if rel_line.strip():
                                 lines.append(f"  {rel_line}")
+
+                # Add IOC/Infrastructure section if available
+                cve_id = c.get("id", "")
+                if cve_id:
+                    ioc_section = _format_iocs_for_report(cve_id)
+                    if ioc_section:
+                        ioc_lines = ioc_section.split("\n")
+                        for ioc_line in ioc_lines:
+                            if ioc_line.strip():
+                                lines.append(f"  {ioc_line}")
 
             lines.append("")
 

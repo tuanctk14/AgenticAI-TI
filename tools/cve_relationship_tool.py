@@ -12,6 +12,8 @@ from tools.cve_relationship_integrator import (
     create_threat_summary,
 )
 from tools.neo4j_relationship_persister import persist_cve_relationships
+from tools.ioc_extractor import extract_iocs_from_enrichment
+from tools.kb_populator import populate_kb_from_cve
 
 
 def enrich_cve_relationships(cve_id: str) -> dict:
@@ -60,6 +62,10 @@ def enrich_cve_relationships(cve_id: str) -> dict:
 
         # Persist relationships to Neo4j
         persistence_result = persist_cve_relationships(enriched_cve)
+
+        # Extract and populate IOCs
+        ioc_extraction = extract_iocs_from_enrichment(enriched_cve)
+        kb_population = populate_kb_from_cve(enriched_cve)
 
         # Generate threat summary
         threat_summary = create_threat_summary(enriched_cve)
@@ -113,11 +119,22 @@ def enrich_cve_relationships(cve_id: str) -> dict:
                 "malware_relationships": persistence_result.get("malware_relationships", 0),
                 "campaign_relationships": persistence_result.get("campaign_relationships", 0),
                 "actor_relationships": persistence_result.get("actor_relationships", 0),
+            },
+            "ioc_extraction": {
+                "status": ioc_extraction.get("status"),
+                "total_iocs": ioc_extraction.get("total_unique_iocs", 0),
+            },
+            "kb_population": {
+                "status": kb_population.get("status"),
+                "iocs_added": kb_population.get("iocs_added", 0),
+                "iocs_updated": kb_population.get("iocs_updated", 0),
             }
         }
 
         print(f"  [RelationshipTool] SUCCESS: {result['total_relationships']} relationships found")
         print(f"  [RelationshipTool] PERSISTED: {persistence_result.get('total_persisted', 0)} relationships to Neo4j")
+        print(f"  [RelationshipTool] IOC EXTRACTED: {ioc_extraction.get('total_unique_iocs', 0)} IOCs")
+        print(f"  [RelationshipTool] KB POPULATED: {kb_population.get('iocs_added', 0)} added, {kb_population.get('iocs_updated', 0)} updated")
         return result
 
     except Exception as e:
