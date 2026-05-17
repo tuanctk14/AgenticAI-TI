@@ -16,6 +16,11 @@ OPENCTI_URL    = os.getenv("OPENCTI_URL",    "http://localhost:8080")
 OPENCTI_TOKEN  = os.getenv("OPENCTI_TOKEN",  "")
 VULNERS_API_KEY = os.getenv("VULNERS_API_KEY", "")
 
+# ── Neo4j Graph Database (tuỳ chọn) ─────────────────────────────────────────
+NEO4J_URI      = os.getenv("NEO4J_URI",      "bolt://localhost:7687")
+NEO4J_USER     = os.getenv("NEO4J_USER",     "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "")
+
 # ── App ─────────────────────────────────────────────────────────────────────
 REPORTS_DIR    = os.getenv("REPORTS_DIR", "./reports")
 MAX_STEPS      = int(os.getenv("MAX_STEPS", "20"))

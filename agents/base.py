@@ -14,6 +14,7 @@ from tools.doc_store        import (
     fetch_kb_indicators, fetch_kb_cves
 )
 from tools.cwe_mapper       import get_mitre_attack_info, get_nist_controls
+from tools.cve_relationship_tool import enrich_cve_relationships, enrich_cve_batch
 
 # ── Tool registry ──────────────────────────────────────────────────────────
 TOOLS_MAPPING = {
@@ -34,6 +35,8 @@ TOOLS_MAPPING = {
     "get_knowledge_base_stats":    get_knowledge_base_stats,
     "get_mitre_attack_info":       get_mitre_attack_info,
     "get_nist_controls":           get_nist_controls,
+    "enrich_cve_relationships":    enrich_cve_relationships,
+    "enrich_cve_batch":            enrich_cve_batch,
 }
 
 # ── Tool Permission Matrix (Guardrails) ───────────────────────────────────
@@ -55,6 +58,7 @@ TOOL_PERMISSIONS = {
     ],
     "agent_analyst": [
         "get_mitre_attack_info", "get_nist_controls",
+        "enrich_cve_relationships", "enrich_cve_batch",
     ],
     "agent_reporter": [
         "generate_report", "list_reports",
@@ -295,32 +299,38 @@ MANDATORY RULES:
     },
 
     "agent_analyst": {
-        "role": "Threat Analysis Agent - Phân tích MITRE ATT&CK và NIST SP 800-53",
-        "system_instruction": """Bạn là Threat Analysis Agent. Nhiệm vụ CHÍNH: Phân tích CVE để tìm attack vector và hướng khắc phục.
+        "role": "Threat Analysis Agent - Phân tích MITRE ATT&CK, NIST SP 800-53, và Relationship Intelligence",
+        "system_instruction": """Bạn là Threat Analysis Agent. Nhiệm vụ CHÍNH: Phân tích CVE để tìm attack vector, khắc phục, và threat context.
 
-⭐ TOOLS ĐƯỢC PHÉP (CHỈ 2 TOOLS NÀY, KHÔNG CÓ TOOL NÀO KHÁC):
-- get_mitre_attack_info: Lấy MITRE ATT&CK techniques cho CVE
-- get_nist_controls: Lấy NIST SP 800-53 controls cho CVE
+⭐ TOOLS ĐƯỢC PHÉP (4 TOOLS NÀY):
+1. get_mitre_attack_info: Lấy MITRE ATT&CK techniques cho CVE
+2. get_nist_controls: Lấy NIST SP 800-53 controls cho CVE
+3. enrich_cve_relationships: Lấy malware/campaign/threat actor relationships (NEW!)
+4. enrich_cve_batch: Enrich multiple CVEs cùng lúc (NEW!)
 
 ⭐ TUYỆT ĐỐI KHÔNG ĐƯỢC GỌI: match_cves_with_cmdb, list_all_devices, fetch_nvd_cves, hoặc bất kỳ tool nào khác.
 
 WORKFLOW:
 
 ==== LẦN 1: GỌI TOOLS ====
-Với mỗi CVE trong state['collected_cves'], gọi:
+Với mỗi CVE trong state['collected_cves'], gọi theo thứ tự:
 
+1. TIÊN TIÊN: Relationship enrichment (NEW priority)
+ACTION: enrich_cve_relationships
+ARGUMENTS: {"cve_id": "<CVE_ID>"}
+
+2. TIẾP TỤC: MITRE analysis
 ACTION: get_mitre_attack_info
 ARGUMENTS: {"cve_id": "<CVE_ID>"}
 
-TIẾP TỤC GỌI:
-
+3. TIẾP TỤC: NIST analysis
 ACTION: get_nist_controls
 ARGUMENTS: {"cve_id": "<CVE_ID>"}
 
 ⭐ LẦN NÀY CHỈ GỌI TOOLS. KHÔNG OUTPUT ANSWER. KHÔNG HANDOFF.
 
 ==== LẦN 2: HANDOFF SANG MATCHING ====
-Sau khi tools trả về kết quả MITRE + NIST:
+Sau khi tools trả về kết quả (relationships + MITRE + NIST):
 
 OUTPUT CHÍNH XÁC:
 HANDOFF: agent_matcher
@@ -328,9 +338,10 @@ HANDOFF: agent_matcher
 KHÔNG ANSWER ở lần 2. agent_matcher sẽ nhận kết quả và output cuối cùng.
 
 RULES:
-1. LẦN 1: CHỈ GỌI 2 TOOLS TRÊN. Không làm gì khác.
+1. LẦN 1: GỌI CẢ 4 TOOLS. Relationship enrichment ĐẦU TIÊN.
 2. LẦN 2: CHỈ HANDOFF: agent_matcher. Không làm gì khác.
-3. KHÔNG BAO GIỜ gọi match_cves_with_cmdb hoặc list_all_devices.""",
+3. KHÔNG BAO GIỜ gọi match_cves_with_cmdb hoặc list_all_devices.
+4. NEW: enrich_cve_relationships cung cấp contextual threat intelligence (campaigns, malware, actors).""",
     },
 
     "agent_doc": {

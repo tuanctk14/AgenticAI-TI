@@ -8,6 +8,7 @@ from datetime import datetime
 from config import REPORTS_DIR
 from tools.doc_store import load_knowledge_base
 from tools.risk_scorer import RiskScorer
+from tools.cve_relationship_integrator import format_relationships_for_report
 
 # Lưu trong memory để tra cứu trong session
 REPORTS_STORE: dict[str, dict] = {}
@@ -380,6 +381,17 @@ def _build_report_from_state(
                         lines.append(f"- **{cve_id}** (CVSS: {cvss}, {severity}): {desc}...")
                     else:
                         lines.append(f"- **{cve_id}** (CVSS: {cvss}, {severity})")
+
+                # Add relationship enrichment (malware/campaigns/actors) if available
+                relationships = c.get("relationships")
+                if relationships and relationships.get("total_relationships", 0) > 0:
+                    relationship_markdown = format_relationships_for_report(c)
+                    if relationship_markdown:
+                        rel_lines = relationship_markdown.split("\n")
+                        for rel_line in rel_lines:
+                            if rel_line.strip():
+                                lines.append(f"  {rel_line}")
+
             lines.append("")
 
     # IOC / Malware / Threat Intelligence
