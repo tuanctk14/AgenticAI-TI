@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field
 # ============================================================
 
 class EntityType(str, Enum):
-    """Entity types in threat intelligence."""
+    """Entity types in threat intelligence - 8 core types."""
     VULNERABILITY = "vulnerability"
     IOC = "ioc"
     ASSET = "asset"
@@ -33,10 +33,12 @@ class EntityType(str, Enum):
     CAMPAIGN = "campaign"
     THREAT_ACTOR = "threat_actor"
     ATTACK_PATTERN = "attack_pattern"
+    INFRASTRUCTURE = "infrastructure"  # NEW Week 1
 
 
 class RelationshipType(str, Enum):
-    """Relationship types between entities."""
+    """Relationship types between entities - 16 total (10 core + 6 new)."""
+    # Core relationships (10)
     VULNERABLE_TO = "vulnerable_to"  # Asset vulnerable to CVE
     LINKED_TO = "linked_to"  # IOC linked to Malware
     EXPLOITS = "exploits"  # Campaign exploits CVE
@@ -47,6 +49,14 @@ class RelationshipType(str, Enum):
     EXPOSED_TO = "exposed_to"  # Asset exposed to Internet
     USES = "uses"  # Threat Actor uses Malware
     OBSERVED_IN = "observed_in"  # IOC observed in Campaign
+
+    # New relationships (6) - Week 1 Expansion
+    USES_MALWARE = "uses_malware"  # Campaign uses Malware
+    LEADS_CAMPAIGN = "leads_campaign"  # ThreatActor leads Campaign
+    OPERATES_INFRASTRUCTURE = "operates_infrastructure"  # ThreatActor operates Infrastructure
+    TARGETS_SECTOR = "targets_sector"  # Campaign targets Sector
+    TARGETS_VICTIMOLOGY = "targets_victimology"  # Campaign targets Victimology
+    FACES_EXPOSURE = "faces_exposure"  # Asset faces Internet Exposure
 
 
 class IOCType(str, Enum):
@@ -66,6 +76,52 @@ class SeverityLevel(str, Enum):
     MEDIUM = "MEDIUM"
     LOW = "LOW"
     UNKNOWN = "UNKNOWN"
+
+
+# ============================================================
+# RELATIONSHIP METADATA (Confidence & Evidence)
+# ============================================================
+
+class RelationshipMetadata(BaseModel):
+    """
+    Rich metadata for relationships.
+    Tracks confidence, evidence sources, temporal lifecycle, and reasoning.
+    Enables intelligent relationship filtering and trust-based graph reasoning.
+    """
+    confidence: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Confidence score: 0=no evidence, 0.5=moderate, 1.0=certain"
+    )
+    evidence: List[str] = Field(
+        default_factory=list,
+        description="Evidence sources: cpe_match, campaign_link, infrastructure_overlap, temporal_correlation, opencti_source, malware_analysis, actor_attribution, sectoral_pattern, victimology_analysis, graph_inference"
+    )
+    first_observed: Optional[datetime] = None
+    last_observed: Optional[datetime] = None
+    active: bool = Field(
+        True,
+        description="Is this relationship currently active/relevant?"
+    )
+    source: str = Field(
+        ...,
+        description="Provider: nvd, opencti, correlator, graph_analyzer, enrichment_pipeline, manual"
+    )
+    reasoning: Optional[str] = None
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "confidence": 0.85,
+                "evidence": ["opencti_source", "temporal_correlation"],
+                "first_observed": "2024-02-01T00:00:00",
+                "last_observed": "2026-05-10T00:00:00",
+                "active": True,
+                "source": "opencti",
+                "reasoning": "OpenCTI documents campaign exploitation of CVE with 15+ public exploits"
+            }
+        }
 
 
 # ============================================================
@@ -111,6 +167,15 @@ class RiskContext(BaseModel):
     data_freshness: Optional[datetime] = None
     data_sources: List[str] = Field(default_factory=list)  # ["nvd", "epss", "kev", "vulners"]
 
+    # Contextual Intelligence Fields (NEW Week 1)
+    attack_path_length: Optional[int] = None  # Hops from internet to asset
+    campaign_active: bool = False  # Campaign targeting CVE is active
+    campaign_name: Optional[str] = None  # Campaign name if linked
+    malware_family: Optional[str] = None  # Associated malware family
+    threat_actor: Optional[str] = None  # Attributed threat actor
+    historical_recurrence: float = Field(default=0.0, ge=0.0, le=1.0)  # % previous occurrences
+    exploitation_confidence: float = Field(default=0.0, ge=0.0, le=1.0)  # Confidence exploit will happen
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -120,6 +185,13 @@ class RiskContext(BaseModel):
                 "public_exploit_available": True,
                 "internet_exposed": True,
                 "attack_path_exists": True,
+                "attack_path_length": 3,
+                "campaign_active": True,
+                "campaign_name": "Ransomware-X",
+                "malware_family": "Lockbit",
+                "threat_actor": "APT1",
+                "historical_recurrence": 0.75,
+                "exploitation_confidence": 0.92,
                 "linked_campaigns": ["ransomware-x"],
                 "ransomware_linked": True
             }
@@ -149,9 +221,16 @@ class Vulnerability(BaseModel):
     risk_context: RiskContext = Field(default_factory=RiskContext)
 
     # Temporal information
-    published_date: Optional[str] = None
+    published_date: Optional[str] = None  # NVD publication date
     modified_date: Optional[str] = None
     discovered_date: Optional[str] = None
+
+    # Temporal Intelligence (NEW Week 1)
+    kev_added_date: Optional[datetime] = None  # Date added to CISA KEV list
+    poc_published_date: Optional[datetime] = None  # Date PoC released publicly
+    exploit_evolution: Optional[Dict[str, Any]] = None  # Timeline of exploit availability (date string -> description)
+    first_seen_in_wild: Optional[datetime] = None  # First observed in actual attacks
+    last_exploited: Optional[datetime] = None  # Last time actively exploited
 
     # Relationships
     related_entities: List[str] = Field(default_factory=list)  # entity IDs
@@ -200,6 +279,11 @@ class IOC(BaseModel):
     first_seen: Optional[str] = None
     last_seen: Optional[str] = None
     observation_count: int = 0
+
+    # Temporal Intelligence (NEW Week 1)
+    active_window: Optional[str] = None  # "2024-01 to 2026-05" format
+    recurrence_count: int = 0  # How many times IOC has been seen across campaigns
+    recurrence_history: List[Dict[str, Any]] = Field(default_factory=list)  # Timeline of occurrences
 
     # Risk information
     severity: SeverityLevel = SeverityLevel.LOW
@@ -314,6 +398,9 @@ class Relationship(BaseModel):
     evidence: List[Dict[str, Any]] = Field(default_factory=list)
     evidence_sources: List[str] = Field(default_factory=list)  # ["nvd", "opencti", "internal"]
 
+    # Rich metadata (NEW Week 1)
+    metadata: Optional[RelationshipMetadata] = None
+
     # Temporal
     discovered_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -334,9 +421,125 @@ class Relationship(BaseModel):
                 "relationship_type": "vulnerable_to",
                 "confidence": 0.92,
                 "evidence_sources": ["cpematch", "internal_scan"],
-                "strength": "strong"
+                "strength": "strong",
+                "metadata": {
+                    "confidence": 0.92,
+                    "evidence": ["cpe_match", "internal_scan"],
+                    "active": True,
+                    "source": "nvd",
+                    "reasoning": "Asset CPE matches CVE CPE exactly from NVD"
+                }
             }
         }
+
+
+# ============================================================
+# LIGHTWEIGHT ENTITIES (Week 1 - For Relationship Intelligence)
+# ============================================================
+
+class Campaign(BaseModel):
+    """
+    Lightweight Campaign entity.
+    Used for relationship intelligence and contextual reasoning.
+    Does NOT store full OpenCTI data - only key attributes for graph analysis.
+    """
+    entity_type: EntityType = EntityType.CAMPAIGN
+    id: str  # OpenCTI campaign ID or internal ID
+
+    # Identity
+    name: str
+    aliases: List[str] = Field(default_factory=list)
+    description: Optional[str] = None
+
+    # Threat actors
+    threat_actors: List[str] = Field(default_factory=list)  # ThreatActor IDs
+
+    # Temporal
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    active: bool = True
+
+    # Targeting
+    victimology: List[str] = Field(default_factory=list)  # Victim types
+    sectors: List[str] = Field(default_factory=list)  # Target sectors
+
+    # TTPs and tools
+    techniques: List[str] = Field(default_factory=list)  # MITRE ATT&CK techniques
+    malware: List[str] = Field(default_factory=list)  # Malware families used
+
+    # Risk
+    severity: SeverityLevel = SeverityLevel.UNKNOWN
+    confidence: float = Field(ge=0.0, le=1.0, default=0.0)  # Attribution confidence
+
+    # Metadata
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ThreatActor(BaseModel):
+    """
+    Lightweight Threat Actor entity.
+    Used for relationship intelligence and contextual reasoning.
+    Does NOT store full profiles - only key attributes for graph analysis.
+    """
+    entity_type: EntityType = EntityType.THREAT_ACTOR
+    id: str  # OpenCTI actor ID or internal ID
+
+    # Identity
+    name: str
+    aliases: List[str] = Field(default_factory=list)
+    description: Optional[str] = None
+
+    # Operations
+    campaigns: List[str] = Field(default_factory=list)  # Campaign IDs led
+    malware_used: List[str] = Field(default_factory=list)  # Malware families
+    infrastructure: List[str] = Field(default_factory=list)  # Infrastructure node IDs
+
+    # TTPs
+    techniques: List[str] = Field(default_factory=list)  # MITRE ATT&CK techniques
+    target_sectors: List[str] = Field(default_factory=list)  # Preferred targets
+
+    # Activity
+    active: bool = True
+    last_seen: Optional[datetime] = None
+    activity_level: str = Field(default="unknown")  # low, medium, high, critical
+
+    # Metadata
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class Infrastructure(BaseModel):
+    """
+    Lightweight Infrastructure entity.
+    Represents C2 servers, proxies, malware hosting, etc.
+    Used for relationship intelligence and infrastructure correlation.
+    """
+    entity_type: EntityType = EntityType.INFRASTRUCTURE
+    id: str  # Unique infrastructure node ID
+
+    # Identity
+    node_type: str  # "ip", "domain", "c2", "proxy", "malware_host"
+    value: str  # IP address, domain name, URL
+
+    # Connections
+    c2_connections: List[str] = Field(default_factory=list)  # Connected C2 IPs/domains
+    malware: List[str] = Field(default_factory=list)  # Malware families using it
+    campaigns: List[str] = Field(default_factory=list)  # Campaign IDs
+    threat_actors: List[str] = Field(default_factory=list)  # Actor IDs
+
+    # Temporal
+    first_seen: Optional[datetime] = None
+    last_seen: Optional[datetime] = None
+    active: bool = True
+
+    # Risk
+    severity: SeverityLevel = SeverityLevel.UNKNOWN
+    confidence: float = Field(ge=0.0, le=1.0, default=0.0)
+
+    # Metadata
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 # ============================================================

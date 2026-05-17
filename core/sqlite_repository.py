@@ -33,6 +33,8 @@ from core.threat_repository import (
     TTLStatus,
     QueryContext,
 )
+from core.migrations.manager import MigrationManager
+from core.threat_memory import ThreatMemoryEngine
 
 
 class SQLiteRepository(ThreatKnowledgeRepository):
@@ -42,7 +44,12 @@ class SQLiteRepository(ThreatKnowledgeRepository):
         """Initialize SQLite repository."""
         self.db_path = db_path
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+        self.memory_engine = ThreatMemoryEngine()
         self._init_db()
+        # Apply any pending migrations (Week 1 adds new tables)
+        self._apply_migrations()
+        # Load memory from persistence
+        self._load_memory_from_db()
 
     def _init_db(self):
         """Initialize database schema."""
@@ -145,6 +152,56 @@ class SQLiteRepository(ThreatKnowledgeRepository):
             )
         """)
 
+        # Memory persistence tables (Week 2)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ioc_memory (
+                ioc_id TEXT PRIMARY KEY,
+                ioc_value TEXT,
+                first_observed TEXT,
+                last_observed TEXT,
+                memory_data JSON
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS campaign_memory (
+                campaign_id TEXT PRIMARY KEY,
+                campaign_name TEXT,
+                first_observed TEXT,
+                last_observed TEXT,
+                memory_data JSON
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS asset_memory (
+                asset_id TEXT PRIMARY KEY,
+                asset_name TEXT,
+                first_exposure TEXT,
+                last_exposure TEXT,
+                memory_data JSON
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS infrastructure_memory (
+                infrastructure_id TEXT PRIMARY KEY,
+                first_observed TEXT,
+                last_observed TEXT,
+                memory_data JSON
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS pattern_memory (
+                pattern_id TEXT PRIMARY KEY,
+                pattern_name TEXT,
+                first_observed TEXT,
+                last_observed TEXT,
+                memory_data JSON
+            )
+        """)
+
         # Indexes for performance
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_vuln_expires ON vulnerabilities(expires_at)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_ioc_expires ON iocs(expires_at)")
@@ -153,8 +210,27 @@ class SQLiteRepository(ThreatKnowledgeRepository):
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_rel_target ON relationships(target_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_threat_obs_entity ON threat_observations(entity_id)")
 
+        # Memory indexes
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_ioc_mem_observed ON ioc_memory(last_observed)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_campaign_mem_observed ON campaign_memory(last_observed)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_asset_mem_exposed ON asset_memory(last_exposure)")
+
         conn.commit()
         conn.close()
+
+    def _apply_migrations(self):
+        """Apply any pending database migrations."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            manager = MigrationManager(self.db_path)
+            if manager.migrate_to_latest(conn):
+                conn.close()
+            else:
+                conn.close()
+                raise RuntimeError("Failed to apply migrations")
+        except Exception as e:
+            print(f"[SQLiteRepository] Warning: Migration error: {e}")
+            # Non-fatal: system can still work with basic schema
 
     # ============================================================
     # ENTITY OPERATIONS
@@ -900,3 +976,139 @@ class SQLiteRepository(ThreatKnowledgeRepository):
         except Exception as e:
             print(f"[SQLiteRepository] Health check failed: {e}")
             return False
+
+    # ============================================================
+    # MEMORY PERSISTENCE (Week 2)
+    # ============================================================
+
+    def _load_memory_from_db(self):
+        """Load all memories from database into engine."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+
+            # Load IOC memory
+            cursor.execute("SELECT memory_data FROM ioc_memory")
+            for (memory_json,) in cursor.fetchall():
+                try:
+                    data = json.loads(memory_json)
+                    from core.threat_memory import RecurringIOCMemory
+                    memory = RecurringIOCMemory(**data)
+                    self.memory_engine.ioc_memory[memory.ioc_id] = memory
+                except Exception as e:
+                    print(f"[Memory] Failed to load IOC memory: {e}")
+
+            # Load campaign memory
+            cursor.execute("SELECT memory_data FROM campaign_memory")
+            for (memory_json,) in cursor.fetchall():
+                try:
+                    data = json.loads(memory_json)
+                    from core.threat_memory import CampaignPersistenceMemory
+                    memory = CampaignPersistenceMemory(**data)
+                    self.memory_engine.campaign_memory[memory.campaign_id] = memory
+                except Exception as e:
+                    print(f"[Memory] Failed to load campaign memory: {e}")
+
+            # Load asset memory
+            cursor.execute("SELECT memory_data FROM asset_memory")
+            for (memory_json,) in cursor.fetchall():
+                try:
+                    data = json.loads(memory_json)
+                    from core.threat_memory import AssetExposureHistoryMemory
+                    memory = AssetExposureHistoryMemory(**data)
+                    self.memory_engine.asset_memory[memory.asset_id] = memory
+                except Exception as e:
+                    print(f"[Memory] Failed to load asset memory: {e}")
+
+            # Load infrastructure memory
+            cursor.execute("SELECT memory_data FROM infrastructure_memory")
+            for (memory_json,) in cursor.fetchall():
+                try:
+                    data = json.loads(memory_json)
+                    from core.threat_memory import InfrastructureReuseMemory
+                    memory = InfrastructureReuseMemory(**data)
+                    self.memory_engine.infrastructure_memory[memory.infrastructure_id] = memory
+                except Exception as e:
+                    print(f"[Memory] Failed to load infrastructure memory: {e}")
+
+            # Load pattern memory
+            cursor.execute("SELECT memory_data FROM pattern_memory")
+            for (memory_json,) in cursor.fetchall():
+                try:
+                    data = json.loads(memory_json)
+                    from core.threat_memory import ExploitationPatternMemory
+                    memory = ExploitationPatternMemory(**data)
+                    self.memory_engine.pattern_memory[memory.pattern_id] = memory
+                except Exception as e:
+                    print(f"[Memory] Failed to load pattern memory: {e}")
+
+            conn.close()
+        except Exception as e:
+            print(f"[Memory] Failed to load memories: {e}")
+
+    def _save_memory_to_db(self):
+        """Persist all memories to database."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+
+            # Save IOC memory
+            for ioc_id, memory in self.memory_engine.ioc_memory.items():
+                data = json.dumps(json.loads(memory.model_dump_json()), default=str)
+                cursor.execute("""
+                    INSERT OR REPLACE INTO ioc_memory
+                    (ioc_id, ioc_value, first_observed, last_observed, memory_data)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (ioc_id, memory.ioc_value, memory.first_observed.isoformat(),
+                      memory.last_observed.isoformat(), data))
+
+            # Save campaign memory
+            for campaign_id, memory in self.memory_engine.campaign_memory.items():
+                data = json.dumps(json.loads(memory.model_dump_json()), default=str)
+                cursor.execute("""
+                    INSERT OR REPLACE INTO campaign_memory
+                    (campaign_id, campaign_name, first_observed, last_observed, memory_data)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (campaign_id, memory.campaign_name, memory.first_observed.isoformat(),
+                      memory.last_observed.isoformat(), data))
+
+            # Save asset memory
+            for asset_id, memory in self.memory_engine.asset_memory.items():
+                data = json.dumps(json.loads(memory.model_dump_json()), default=str)
+                cursor.execute("""
+                    INSERT OR REPLACE INTO asset_memory
+                    (asset_id, asset_name, first_exposure, last_exposure, memory_data)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (asset_id, memory.asset_name,
+                      memory.first_exposure.isoformat() if memory.first_exposure else None,
+                      memory.last_exposure.isoformat() if memory.last_exposure else None, data))
+
+            # Save infrastructure memory
+            for infra_id, memory in self.memory_engine.infrastructure_memory.items():
+                data = json.dumps(json.loads(memory.model_dump_json()), default=str)
+                cursor.execute("""
+                    INSERT OR REPLACE INTO infrastructure_memory
+                    (infrastructure_id, first_observed, last_observed, memory_data)
+                    VALUES (?, ?, ?, ?)
+                """, (infra_id, memory.first_observed.isoformat(),
+                      memory.last_observed.isoformat(), data))
+
+            # Save pattern memory
+            for pattern_id, memory in self.memory_engine.pattern_memory.items():
+                data = json.dumps(json.loads(memory.model_dump_json()), default=str)
+                cursor.execute("""
+                    INSERT OR REPLACE INTO pattern_memory
+                    (pattern_id, pattern_name, first_observed, last_observed, memory_data)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (pattern_id, memory.pattern_name, memory.first_observed.isoformat(),
+                      memory.last_observed.isoformat(), data))
+
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"[Memory] Failed to save memories: {e}")
+
+    async def persist_memories(self) -> bool:
+        """Save all memories to database."""
+        self._save_memory_to_db()
+        return True

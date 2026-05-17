@@ -13,7 +13,11 @@ from core.threat_schema import (
     ThreatIntelligenceObject,
     EntityType,
     RelationshipType,
+    RelationshipMetadata,
     SeverityLevel,
+    Campaign,
+    ThreatActor,
+    Infrastructure,
 )
 from core.threat_repository import ThreatKnowledgeRepository, TTLStatus
 from core.threat_adapters import (
@@ -24,17 +28,31 @@ from core.threat_adapters import (
     OpenCTIAdapter,
 )
 from core.threat_fusion import ThreatFusionEngine
+from core.threat_memory import (
+    ThreatMemoryEngine,
+    RecurringIOCMemory,
+    CampaignPersistenceMemory,
+    AssetExposureHistoryMemory,
+    InfrastructureReuseMemory,
+    ExploitationPatternMemory,
+)
 
 __all__ = [
-    # Schema
+    # Schema - Core Entities
     "Vulnerability",
     "IOC",
     "Asset",
     "Relationship",
     "RiskContext",
     "ThreatIntelligenceObject",
+    # Schema - Lightweight Entities (NEW Week 1)
+    "Campaign",
+    "ThreatActor",
+    "Infrastructure",
+    # Schema - Enums & Metadata
     "EntityType",
     "RelationshipType",
+    "RelationshipMetadata",
     "SeverityLevel",
     # Repository
     "ThreatKnowledgeRepository",
@@ -47,4 +65,11 @@ __all__ = [
     "OpenCTIAdapter",
     # Fusion
     "ThreatFusionEngine",
+    # Memory (NEW Week 2)
+    "ThreatMemoryEngine",
+    "RecurringIOCMemory",
+    "CampaignPersistenceMemory",
+    "AssetExposureHistoryMemory",
+    "InfrastructureReuseMemory",
+    "ExploitationPatternMemory",
 ]
