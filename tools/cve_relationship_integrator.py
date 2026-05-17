@@ -31,7 +31,7 @@ def add_relationships_to_cve(cve_dict: dict) -> dict:
     - Malware families exploiting it
     - Campaigns leveraging it
     - Threat actors behind it
-    - ATT&CK techniques involved
+    - ATT&CK techniques from DIRECT OpenCTI relationships (authoritative source)
 
     Args:
         cve_dict: CVE object from NVD (with id, description, etc.)
@@ -42,21 +42,26 @@ def add_relationships_to_cve(cve_dict: dict) -> dict:
     if not cve_id:
         return cve_dict
 
-    # Fetch relationships from OpenCTI
+    # Fetch relationships from OpenCTI (now includes attack_patterns from direct edges)
     enrichment = enrich_cve_with_relationships(cve_id)
 
-    # Extract ATT&CK techniques from descriptions
-    techniques = extract_attack_techniques(
-        enrichment.get("malwares", []),
-        enrichment.get("threat_actors", [])
-    )
+    # Use DIRECT attack patterns from OpenCTI first (authoritative)
+    # Only fall back to regex extraction if OpenCTI has no attack patterns
+    attack_patterns = enrichment.get("attack_patterns", [])
+    if not attack_patterns:
+        # Fallback: extract from malware/actor descriptions if OpenCTI doesn't have direct patterns
+        techniques = extract_attack_techniques(
+            enrichment.get("malwares", []),
+            enrichment.get("threat_actors", [])
+        )
+        attack_patterns = [{"technique_id": t, "source": "heuristic-extraction"} for t in techniques]
 
     # Add to CVE object
     cve_dict["relationships"] = {
         "malwares": enrichment.get("malwares", []),
         "campaigns": enrichment.get("campaigns", []),
         "threat_actors": enrichment.get("threat_actors", []),
-        "attack_techniques": techniques,
+        "attack_techniques": attack_patterns,  # Now from OpenCTI direct edges (authoritative)
         "total_relationships": enrichment.get("total_relationships", 0),
         "relationship_source": "OpenCTI",
         "relationship_status": enrichment.get("status", "unknown")

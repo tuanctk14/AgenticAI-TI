@@ -417,6 +417,122 @@ def query_cve_threat_actor_relationships(cve_id: str, max_results: int = 20) -> 
         return {"threat_actors": [], "source": "OpenCTI-ERROR", "error": str(e), "total_direct_relationships": 0}
 
 
+def query_cve_attack_patterns(cve_id: str, max_results: int = 50) -> dict:
+    """
+    Query OpenCTI to find MITRE ATT&CK techniques with DIRECT relationships to CVE.
+
+    This queries Attack Pattern objects directly, not inferred from CWE.
+    Provides authoritative ATT&CK techniques from OpenCTI's threat intelligence.
+
+    Args:
+        cve_id: CVE identifier
+        max_results: Maximum attack pattern results
+
+    Returns: {
+        "cve_id": "CVE-2021-44228",
+        "attack_patterns": [
+            {
+                "id": "...",
+                "technique_id": "T1190",
+                "name": "Exploit Public-Facing Application",
+                "confidence": 0.9,
+                "relationship_type": "exploited_via"
+            },
+            ...
+        ],
+        "source": "OpenCTI-direct-edge",
+        "total_direct_relationships": 3
+    }
+    """
+    if not OPENCTI_TOKEN or not OPENCTI_URL:
+        return {"attack_patterns": [], "source": "OpenCTI-SKIP", "total_direct_relationships": 0}
+
+    print(f"  [OpenCTI] Searching attack patterns for {cve_id}...")
+
+    # Query for DIRECT relationships: CVE → AttackPattern
+    gql = """
+    query GetCVEAttackPatternRelationships($cve_id: String!) {
+      vulnerabilities(search: $cve_id, first: 1) {
+        edges { node {
+          id name
+          stixCoreRelationships(first: 100) {
+            edges { node {
+              id relationship_type confidence
+              from {
+                ... on AttackPattern {
+                  id name x_mitre_id description created_at
+                }
+              }
+              to {
+                ... on AttackPattern {
+                  id name x_mitre_id description created_at
+                }
+              }
+            }}
+          }
+        }}
+      }
+    }"""
+
+    attack_patterns = []
+
+    try:
+        resp = requests.post(
+            f"{OPENCTI_URL}/graphql",
+            json={"query": gql, "variables": {"cve_id": cve_id}},
+            headers={"Authorization": f"Bearer {OPENCTI_TOKEN}"},
+            timeout=15
+        )
+
+        if resp.status_code == 200:
+            data = resp.json()
+            vulns = data.get("data", {}).get("vulnerabilities", {}).get("edges", [])
+
+            if vulns and isinstance(vulns, list):
+                vuln_node = vulns[0].get("node", {})
+                relationships = vuln_node.get("stixCoreRelationships", {}).get("edges", [])
+
+                if relationships and isinstance(relationships, dict):
+                    for edge in relationships.get("edges", []):
+                        if edge and "node" in edge:
+                            rel_node = edge["node"]
+                            # Get attack pattern from relationship
+                            pattern_obj = rel_node.get("from") or rel_node.get("to")
+                            if pattern_obj:
+                                technique_id = pattern_obj.get("x_mitre_id", "")
+                                confidence = rel_node.get("confidence", 0)
+                                # If no confidence, use high confidence for direct edge
+                                if not confidence or confidence == 0:
+                                    confidence = _calculate_relationship_confidence(
+                                        cve_id, pattern_obj.get("name"), "direct"
+                                    )
+
+                                attack_patterns.append({
+                                    "id": pattern_obj.get("id", "Unknown"),
+                                    "technique_id": technique_id,
+                                    "name": pattern_obj.get("name", "Unknown"),
+                                    "description": pattern_obj.get("description", "")[:300] if pattern_obj.get("description") else "",
+                                    "created_at": pattern_obj.get("created_at"),
+                                    "confidence": confidence,
+                                    "relationship_type": rel_node.get("relationship_type", "exploited_via"),
+                                    "source": "OpenCTI-direct-edge"
+                                })
+
+        if attack_patterns:
+            print(f"  [OpenCTI] Found {len(attack_patterns)} DIRECT attack pattern relationships for {cve_id}")
+
+        return {
+            "cve_id": cve_id,
+            "attack_patterns": attack_patterns,
+            "source": "OpenCTI-LIVE",
+            "total_direct_relationships": len(attack_patterns)
+        }
+
+    except Exception as e:
+        print(f"  [OpenCTI] Attack pattern search error: {e}")
+        return {"attack_patterns": [], "source": "OpenCTI-ERROR", "error": str(e), "total_direct_relationships": 0}
+
+
 def enrich_cve_with_relationships(cve_id: str) -> dict:
     """
     Complete enrichment: fetch ONLY DIRECT relationships from OpenCTI.
@@ -431,6 +547,7 @@ def enrich_cve_with_relationships(cve_id: str) -> dict:
         "malwares": [...],         # ONLY direct relationships
         "campaigns": [...],        # ONLY direct relationships
         "threat_actors": [...],    # ONLY direct relationships
+        "attack_patterns": [...],  # ONLY direct relationships from OpenCTI (authoritative)
         "total_relationships": 12, # Sum of actual confirmed relationships
         "source": "OpenCTI-LIVE",
         "status": "enriched" | "no_relationships_found"
@@ -441,12 +558,14 @@ def enrich_cve_with_relationships(cve_id: str) -> dict:
     malware_result = query_cve_malware_relationships(cve_id)
     campaign_result = query_cve_campaign_relationships(cve_id)
     actor_result = query_cve_threat_actor_relationships(cve_id)
+    pattern_result = query_cve_attack_patterns(cve_id)
 
     # Only count DIRECT relationships (not mock/contextual)
     total_relationships = (
         malware_result.get("total_direct_relationships", 0) +
         campaign_result.get("total_direct_relationships", 0) +
-        actor_result.get("total_direct_relationships", 0)
+        actor_result.get("total_direct_relationships", 0) +
+        pattern_result.get("total_direct_relationships", 0)
     )
 
     enrichment = {
@@ -454,6 +573,7 @@ def enrich_cve_with_relationships(cve_id: str) -> dict:
         "malwares": malware_result.get("malwares", []),
         "campaigns": campaign_result.get("campaigns", []),
         "threat_actors": actor_result.get("threat_actors", []),
+        "attack_patterns": pattern_result.get("attack_patterns", []),
         "total_relationships": total_relationships,
         "source": "OpenCTI-LIVE",
         "status": "enriched" if total_relationships > 0 else "no_direct_relationships",
@@ -461,6 +581,7 @@ def enrich_cve_with_relationships(cve_id: str) -> dict:
             "malware_source": malware_result.get("source", "unknown"),
             "campaign_source": campaign_result.get("source", "unknown"),
             "actor_source": actor_result.get("source", "unknown"),
+            "pattern_source": pattern_result.get("source", "unknown"),
         }
     }
 

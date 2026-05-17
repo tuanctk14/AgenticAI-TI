@@ -51,16 +51,22 @@ def fetch_cve_by_id(cve_id: str, enrich: bool = True) -> dict:
                     sev = m["cvssData"].get("baseSeverity", sev)
                     break
             # Extract CWE from weaknesses
+            # NVD structure: weaknesses[].description[].value = "CWE-20"
             cwe_ids = []
             weaknesses = cve.get("weaknesses", [])
             for weakness in weaknesses:
                 descriptions = weakness.get("description", [])
-                for desc_obj in descriptions:
-                    value = desc_obj.get("value", "")
-                    if value.startswith("CWE-"):
-                        cwe_id = value.replace("CWE-", "")
-                        if cwe_id not in cwe_ids:
-                            cwe_ids.append(cwe_id)
+                if isinstance(descriptions, list):
+                    for desc_obj in descriptions:
+                        if isinstance(desc_obj, dict):
+                            value = desc_obj.get("value", "")
+                        else:
+                            value = str(desc_obj)
+
+                        if value.startswith("CWE-"):
+                            cwe_id = value.replace("CWE-", "")
+                            if cwe_id not in cwe_ids:
+                                cwe_ids.append(cwe_id)
 
             result = [{
                 "id": cve["id"],
