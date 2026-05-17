@@ -65,6 +65,7 @@ from core.actor_profiling import (
     ActorProfile,
 )
 from core.trend_analysis import TrendAnalyzer
+from core.anomaly_detection import AnomalyDetector
 
 __all__ = [
     # Schema - Core Entities
@@ -128,4 +129,6 @@ __all__ = [
     "ActorProfile",
     # Trend Analysis (NEW Week 3 Day 4)
     "TrendAnalyzer",
+    # Anomaly Detection (NEW Week 3 Day 5)
+    "AnomalyDetector",
 ]
