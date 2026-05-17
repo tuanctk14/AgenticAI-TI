@@ -586,17 +586,26 @@ def _build_full_analyst_output(cves: list, attack_info: dict, nist_info: dict, m
                 else:
                     lines.append(f"    KEV Listed: NO")
 
-                # Vulners exploit intelligence
+                # Vulners exploit intelligence - Always show status (YES/NO like KEV)
                 public_exploit = enrichment.get("public_exploit", False)
                 metasploit = enrichment.get("metasploit", False)
                 exploit_count = enrichment.get("exploit_count", 0)
-                if public_exploit:
+                exploit_sources = enrichment.get("exploit_sources", [])
+
+                # Always show exploit status
+                if public_exploit or exploit_count > 0:
+                    lines.append(f"    Public Exploit: YES")
                     if exploit_count > 0:
-                        lines.append(f"    Vulners Exploits: {exploit_count} available")
-                    else:
-                        lines.append(f"    Public Exploit: AVAILABLE")
-                if metasploit:
-                    lines.append(f"    Metasploit Module: AVAILABLE")
+                        lines.append(f"      Exploit Count: {exploit_count}")
+                    if metasploit:
+                        lines.append(f"      Metasploit Module: YES")
+                    if exploit_sources:
+                        sources_str = ", ".join(exploit_sources[:5])
+                        if len(exploit_sources) > 5:
+                            sources_str += f", ... (+{len(exploit_sources)-5} more)"
+                        lines.append(f"      Exploit Sources: {sources_str}")
+                else:
+                    lines.append(f"    Public Exploit: NO")
 
                 # Risk summary
                 risk_score = enrichment.get("unified_risk_score")

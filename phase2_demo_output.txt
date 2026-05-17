@@ -1,0 +1,164 @@
+﻿python : Traceback (most recent call last):
+At line:1 char:68
++ ... ticThreatIntelligence; python -m core.enrichment_example 2>&1 | Out-F ...
++                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\ATI-AgenticThreatIntelligence\ATI-AgenticThreatIntelligence\core\enrichment_example.py", line 334, in 
+<module>
+    asyncio.run(demo_enrichment_pipeline())
+  File "C:\Program 
+Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\asyncio\runners.py", line 
+190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Program 
+Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\asyncio\runners.py", line 
+118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program 
+Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\asyncio\base_events.py", 
+line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\ATI-AgenticThreatIntelligence\ATI-AgenticThreatIntelligence\core\enrichment_example.py", line 303, in 
+demo_enrichment_pipeline
+    print("     - CVE \u2194 Asset (CPE matching)")
+  File "C:\Program 
+Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\encodings\cp1252.py", line 
+19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2194' in position 11: character maps to <undefined>
+
+======================================================================
+PHASE 2: THREAT ENRICHMENT PIPELINE - DEMONSTRATION
+======================================================================
+
+[SETUP] Initializing components...
+  [OK] Components initialized
+
+[TEST 1] CVE ENRICHMENT STRATEGIES
+----------------------------------------------------------------------
+
+[Scenario 1A] Fresh KB data - should use FAST strategy
+  CVE: CVE-2026-8181 (critical, internet-exposed)
+  [KB] Saved to knowledge base
+  [KB] Status: fresh
+  [STRATEGY] Selected: fast
+  [DECISION] Skip API calls (fresh data in KB)
+
+[Scenario 1B] Stale data for critical+exposed asset - should use DEEP
+  CVE: CVE-2026-5432 (critical, internet-exposed)
+  [STRATEGY] Selected: deep
+  [DECISION] Fetch all sources: NVD+EPSS+KEV+Vulners+OpenCTI
+
+[Scenario 1C] Low severity, not exposed - should use MINIMAL
+  CVE: CVE-2026-1234 (low severity)
+  [STRATEGY] Selected: fast
+  [DECISION] Fetch NVD only
+
+[TEST 2] SOURCE SELECTION PER STRATEGY
+----------------------------------------------------------------------
+
+  MINIMAL:
+    Sources: nvd
+
+  STANDARD:
+    Sources: nvd, epss, kev
+
+  DEEP:
+    Sources: nvd, epss, kev, vulners, opencti
+
+  FAST:
+    Sources: None
+
+[TEST 3] FALLBACK CHAIN APPLICATION
+----------------------------------------------------------------------
+
+  Input:
+    [NVD] Success (has CVSS)
+    [EPSS] Missing (not in results)
+    [Vulners] Success (has EPSS as backup)
+    [FALLBACK] EPSS: FIRST -> Vulners
+
+  Output after fallback chains:
+    [NVD] CVSS: 8.5
+    [EPSS] Score: 0.65
+    [FALLBACK] Applied: FIRST -> Vulners
+    [Vulners] Exploits: 3
+
+[TEST 4] IOC ENRICHMENT
+----------------------------------------------------------------------
+
+  IOC: 192.168.1.100
+  Type: ip
+  [KB] Saved IOC
+  [DECISION] Fresh in KB, skip OpenCTI fetch (FAST)
+
+[TEST 5] ASSET ENRICHMENT
+----------------------------------------------------------------------
+
+  Asset: dmz-web-01
+  IP: 10.0.1.5
+  Internet-Facing: True
+  Criticality: high
+  [KB] Saved asset
+  [RELATIONSHIP] Created: dmz-web-01 --[vulnerable_to]--> CVE-2026-8181
+  [CORRELATE] Found 1 vulnerable CVE(s)
+
+[TEST 6] BATCH ENRICHMENT
+----------------------------------------------------------------------
+
+  Enriching 3 entities in parallel...
+    - VULNERABILITY: CVE-2026-8181
+    - IOC: 192.168.1.100
+    - ASSET: dmz-web-01
+
+  [FLOW]
+    1. Check KB for fresh data (skip API if fresh)
+    2. Select enrichment strategy per entity context
+    3. Fetch from selected sources in parallel
+    4. Apply fallback chains
+    5. Fuse results with enrichment engine
+    6. Correlate relationships
+    7. Persist high-value intelligence
+
+[TEST 7] KNOWLEDGE BASE STATISTICS
+----------------------------------------------------------------------
+
+  Knowledge Base Statistics:
+    vulnerabilities: 1
+    iocs: 1
+    assets: 1
+    relationships: 3
+
+======================================================================
+PHASE 2 DEMONSTRATION COMPLETE
+======================================================================
+
+[KEY CONCEPTS DEMONSTRATED]
+  1. Dynamic Strategy Selection
+     - FAST (fresh KB data) -> skip API calls
+     - MINIMAL (low-risk) -> NVD only
+     - STANDARD (normal) -> NVD + EPSS + KEV
+     - DEEP (critical+exposed) -> all sources
+
+  2. Parallel Async Fetching
+     - All selected sources fetched concurrently
+     - Uses asyncio.gather for true parallelism
+
+  3. Fallback Chains
+     - EPSS: FIRST API -> Vulners
+     - CVSS: NVD -> Vulners
+     - CWE: NVD -> Vulners
+
+  4. Selective Persistence
+     - High-value intelligence only saved to KB
+     - TTL-based automatic expiration
+
+  5. Relationship Correlation

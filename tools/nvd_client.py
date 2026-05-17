@@ -1,12 +1,9 @@
 """
-tools/nvd_client.py - Lấy CVE từ NVD API (với fallback mock)
+tools/nvd_client.py - Fetch CVE from NVD API using real data only
 """
 import requests
 import asyncio
 from config import NVD_API_KEY
-
-# Dữ liệu mock dự phòng (hiện tại không dùng - chỉ lấy từ API thực)
-MOCK_CVES = []
 
 # Enrichment orchestrator (lazy-loaded)
 _enrichment_orchestrator = None
@@ -22,8 +19,8 @@ def _get_orchestrator():
 
 def fetch_cve_by_id(cve_id: str, enrich: bool = True) -> dict:
     """
-    Tra cứu một CVE cụ thể từ NVD API.
-    Fallback sang mock data nếu không có internet.
+    Fetch a specific CVE from NVD API.
+    Uses real threat intelligence data from public APIs.
 
     Args:
         cve_id: CVE ID (e.g., "CVE-2021-44228")
