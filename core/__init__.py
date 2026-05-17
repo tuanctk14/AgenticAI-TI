@@ -42,6 +42,7 @@ from core.temporal_intelligence import (
     IOCTemporal,
     CampaignTemporal,
 )
+from core.pattern_detection import PatternDetectionEngine
 
 __all__ = [
     # Schema - Core Entities
@@ -83,4 +84,6 @@ __all__ = [
     "VulnerabilityTemporal",
     "IOCTemporal",
     "CampaignTemporal",
+    # Pattern Detection (NEW Week 2 Day 3)
+    "PatternDetectionEngine",
 ]
