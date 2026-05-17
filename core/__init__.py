@@ -75,6 +75,13 @@ from core.decision_support import (
     PrioritizedThreat,
     MitigationStrategy,
 )
+from core.response_automation import (
+    ResponseAutomationEngine,
+    ResponseAction,
+    Playbook,
+    ResponseWorkflow,
+    ActionStatus,
+)
 
 __all__ = [
     # Schema - Core Entities
@@ -147,4 +154,10 @@ __all__ = [
     "DecisionSupportSystem",
     "PrioritizedThreat",
     "MitigationStrategy",
+    # Response Automation (NEW Week 4 Day 3)
+    "ResponseAutomationEngine",
+    "ResponseAction",
+    "Playbook",
+    "ResponseWorkflow",
+    "ActionStatus",
 ]
