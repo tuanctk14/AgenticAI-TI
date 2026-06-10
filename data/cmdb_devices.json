@@ -6,18 +6,41 @@
     "type": "Server",
     "os": "Windows Server 2019",
     "os_version": "10.0.17763",
-    "platform": {"name": "apache", "version": "2.4.49"},
+    "platform": {
+      "name": "apache",
+      "version": "2.4.49"
+    },
     "components": [
-      {"type": "library", "name": "openssl", "version": "1.0.2k"},
-      {"type": "language", "name": "php", "version": "7.4.3"}
+      {
+        "type": "library",
+        "name": "openssl",
+        "version": "1.0.2k"
+      },
+      {
+        "type": "language",
+        "name": "php",
+        "version": "7.4.3"
+      }
     ],
     "criticality": "HIGH",
     "department": "IT",
     "location": "HaNoi-DC1",
     "software": [
-      {"name": "Apache HTTP Server", "version": "2.4.49", "normalized_id": "apache:http_server"},
-      {"name": "OpenSSL",            "version": "1.0.2k", "normalized_id": "openssl:openssl"},
-      {"name": "PHP",                "version": "7.4.3", "normalized_id": "php:php"}
+      {
+        "name": "Apache HTTP Server",
+        "version": "2.4.49",
+        "normalized_id": "apache:http_server"
+      },
+      {
+        "name": "OpenSSL",
+        "version": "1.0.2k",
+        "normalized_id": "openssl:openssl"
+      },
+      {
+        "name": "PHP",
+        "version": "7.4.3",
+        "normalized_id": "php:php"
+      }
     ]
   },
   {
@@ -27,18 +50,41 @@
     "type": "Server",
     "os": "Ubuntu",
     "os_version": "20.04",
-    "platform": {"name": "mysql", "version": "8.0.26"},
+    "platform": {
+      "name": "mysql",
+      "version": "8.0.26"
+    },
     "components": [
-      {"type": "service", "name": "openssh", "version": "8.2p1"},
-      {"type": "library", "name": "log4j", "version": "2.14.1"}
+      {
+        "type": "service",
+        "name": "openssh",
+        "version": "8.2p1"
+      },
+      {
+        "type": "library",
+        "name": "log4j",
+        "version": "2.14.1"
+      }
     ],
     "criticality": "CRITICAL",
     "department": "Finance",
     "location": "HaNoi-DC1",
     "software": [
-      {"name": "MySQL",   "version": "8.0.26", "normalized_id": "mysql:mysql"},
-      {"name": "OpenSSH", "version": "8.2p1", "normalized_id": "openssh:openssh"},
-      {"name": "log4j",   "version": "2.14.1", "normalized_id": "apache:log4j"}
+      {
+        "name": "MySQL",
+        "version": "8.0.26",
+        "normalized_id": "mysql:mysql"
+      },
+      {
+        "name": "OpenSSH",
+        "version": "8.2p1",
+        "normalized_id": "openssh:openssh"
+      },
+      {
+        "name": "log4j",
+        "version": "2.14.1",
+        "normalized_id": "apache:log4j"
+      }
     ]
   },
   {
@@ -48,19 +94,46 @@
     "type": "Workstation",
     "os": "Windows 10",
     "os_version": "21H2",
-    "platform": {"name": "windows", "version": "10"},
+    "platform": {
+      "name": "windows",
+      "version": "10"
+    },
     "components": [
-      {"type": "application", "name": "microsoft-office", "version": "2019"},
-      {"type": "application", "name": "chrome", "version": "109.0.5414"},
-      {"type": "application", "name": "adobe-acrobat", "version": "21.011"}
+      {
+        "type": "application",
+        "name": "microsoft-office",
+        "version": "2019"
+      },
+      {
+        "type": "application",
+        "name": "chrome",
+        "version": "109.0.5414"
+      },
+      {
+        "type": "application",
+        "name": "adobe-acrobat",
+        "version": "21.011"
+      }
     ],
     "criticality": "MEDIUM",
     "department": "Finance",
     "location": "HaNoi-Office",
     "software": [
-      {"name": "Microsoft Office", "version": "2019", "normalized_id": "microsoft:office"},
-      {"name": "Chrome",           "version": "109.0.5414", "normalized_id": "google:chrome"},
-      {"name": "Adobe Acrobat",    "version": "21.011", "normalized_id": "adobe:acrobat"}
+      {
+        "name": "Microsoft Office",
+        "version": "2019",
+        "normalized_id": "microsoft:office"
+      },
+      {
+        "name": "Chrome",
+        "version": "109.0.5414",
+        "normalized_id": "google:chrome"
+      },
+      {
+        "name": "Adobe Acrobat",
+        "version": "21.011",
+        "normalized_id": "adobe:acrobat"
+      }
     ]
   },
   {
@@ -70,13 +143,20 @@
     "type": "Network Device",
     "os": "Cisco IOS",
     "os_version": "15.7",
-    "platform": {"name": "cisco-ios", "version": "15.7(3)M6"},
+    "platform": {
+      "name": "cisco-ios",
+      "version": "15.7(3)M6"
+    },
     "components": [],
     "criticality": "CRITICAL",
     "department": "Network",
     "location": "HaNoi-DC1",
     "software": [
-      {"name": "Cisco IOS", "version": "15.7(3)M6", "normalized_id": "cisco:ios"}
+      {
+        "name": "Cisco IOS",
+        "version": "15.7(3)M6",
+        "normalized_id": "cisco:ios"
+      }
     ]
   },
   {
@@ -86,18 +166,41 @@
     "type": "Server",
     "os": "CentOS",
     "os_version": "7.9",
-    "platform": {"name": "tomcat", "version": "9.0.58"},
+    "platform": {
+      "name": "tomcat",
+      "version": "9.0.58"
+    },
     "components": [
-      {"type": "framework", "name": "spring-framework", "version": "5.3.18"},
-      {"type": "runtime", "name": "openjdk", "version": "11.0.14"}
+      {
+        "type": "framework",
+        "name": "spring-framework",
+        "version": "5.3.18"
+      },
+      {
+        "type": "runtime",
+        "name": "openjdk",
+        "version": "11.0.14"
+      }
     ],
     "criticality": "HIGH",
     "department": "Development",
     "location": "HaNoi-DC2",
     "software": [
-      {"name": "Spring Framework", "version": "5.3.18", "normalized_id": "pivotal:spring_framework"},
-      {"name": "Tomcat",           "version": "9.0.58", "normalized_id": "apache:tomcat"},
-      {"name": "OpenJDK",          "version": "11.0.14", "normalized_id": "openjdk:openjdk"}
+      {
+        "name": "Spring Framework",
+        "version": "5.3.18",
+        "normalized_id": "pivotal:spring_framework"
+      },
+      {
+        "name": "Tomcat",
+        "version": "9.0.58",
+        "normalized_id": "apache:tomcat"
+      },
+      {
+        "name": "OpenJDK",
+        "version": "11.0.14",
+        "normalized_id": "openjdk:openjdk"
+      }
     ]
   },
   {
@@ -107,25 +210,197 @@
     "type": "Server",
     "os": "Ubuntu",
     "os_version": "20.04",
-    "platform": {"name": "wordpress", "version": "6.0"},
+    "platform": {
+      "name": "wordpress",
+      "version": "6.0"
+    },
     "plugins": [
-      {"name": "mstore-api", "version": "2.0.6"},
-      {"name": "download-from-files", "version": "1.48"}
+      {
+        "name": "mstore-api",
+        "version": "2.0.6"
+      },
+      {
+        "name": "download-from-files",
+        "version": "1.48"
+      }
     ],
     "components": [
-      {"type": "webserver", "name": "apache", "version": "2.4.41"},
-      {"type": "language", "name": "php", "version": "7.4.3"},
-      {"type": "database", "name": "mysql", "version": "8.0.28"}
+      {
+        "type": "webserver",
+        "name": "apache",
+        "version": "2.4.41"
+      },
+      {
+        "type": "language",
+        "name": "php",
+        "version": "7.4.3"
+      },
+      {
+        "type": "database",
+        "name": "mysql",
+        "version": "8.0.28"
+      }
     ],
     "criticality": "HIGH",
     "department": "Marketing",
     "location": "HaNoi-Office",
     "software": [
-      {"name": "WordPress",                        "version": "6.0", "normalized_id": "wordpress:wordpress"},
-      {"name": "WordPress Plugin Download From Files", "version": "1.48", "normalized_id": "wordpress:wordpress"},
-      {"name": "Apache HTTP Server",               "version": "2.4.41", "normalized_id": "apache:http_server"},
-      {"name": "PHP",                              "version": "7.4.3", "normalized_id": "php:php"},
-      {"name": "MySQL",                            "version": "8.0.28", "normalized_id": "mysql:mysql"}
+      {
+        "name": "WordPress",
+        "version": "6.0",
+        "normalized_id": "wordpress:wordpress"
+      },
+      {
+        "name": "WordPress Plugin Download From Files",
+        "version": "1.48",
+        "normalized_id": "wordpress:wordpress"
+      },
+      {
+        "name": "Apache HTTP Server",
+        "version": "2.4.41",
+        "normalized_id": "apache:http_server"
+      },
+      {
+        "name": "PHP",
+        "version": "7.4.3",
+        "normalized_id": "php:php"
+      },
+      {
+        "name": "MySQL",
+        "version": "8.0.28",
+        "normalized_id": "mysql:mysql"
+      }
     ]
+  },
+  {
+    "asset_id": "ASSET-001",
+    "hostname": "web-server-01",
+    "asset_type": "server",
+    "software": [
+      {
+        "name": "Apache",
+        "version": "2.4.41"
+      },
+      {
+        "name": "OpenSSL",
+        "version": "1.1.1"
+      }
+    ],
+    "os": "Linux",
+    "ip_address": "192.168.1.10",
+    "criticality": "high",
+    "first_seen": "2026-06-10T04:12:51.270538",
+    "last_seen": "2026-06-10T04:12:51.270538"
+  },
+  {
+    "asset_id": "ASSET-DUP",
+    "hostname": "test",
+    "asset_type": "server",
+    "software": [],
+    "os": "Linux",
+    "ip_address": null,
+    "criticality": "medium",
+    "first_seen": "2026-06-10T04:12:51.354796",
+    "last_seen": "2026-06-10T04:12:51.354796"
+  },
+  {
+    "asset_id": "ASSET-002",
+    "hostname": "app-server",
+    "asset_type": "server",
+    "software": [
+      {
+        "name": "Tomcat",
+        "version": "9.0"
+      }
+    ],
+    "os": "Linux",
+    "ip_address": "192.168.1.20",
+    "criticality": "critical",
+    "first_seen": "2026-06-10T04:12:51.384606",
+    "last_seen": "2026-06-10T04:12:51.384606"
+  },
+  {
+    "asset_id": "ASSET-RISK",
+    "hostname": "critical-server",
+    "asset_type": "server",
+    "software": [
+      {
+        "name": "App1",
+        "version": "1.0"
+      },
+      {
+        "name": "App2",
+        "version": "2.0"
+      },
+      {
+        "name": "App3",
+        "version": "3.0"
+      }
+    ],
+    "os": "Linux",
+    "ip_address": null,
+    "criticality": "critical",
+    "first_seen": "2026-06-10T04:12:51.453768",
+    "last_seen": "2026-06-10T04:12:51.453768"
+  },
+  {
+    "asset_id": "ASSET-WRAP-001",
+    "hostname": "test-server",
+    "asset_type": "server",
+    "software": [
+      {
+        "name": "Apache",
+        "version": "2.4"
+      }
+    ],
+    "os": "Linux",
+    "ip_address": "192.168.1.100",
+    "criticality": "high",
+    "first_seen": "2026-06-10T04:12:51.477246",
+    "last_seen": "2026-06-10T04:12:51.477246"
+  },
+  {
+    "asset_id": "ASSET-WRAP-002",
+    "hostname": "app-server",
+    "asset_type": "server",
+    "software": [],
+    "os": "Linux",
+    "ip_address": null,
+    "criticality": "medium",
+    "first_seen": "2026-06-10T04:12:51.477246",
+    "last_seen": "2026-06-10T04:12:51.477246"
+  },
+  {
+    "asset_id": "ASSET-WRAP-RISK",
+    "hostname": "test",
+    "asset_type": "server",
+    "software": [],
+    "os": "Linux",
+    "ip_address": null,
+    "criticality": "medium",
+    "first_seen": "2026-06-10T04:12:51.487677",
+    "last_seen": "2026-06-10T04:12:51.487677"
+  },
+  {
+    "asset_id": "ASSET-PERF-1",
+    "hostname": "test",
+    "asset_type": "server",
+    "software": [],
+    "os": "Linux",
+    "ip_address": null,
+    "criticality": "medium",
+    "first_seen": "2026-06-10T04:12:51.513880",
+    "last_seen": "2026-06-10T04:12:51.513880"
+  },
+  {
+    "asset_id": "ASSET-PERF-RISK",
+    "hostname": "test",
+    "asset_type": "server",
+    "software": [],
+    "os": "Linux",
+    "ip_address": null,
+    "criticality": "medium",
+    "first_seen": "2026-06-10T04:12:51.524733",
+    "last_seen": "2026-06-10T04:12:51.524733"
   }
 ]
