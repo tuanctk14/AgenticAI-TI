@@ -9,6 +9,10 @@ requests>=2.31.0
 # Authentication
 bcrypt>=4.0.0
 
+# Hybrid RAG
+chromadb>=0.4.0
+rank_bm25>=0.2.2
+
 # Testing
 pytest>=7.0.0
 pytest-cov>=4.0.0
