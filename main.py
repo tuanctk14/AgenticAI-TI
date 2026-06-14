@@ -25,7 +25,7 @@ load_dotenv()
 
 from config import OLLAMA_MODEL, OLLAMA_BASE_URL, REPORTS_DIR
 from auth import AuthDB, init_auth_service, get_auth_service, Role
-from cli import auth_commands
+from cli import auth_commands, schedule_commands
 from core.ollama_llm import check_ollama_connection
 from core.state      import init_state
 from core.graph      import get_graph
@@ -1178,7 +1178,12 @@ def main():
     parser = argparse.ArgumentParser(
         description="ATI-AgenticThreatIntelligence System — Ollama Local Edition"
     )
-    parser.add_argument("command", nargs="?", default=None, help="Auth command (init-admin, login, logout, whoami, etc.)")
+    parser.add_argument("command", nargs="?", default=None, help="Command (auth/schedule/etc)")
+    parser.add_argument("subcommand", nargs="?", default=None, help="Subcommand")
+    parser.add_argument("--name", type=str, help="Schedule name")
+    parser.add_argument("--time", type=str, help="Time of day (HH:MM)")
+    parser.add_argument("--severity", type=str, default="HIGH", help="CVE severity filter")
+    parser.add_argument("--id", type=int, help="Schedule ID")
     parser.add_argument("--query", "-q", type=str, help="Chạy câu hỏi trực tiếp")
     parser.add_argument("--test",  "-t", action="store_true", help="Chạy test cases")
     parser.add_argument("--check", "-c", action="store_true", help="Kiểm tra kết nối Ollama")
@@ -1208,6 +1213,44 @@ def main():
             return
         elif args.command == "list-users":
             auth_commands.cmd_list_users(db, get_auth_service())
+            return
+        elif args.command == "schedule":
+            # Schedule subcommands
+            if args.subcommand == "add":
+                if not args.name or not args.time:
+                    print("[LỖI] schedule add cần --name và --time")
+                    sys.exit(1)
+                schedule_commands.cmd_schedule_add(db, args.name, args.time, args.severity)
+            elif args.subcommand == "list":
+                schedule_commands.cmd_schedule_list(db)
+            elif args.subcommand == "remove":
+                if not args.id:
+                    print("[LỖI] schedule remove cần --id")
+                    sys.exit(1)
+                schedule_commands.cmd_schedule_remove(db, args.id)
+            elif args.subcommand == "enable":
+                if not args.id:
+                    print("[LỖI] schedule enable cần --id")
+                    sys.exit(1)
+                schedule_commands.cmd_schedule_enable(db, args.id)
+            elif args.subcommand == "disable":
+                if not args.id:
+                    print("[LỖI] schedule disable cần --id")
+                    sys.exit(1)
+                schedule_commands.cmd_schedule_disable(db, args.id)
+            elif args.subcommand == "runs":
+                if not args.id:
+                    print("[LỖI] schedule runs cần --id")
+                    sys.exit(1)
+                schedule_commands.cmd_schedule_runs(db, args.id)
+            elif args.subcommand == "run-now":
+                if not args.id:
+                    print("[LỖI] schedule run-now cần --id")
+                    sys.exit(1)
+                schedule_commands.cmd_schedule_run_now(db, args.id)
+            else:
+                print(f"[LỖI] schedule subcommand không biết: {args.subcommand}")
+                sys.exit(1)
             return
         else:
             print(f"[LỖI] Lệnh không biết: {args.command}")
