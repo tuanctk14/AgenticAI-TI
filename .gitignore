@@ -1,10 +1,23 @@
-# Test artifact databases - not used by system
+# Python cache
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Environment
+~/.ati/
+.env.local
+
+# Database artifacts
 data/test_*.db
 data/*_example.db
 data/intelligence_real.db
+data/auth.db
+data/chroma/
 
-# Test report HTML files
+# Test reports
 reports/executive_summary_*.html
+reports/scheduled/*.html
 
 # Temporary files
 phase2_demo_output.txt
