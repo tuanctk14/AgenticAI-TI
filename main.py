@@ -6,6 +6,7 @@ import io
 import argparse
 import os
 import webbrowser
+from dotenv import load_dotenv
 
 # Fix Unicode encoding cho Windows (cp1252 → utf-8)
 if sys.platform == "win32":
@@ -19,7 +20,12 @@ if sys.platform == "win32":
 # Đảm bảo import đúng khi chạy từ bất kỳ thư mục nào
 sys.path.insert(0, os.path.dirname(__file__))
 
+# Load .env
+load_dotenv()
+
 from config import OLLAMA_MODEL, OLLAMA_BASE_URL, REPORTS_DIR
+from auth import AuthDB, init_auth_service, get_auth_service, Role
+from cli import auth_commands
 from core.ollama_llm import check_ollama_connection
 from core.state      import init_state
 from core.graph      import get_graph
@@ -902,21 +908,53 @@ def _ask_and_export(state: dict, start_date: str, end_date: str):
 
 # ── Interactive menu ───────────────────────────────────────────────────────
 def interactive_mode():
+    # Check auth session
+    auth_service = get_auth_service()
+    session = auth_service.get_current_session()
+
+    if not session:
+        print("[THÔNG BÁO] Chưa đăng nhập. Chạy: python main.py login")
+        sys.exit(1)
+
+    user = auth_service.db.get_user_by_username(
+        next((u.username for u in auth_service.db.get_all_users() if u.id == session.user_id), "?")
+    )
+    username = user.username if user else "Unknown"
+    role_text = session.role.value.upper()
+
     print(BANNER)
     print(f"  Model: {OLLAMA_MODEL} @ {OLLAMA_BASE_URL}")
     print(f"  Báo cáo sẽ lưu tại: {os.path.abspath(REPORTS_DIR)}")
+    print(f"  Người dùng: {username} ({role_text})\n")
 
     # Kiểm tra kết nối Ollama
-    print("\n Kiểm tra kết nối Ollama...")
+    print(" Kiểm tra kết nối Ollama...")
     ok, msg = check_ollama_connection()
     if not ok:
         print(f"\n {msg}\n")
         sys.exit(1)
     print(f" Ollama sẵn sàng (model: {OLLAMA_MODEL})\n")
 
+    # Update menu based on role
+    if session.role == Role.ADMIN:
+        menu_text = """
++--------------------------------------------------------------+
+|                           MENU                               |
++--------------------------------------------------------------+
+|  1. Quét CVE và tìm thiết bị ảnh hưởng                       |
+|  2. Tạo báo cáo                                              |
+|  3. Upload / xử lý tài liệu nội bộ                           |
+|  4. Chat với ATI BOT                                         |
+|  5. Quản trị (admin)                                         |
+|  0. Thoát                                                    |
++--------------------------------------------------------------+
+"""
+    else:
+        menu_text = MENU
+
     while True:
-        print(MENU)
-        choice = input("Chọn (0-4): ").strip()
+        print(menu_text)
+        choice = input("Chọn (0-5): " if session.role == Role.ADMIN else "Chọn (0-4): ").strip()
 
         if choice == "0":
             print("\nTạm biệt!\n")
@@ -1063,6 +1101,73 @@ def interactive_mode():
 
                 conversation_history.append({"role": "assistant", "content": answer_text})
 
+        elif choice == "5" and session.role == Role.ADMIN:
+            # Menu 5: Admin panel
+            print("\n╔════════════════════════════════════════════════════════╗")
+            print("║             MENU 5 - QUẢN TRỊ (ADMIN ONLY)             ║")
+            print("║  (Gõ 'exit' hoặc 'quit' để quay lại menu chính)       ║")
+            print("╚════════════════════════════════════════════════════════╝\n")
+
+            while True:
+                admin_menu = """
+Lựa chọn:
+  1. Quản lý schedule
+  2. Xem audit log
+  3. Quản lý users
+  4. Quay lại menu chính
+"""
+                print(admin_menu)
+                admin_choice = input("Chọn (1-4): ").strip()
+
+                if admin_choice in ["4", "exit", "quit", "thoát"]:
+                    print("\nQuay lại menu chính...\n")
+                    break
+
+                elif admin_choice == "1":
+                    print("\n[THÔNG BÁO] Quản lý schedule - Chưa implement trong Phase A")
+                    print("Sẽ được thêm vào Phase C\n")
+
+                elif admin_choice == "2":
+                    # View audit log
+                    print("\n=== AUDIT LOG (50 mục gần nhất) ===\n")
+                    entries = auth_service.db.get_audit_log(limit=50)
+                    if not entries:
+                        print("Không có audit log nào.")
+                    else:
+                        print(f"{'Thời gian':<25} {'User ID':<10} {'Action':<20} {'Resource':<20}")
+                        print("-" * 75)
+                        for entry in entries:
+                            timestamp = entry.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                            print(f"{timestamp:<25} {entry.user_id:<10} {entry.action:<20} {entry.resource or '-':<20}")
+                    print()
+
+                elif admin_choice == "3":
+                    # Manage users submenu
+                    while True:
+                        users_submenu = """
+Quản lý Users:
+  1. Liệt kê users
+  2. Tạo user mới
+  3. Quay lại
+"""
+                        print(users_submenu)
+                        user_choice = input("Chọn (1-3): ").strip()
+
+                        if user_choice in ["3", "exit", "quit"]:
+                            print()
+                            break
+
+                        elif user_choice == "1":
+                            auth_commands.cmd_list_users(db, auth_service)
+                            print()
+
+                        elif user_choice == "2":
+                            auth_commands.cmd_create_user(db, auth_service)
+                            print()
+
+                        else:
+                            print("Lựa chọn không hợp lệ.\n")
+
         else:
             print("Lựa chọn không hợp lệ.")
             input("\n[Enter để tiếp tục]")
@@ -1073,10 +1178,40 @@ def main():
     parser = argparse.ArgumentParser(
         description="ATI-AgenticThreatIntelligence System — Ollama Local Edition"
     )
+    parser.add_argument("command", nargs="?", default=None, help="Auth command (init-admin, login, logout, whoami, etc.)")
     parser.add_argument("--query", "-q", type=str, help="Chạy câu hỏi trực tiếp")
     parser.add_argument("--test",  "-t", action="store_true", help="Chạy test cases")
     parser.add_argument("--check", "-c", action="store_true", help="Kiểm tra kết nối Ollama")
     args = parser.parse_args()
+
+    # Initialize auth service globally
+    db = AuthDB("data/auth.db")
+    db.init_db()
+    init_auth_service(db)
+
+    # Handle auth commands
+    if args.command:
+        if args.command == "init-admin":
+            auth_commands.cmd_init_admin(db, get_auth_service())
+            return
+        elif args.command == "login":
+            auth_commands.cmd_login(db, get_auth_service())
+            return
+        elif args.command == "logout":
+            auth_commands.cmd_logout(get_auth_service())
+            return
+        elif args.command == "whoami":
+            auth_commands.cmd_whoami(get_auth_service())
+            return
+        elif args.command == "create-user":
+            auth_commands.cmd_create_user(db, get_auth_service())
+            return
+        elif args.command == "list-users":
+            auth_commands.cmd_list_users(db, get_auth_service())
+            return
+        else:
+            print(f"[LỖI] Lệnh không biết: {args.command}")
+            sys.exit(1)
 
     if args.check:
         ok, msg = check_ollama_connection()
