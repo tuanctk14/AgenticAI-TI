@@ -6,6 +6,7 @@ __pycache__/
 
 # Environment
 ~/.ati/
+.env
 .env.local
 
 # Database artifacts
