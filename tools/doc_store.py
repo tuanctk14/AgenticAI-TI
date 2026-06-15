@@ -1,12 +1,14 @@
 """
 tools/doc_store.py - Quản lý tài liệu và cơ sở tri thức
 Hỗ trợ định dạng .json, .txt (trích xuất CVE ID), .csv
+Tích hợp NVD KB loader để import CVE data từ D:\nvdcve
 """
 import json
 import csv
 import re
 from pathlib import Path
 from datetime import datetime, timezone
+from .nvd_knowledge_base_loader import get_kb_loader
 
 KB_DIR = Path("data/docs")
 KB_FILES = {
@@ -318,3 +320,133 @@ def enrich_cmdb_keywords() -> dict:
             keywords[cid] = words[:10]
 
     return {"context": keywords, "source": "KB"}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# NVD Knowledge Base Functions (Tích hợp với nvd_knowledge_base_loader)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def import_nvd_knowledge_base(user: str = "system") -> dict:
+    """
+    Import NVD CVE data từ D:\nvdcve vào KB nội bộ.
+    Giữ structure theo năm, track metadata (import date, user, changes)
+
+    Args:
+        user: Username thực hiện import
+
+    Returns:
+        {
+            "status": "success|error",
+            "imported": 1500,
+            "years": ["2021", "2020", ...],
+            "details": {...}
+        }
+    """
+    loader = get_kb_loader()
+    result = loader.import_nvd_data(user=user)
+
+    return {
+        "context": result,
+        "source": "NVD",
+        "status": result.get("status", "unknown")
+    }
+
+
+def get_cve_from_kb(cve_id: str) -> dict:
+    """
+    Lấy CVE từ KB nội bộ (từ NVD data được import).
+
+    Args:
+        cve_id: "CVE-2021-39904"
+
+    Returns:
+        {
+            "cve": {...},
+            "_import": {metadata}
+        } hoặc {"error": "..."}
+    """
+    loader = get_kb_loader()
+    cve = loader.get_cve(cve_id)
+
+    if cve:
+        return {
+            "context": cve,
+            "source": "KB-NVD",
+            "found": True
+        }
+    else:
+        return {
+            "context": None,
+            "source": "KB-NVD",
+            "found": False,
+            "error": f"CVE {cve_id} not found in KB"
+        }
+
+
+def search_kb_cves(keyword: str, year: str = None) -> dict:
+    """
+    Tìm kiếm CVE trong KB theo keyword.
+
+    Args:
+        keyword: Từ khóa tìm kiếm
+        year: Lọc theo năm (None = tất cả)
+
+    Returns:
+        {"context": [cves], "source": "KB-NVD", "count": N}
+    """
+    loader = get_kb_loader()
+    results = loader.search_cves(keyword, year)
+
+    return {
+        "context": results,
+        "source": "KB-NVD",
+        "count": len(results),
+        "keyword": keyword,
+        "year_filter": year
+    }
+
+
+def get_kb_status() -> dict:
+    """
+    Lấy trạng thái KB (tổng CVE, theo năm, import info, user uploads).
+
+    Returns:
+        {
+            "total_cves": 1500,
+            "years": {"2021": 100, ...},
+            "imports": {"2021": {date, file, count}},
+            "last_updated": "ISO"
+        }
+    """
+    loader = get_kb_loader()
+    stats = loader.get_kb_stats()
+
+    return {
+        "context": stats,
+        "source": "KB-NVD",
+        "ready": stats.get("total_cves", 0) > 0
+    }
+
+
+def record_cve_upload(cve_id: str, user: str, changes: str = "") -> dict:
+    """
+    Ghi nhận user upload/chỉnh sửa CVE.
+
+    Args:
+        cve_id: CVE ID
+        user: Username
+        changes: Nội dung thay đổi
+
+    Returns:
+        {"status": "recorded", "cve_id": "...", "user": "..."}
+    """
+    loader = get_kb_loader()
+    loader.record_user_upload(cve_id, user, changes)
+
+    return {
+        "status": "recorded",
+        "cve_id": cve_id,
+        "user": user,
+        "changes": changes,
+        "timestamp": datetime.utcnow().isoformat()
+    }
