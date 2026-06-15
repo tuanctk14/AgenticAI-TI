@@ -1,0 +1,182 @@
+{
+  "imports": {
+    "2002": {
+      "date": "2026-06-15T02:58:18.521726",
+      "file": "nvdcve-2.0-2002.json",
+      "count": 6771,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2003": {
+      "date": "2026-06-15T02:58:19.195650",
+      "file": "nvdcve-2.0-2003.json",
+      "count": 1555,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2004": {
+      "date": "2026-06-15T02:58:20.596474",
+      "file": "nvdcve-2.0-2004.json",
+      "count": 2707,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2005": {
+      "date": "2026-06-15T02:58:22.888845",
+      "file": "nvdcve-2.0-2005.json",
+      "count": 4770,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2006": {
+      "date": "2026-06-15T02:58:26.676413",
+      "file": "nvdcve-2.0-2006.json",
+      "count": 7145,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2007": {
+      "date": "2026-06-15T02:58:29.846897",
+      "file": "nvdcve-2.0-2007.json",
+      "count": 6580,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2008": {
+      "date": "2026-06-15T02:58:33.402242",
+      "file": "nvdcve-2.0-2008.json",
+      "count": 7179,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2009": {
+      "date": "2026-06-15T02:58:36.314373",
+      "file": "nvdcve-2.0-2009.json",
+      "count": 5054,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2010": {
+      "date": "2026-06-15T02:58:39.327362",
+      "file": "nvdcve-2.0-2010.json",
+      "count": 5249,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2011": {
+      "date": "2026-06-15T02:58:42.354893",
+      "file": "nvdcve-2.0-2011.json",
+      "count": 4898,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2012": {
+      "date": "2026-06-15T02:58:45.930081",
+      "file": "nvdcve-2.0-2012.json",
+      "count": 5939,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2013": {
+      "date": "2026-06-15T02:58:51.409311",
+      "file": "nvdcve-2.0-2013.json",
+      "count": 6830,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2014": {
+      "date": "2026-06-15T02:58:58.831833",
+      "file": "nvdcve-2.0-2014.json",
+      "count": 9002,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2015": {
+      "date": "2026-06-15T02:59:03.208745",
+      "file": "nvdcve-2.0-2015.json",
+      "count": 8779,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2016": {
+      "date": "2026-06-15T02:59:08.880878",
+      "file": "nvdcve-2.0-2016.json",
+      "count": 10615,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2017": {
+      "date": "2026-06-15T02:59:08.923457",
+      "file": "nvdcve-2.0-2017.json",
+      "count": 1,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2018": {
+      "date": "2026-06-15T02:59:16.936334",
+      "file": "nvdcve-2.0-2018.json",
+      "count": 17815,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2019": {
+      "date": "2026-06-15T02:59:26.146025",
+      "file": "nvdcve-2.0-2019.json",
+      "count": 17600,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2020": {
+      "date": "2026-06-15T02:59:26.211172",
+      "file": "nvdcve-2.0-2020.json",
+      "count": 1,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2021": {
+      "date": "2026-06-15T02:59:26.213767",
+      "file": "nvdcve-2.0-2021.json",
+      "count": 3,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2022": {
+      "date": "2026-06-15T02:59:26.228326",
+      "file": "nvdcve-2.0-2022.json",
+      "count": 6,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2023": {
+      "date": "2026-06-15T02:59:26.240195",
+      "file": "nvdcve-2.0-2023.json",
+      "count": 10,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2024": {
+      "date": "2026-06-15T02:59:26.251061",
+      "file": "nvdcve-2.0-2024.json",
+      "count": 4,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2025": {
+      "date": "2026-06-15T02:59:26.295696",
+      "file": "nvdcve-2.0-2025.json",
+      "count": 54,
+      "source": "nvd",
+      "user": "system"
+    },
+    "2026": {
+      "date": "2026-06-15T02:59:27.144351",
+      "file": "nvdcve-2.0-2026.json",
+      "count": 949,
+      "source": "nvd",
+      "user": "system"
+    }
+  },
+  "user_uploads": {},
+  "last_updated": "2026-06-15T02:59:27.145629",
+  "total_cves": 0
+}
