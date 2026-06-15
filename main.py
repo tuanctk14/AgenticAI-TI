@@ -913,6 +913,8 @@ def interactive_mode(db):
     session = auth_service.get_current_session()
 
     if not session:
+        # Force logout to clean session file (safety: previous session may have crashed)
+        auth_service.logout()
         print("[THÔNG BÁO] Chưa đăng nhập. Chạy: python main.py login")
         sys.exit(1)
 
@@ -975,8 +977,8 @@ def interactive_mode(db):
         choice = input("Chọn (0-5): " if session.role == Role.ADMIN else "Chọn (0-4): ").strip()
 
         if choice == "0":
-            auth_service.logout()
             print("\nTạm biệt!\n")
+            auth_service.logout()
             break
 
         elif choice == "1":
@@ -1434,7 +1436,19 @@ def main():
         return
 
     # Default: interactive
-    interactive_mode(db)
+    try:
+        interactive_mode(db)
+    except KeyboardInterrupt:
+        # Handle Ctrl+C: logout and exit cleanly
+        auth_service = get_auth_service()
+        auth_service.logout()
+        print("\n\nTạm biệt!\n")
+    except Exception as e:
+        # Handle unexpected errors: logout and report
+        auth_service = get_auth_service()
+        auth_service.logout()
+        print(f"\n[LỖI] {e}\n")
+        raise
 
 
 if __name__ == "__main__":
