@@ -176,10 +176,25 @@ def get_mitre_attack_info(cve_id: str, cve_description: str = "", cwe_ids: list 
     """
     Get MITRE ATT&CK techniques for a CVE.
     Replacement for mitre.py:get_mitre_attack_info()
+    If cwe_ids not provided, attempts to fetch from NVD
     """
     mapper = _get_mapper()
 
     techniques = []
+    source = "CWE-based inference"
+
+    # If cwe_ids not provided, try to fetch from NVD
+    if not cwe_ids:
+        try:
+            from tools.nvd_client import fetch_cve_by_id
+            nvd_cves = fetch_cve_by_id(cve_id, enrich=False)
+            if nvd_cves and nvd_cves[0].get("cwe_ids"):
+                cwe_ids = nvd_cves[0]["cwe_ids"]
+                source = "CWE from NVD + inference"
+        except Exception as e:
+            pass  # Fallback to empty results if NVD fetch fails
+
+    # Map CWE IDs to MITRE techniques
     if cwe_ids:
         for cwe in cwe_ids:
             techniques.extend(mapper.cwe_to_mitre_techniques(str(cwe)))
@@ -188,7 +203,7 @@ def get_mitre_attack_info(cve_id: str, cve_description: str = "", cwe_ids: list 
         "cve_id": cve_id,
         "mitre_techniques": techniques,
         "technique_count": len(techniques),
-        "source": "CWE-based inference"
+        "source": source
     }
 
 
@@ -196,10 +211,25 @@ def get_nist_controls(cve_id: str, cve_description: str = "", cwe_ids: list = No
     """
     Get NIST SP 800-53 controls for a CVE.
     Replacement for nist.py:get_nist_controls()
+    If cwe_ids not provided, attempts to fetch from NVD
     """
     mapper = _get_mapper()
 
     controls = []
+    source = "CWE-based inference"
+
+    # If cwe_ids not provided, try to fetch from NVD
+    if not cwe_ids:
+        try:
+            from tools.nvd_client import fetch_cve_by_id
+            nvd_cves = fetch_cve_by_id(cve_id, enrich=False)
+            if nvd_cves and nvd_cves[0].get("cwe_ids"):
+                cwe_ids = nvd_cves[0]["cwe_ids"]
+                source = "CWE from NVD + inference"
+        except Exception as e:
+            pass  # Fallback to empty results if NVD fetch fails
+
+    # Map CWE IDs to NIST controls
     if cwe_ids:
         for cwe in cwe_ids:
             controls.extend(mapper.cwe_to_nist_controls(str(cwe)))
@@ -208,5 +238,5 @@ def get_nist_controls(cve_id: str, cve_description: str = "", cwe_ids: list = No
         "cve_id": cve_id,
         "nist_controls": controls,
         "control_count": len(controls),
-        "source": "CWE-based inference"
+        "source": source
     }

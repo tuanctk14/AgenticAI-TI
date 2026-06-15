@@ -614,16 +614,35 @@ def call_tool(state: dict) -> dict:
             # If cve_id provided, extract CWE IDs from collected_cves for enhanced mapping
             if cve_id:
                 collected = state.get("collected_cves", [])
+                cwe_ids_found = None
+                cve_desc_found = None
+
+                # Try to find CVE in collected_cves
                 for cve in collected:
                     if cve.get("id") == cve_id:
-                        cwe_ids = cve.get("cwe_ids", [])
-                        if cwe_ids:
-                            args["cwe_ids"] = cwe_ids
-                        # Also provide CVE description for semantic analysis
-                        cve_desc = cve.get("description", "")
-                        if cve_desc:
-                            args["cve_description"] = cve_desc
+                        cwe_ids_found = cve.get("cwe_ids", [])
+                        cve_desc_found = cve.get("description", "")
                         break
+
+                # If found, add to args
+                if cwe_ids_found:
+                    args["cwe_ids"] = cwe_ids_found
+                if cve_desc_found:
+                    args["cve_description"] = cve_desc_found
+
+                # If NOT found in collected_cves, fetch CWE from NVD directly
+                if not cwe_ids_found or not cve_desc_found:
+                    from tools.nvd_client import fetch_cve_by_id
+                    try:
+                        nvd_cves = fetch_cve_by_id(cve_id, enrich=False)
+                        if nvd_cves:
+                            nvd_cve = nvd_cves[0]
+                            if not cwe_ids_found and nvd_cve.get("cwe_ids"):
+                                args["cwe_ids"] = nvd_cve.get("cwe_ids", [])
+                            if not cve_desc_found and nvd_cve.get("description"):
+                                args["cve_description"] = nvd_cve.get("description", "")
+                    except Exception as e:
+                        print(f"   [WARNING] Could not fetch CWE from NVD for {cve_id}: {e}")
 
         # ── GUARDRAIL: Tool Permission Check (Role-Based Access Control) ──
         last_agent = state.get("last_agent", "")
