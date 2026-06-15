@@ -907,7 +907,7 @@ def _ask_and_export(state: dict, start_date: str, end_date: str):
 
 
 # ── Interactive menu ───────────────────────────────────────────────────────
-def interactive_mode():
+def interactive_mode(db):
     # Check auth session
     auth_service = get_auth_service()
     session = auth_service.get_current_session()
@@ -1283,7 +1283,7 @@ def main():
         return
 
     # Default: interactive
-    interactive_mode()
+    interactive_mode(db)
 
 
 if __name__ == "__main__":
