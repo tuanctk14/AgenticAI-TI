@@ -229,6 +229,73 @@ class CWEMapper:
 
         return results
 
+    # ── PHASE 2 EXTENSION: NIST CONTROL MAPPING (G3-G5) ──
+
+    def cwe_to_nist_with_fallback(self, cwe_id: str) -> List[Dict]:
+        """
+        Get NIST controls for CWE with intelligent fallback.
+        G5: CWE → NIST fallback
+
+        Priority:
+        1. CWE → CAPEC → ATT&CK → NIST (primary, high confidence)
+        2. Fallback: CWE → NIST (Heimdall CSV, low confidence)
+
+        Args:
+            cwe_id: "CWE-20" or "20"
+
+        Returns: [
+            {
+                "control": "SI-10",
+                "name": "Information Input Validation",
+                "confidence": 0.95,  # High for ATT&CK chain
+                "source": "attack_chain"
+            },
+            {
+                "control": "AC-3",
+                "name": "Access Enforcement",
+                "confidence": 0.6,  # Lower for Heimdall
+                "source": "heimdall"
+            }
+        ]
+        """
+        from tools.attack_nist_mapper import technique_to_nist_controls
+        from tools.heimdall_cwe_nist_mapper import cwe_to_nist_controls_with_metadata
+
+        results = []
+        seen_controls = set()
+
+        # Step 1: Try primary path (CWE → CAPEC → ATT&CK → NIST)
+        techniques = self.cwe_to_attack_techniques_via_capec(cwe_id)
+
+        if techniques:
+            for tech in techniques:
+                t_num = tech.get("t_number")
+                controls = technique_to_nist_controls(t_num, self.nist_data)
+
+                for ctrl in controls:
+                    ctrl_id = ctrl.get("control", "")
+                    if ctrl_id and ctrl_id not in seen_controls:
+                        results.append({
+                            "control": ctrl_id,
+                            "name": ctrl.get("name", ctrl_id),
+                            "confidence": 0.95,  # High confidence from ATT&CK chain
+                            "source": "attack_chain",
+                            "technique": t_num
+                        })
+                        seen_controls.add(ctrl_id)
+
+        # Step 2: Fallback (CWE → NIST)
+        if not results:
+            fallback_controls = cwe_to_nist_controls_with_metadata(cwe_id, self.nist_data)
+
+            for ctrl in fallback_controls:
+                ctrl_id = ctrl.get("control", "")
+                if ctrl_id and ctrl_id not in seen_controls:
+                    results.append(ctrl)
+                    seen_controls.add(ctrl_id)
+
+        return results
+
 
 def get_cwe_analysis(cve_dict: Dict) -> Dict:
     """
