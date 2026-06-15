@@ -34,7 +34,7 @@ def _get_kb_manager():
 
 def fetch_cve_by_id(cve_id: str, enrich: bool = True) -> dict:
     """
-    Fetch a specific CVE from NVD API.
+    Fetch a specific CVE from KB first, fallback to NVD API.
     Uses real threat intelligence data from public APIs.
 
     Args:
@@ -43,12 +43,92 @@ def fetch_cve_by_id(cve_id: str, enrich: bool = True) -> dict:
     """
     print(f"  [NVD] Looking up: CVE={cve_id}")
 
-    base_url = f"https://services.nvd.nist.gov/rest/json/cves/2.0"
-    headers  = {"apiKey": NVD_API_KEY} if NVD_API_KEY else {}
-    params   = {"cveId": cve_id}
-
+    # Check KB first
     try:
-        resp = requests.get(base_url, params=params, headers=headers, timeout=15)
+        kb = _get_kb_manager()
+        kb_cve = kb.get_cve(cve_id)
+        if kb_cve:
+            print(f"  [KB] Found {cve_id} in local KB")
+            cve = kb_cve.get("cve", {})
+            if cve:
+                desc = (cve.get("descriptions") or [{"value": "N/A"}])[0]["value"]
+                metrics = cve.get("metrics", {})
+                score = "N/A"
+                sev = "UNKNOWN"
+                for key in ("cvssMetricV31", "cvssMetricV30", "cvssMetricV2"):
+                    if key in metrics:
+                        m = metrics[key][0]
+                        score = m["cvssData"]["baseScore"]
+                        sev = m["cvssData"].get("baseSeverity", sev)
+                        break
+                cwe_ids = []
+                weaknesses = cve.get("weaknesses", [])
+                for weakness in weaknesses:
+                    descriptions = weakness.get("description", [])
+                    if isinstance(descriptions, list):
+                        for desc_obj in descriptions:
+                            if isinstance(desc_obj, dict):
+                                value = desc_obj.get("value", "")
+                            else:
+                                value = str(desc_obj)
+                            if value.startswith("CWE-"):
+                                cwe_id = value.replace("CWE-", "")
+                                if cwe_id not in cwe_ids:
+                                    cwe_ids.append(cwe_id)
+
+                result = [{
+                    "id": cve["id"],
+                    "description": desc,
+                    "cvss_score": score,
+                    "cvss_vector": None,
+                    "severity": sev,
+                    "published": cve.get("published", "N/A")[:10],
+                    "references": [r["url"] for r in cve.get("references", [])[:5]],
+                    "configurations": cve.get("configurations", []),
+                    "cwe_ids": cwe_ids,
+                }]
+
+                if "cvssMetricV31" in metrics:
+                    result[0]["cvss_vector"] = metrics["cvssMetricV31"][0]["cvssData"].get("vectorString")
+                elif "cvssMetricV30" in metrics:
+                    result[0]["cvss_vector"] = metrics["cvssMetricV30"][0]["cvssData"].get("vectorString")
+
+                if enrich:
+                    try:
+                        orchestrator = _get_orchestrator()
+                        unified = asyncio.run(orchestrator.enrich_cve(cve_id))
+                        enrichment = {
+                            "epss_score": unified.epss.score if unified.epss and unified.epss.available else None,
+                            "epss_percentile": unified.epss.percentile if unified.epss and unified.epss.available else None,
+                            "kev_listed": unified.kev.listed if unified.kev else False,
+                            "kev_source": unified.kev.source if unified.kev else None,
+                            "public_exploit": unified.vulncheck.public_exploit_available if unified.vulncheck else False,
+                            "metasploit": unified.vulncheck.metasploit_available if unified.vulncheck else False,
+                            "exploit_count": unified.vulncheck.exploit_count if unified.vulncheck else 0,
+                            "exploit_sources": unified.vulncheck.exploit_sources if unified.vulncheck else [],
+                            "unified_risk_score": unified.unified_risk_score,
+                            "enrichment_summary": unified.enrichment_summary,
+                        }
+                        result[0]["enrichment"] = enrichment
+                    except Exception as e:
+                        print(f"  [Enrichment] Error enriching {cve_id}: {e}")
+                        result[0]["enrichment"] = None
+
+                print(f"  [NVD] Found {cve_id} (from KB)")
+                return {"context": result, "source": "KB-CACHED", "total": 1}
+    except Exception as e:
+        logger.debug(f"KB lookup error for {cve_id}: {e}")
+
+    # Fallback to NVD API
+    try:
+        base_url = "https://services.nvd.nist.gov/rest/json/cves/2.0"
+        headers = {"apiKey": NVD_API_KEY} if NVD_API_KEY else {}
+
+        params = {
+            "cveId": cve_id,
+        }
+
+        resp = requests.get(base_url, params=params, headers=headers, timeout=30)
         resp.raise_for_status()
         data = resp.json()
 
@@ -65,8 +145,6 @@ def fetch_cve_by_id(cve_id: str, enrich: bool = True) -> dict:
                     score = m["cvssData"]["baseScore"]
                     sev = m["cvssData"].get("baseSeverity", sev)
                     break
-            # Extract CWE from weaknesses
-            # NVD structure: weaknesses[].description[].value = "CWE-20"
             cwe_ids = []
             weaknesses = cve.get("weaknesses", [])
             for weakness in weaknesses:
@@ -85,9 +163,9 @@ def fetch_cve_by_id(cve_id: str, enrich: bool = True) -> dict:
 
             result = [{
                 "id": cve["id"],
-                "description": desc,  # Keep full description for NLP extraction
+                "description": desc,
                 "cvss_score": score,
-                "cvss_vector": None,  # Will be set below if available
+                "cvss_vector": None,
                 "severity": sev,
                 "published": cve.get("published", "N/A")[:10],
                 "references": [r["url"] for r in cve.get("references", [])[:5]],
@@ -95,18 +173,15 @@ def fetch_cve_by_id(cve_id: str, enrich: bool = True) -> dict:
                 "cwe_ids": cwe_ids,
             }]
 
-            # Extract CVSS vector string for more detailed vulnerability analysis
             if "cvssMetricV31" in metrics:
                 result[0]["cvss_vector"] = metrics["cvssMetricV31"][0]["cvssData"].get("vectorString")
             elif "cvssMetricV30" in metrics:
                 result[0]["cvss_vector"] = metrics["cvssMetricV30"][0]["cvssData"].get("vectorString")
 
-            # Enrich with EPSS/KEV/Vulners if requested
             if enrich:
                 try:
                     orchestrator = _get_orchestrator()
                     unified = asyncio.run(orchestrator.enrich_cve(cve_id))
-                    # Add enrichment data to CVE dict (flat structure)
                     enrichment = {
                         "epss_score": unified.epss.score if unified.epss and unified.epss.available else None,
                         "epss_percentile": unified.epss.percentile if unified.epss and unified.epss.available else None,
@@ -124,9 +199,8 @@ def fetch_cve_by_id(cve_id: str, enrich: bool = True) -> dict:
                     print(f"  [Enrichment] Error enriching {cve_id}: {e}")
                     result[0]["enrichment"] = None
 
-            print(f"  [NVD]  Found {cve_id}")
+            print(f"  [NVD] Found {cve_id} (from API)")
 
-            # Auto-save to internal KB for future queries
             try:
                 kb = _get_kb_manager()
                 kb.save_cve(cve_id, cve, user="system", source="api", changes="Auto-cached from NVD API")
@@ -134,9 +208,12 @@ def fetch_cve_by_id(cve_id: str, enrich: bool = True) -> dict:
                 logger.debug(f"Could not save {cve_id} to KB: {e}")
 
             return {"context": result, "source": "NVD-LIVE", "total": 1}
+        else:
+            print(f"  [NVD] Not found: {cve_id}")
+            return {"context": [], "source": "NVD-NOTFOUND", "total": 0}
 
     except Exception as e:
-        print(f"  [NVD]  API Error: {e}")
+        print(f"  [NVD] API Error: {e}")
         print(f"  [NVD] Could not find CVE {cve_id}")
         return {"context": [], "source": "NVD-ERROR", "total": 0}
 
