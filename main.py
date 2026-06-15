@@ -1193,8 +1193,90 @@ Lựa chọn:
                     break
 
                 elif admin_choice == "1":
-                    print("\n[THÔNG BÁO] Quản lý schedule - Chưa implement trong Phase A")
-                    print("Sẽ được thêm vào Phase C\n")
+                    # Manage schedules submenu
+                    while True:
+                        schedule_submenu = """
+Quản lý Schedules:
+  1. Liệt kê schedules
+  2. Thêm schedule mới
+  3. Kích hoạt schedule
+  4. Vô hiệu hóa schedule
+  5. Xóa schedule
+  6. Xem job runs
+  7. Chạy schedule ngay
+  8. Quay lại
+"""
+                        print(schedule_submenu)
+                        schedule_choice = input("Chọn (1-8): ").strip()
+
+                        if schedule_choice in ["8", "exit", "quit"]:
+                            print()
+                            break
+
+                        elif schedule_choice == "1":
+                            # List schedules
+                            schedule_commands.cmd_schedule_list(db)
+                            print()
+
+                        elif schedule_choice == "2":
+                            # Add new schedule
+                            print("\nThêm Schedule Mới:")
+                            name = input("  Tên schedule: ").strip()
+                            time = input("  Thời gian (HH:MM): ").strip()
+                            severity = input("  CVE severity (HIGH/MEDIUM/LOW) [default: HIGH]: ").strip() or "HIGH"
+                            if name and time:
+                                schedule_commands.cmd_schedule_add(db, name, time, severity)
+                            else:
+                                print("  [LỖI] Tên và thời gian không được để trống.")
+                            print()
+
+                        elif schedule_choice == "3":
+                            # Enable schedule
+                            try:
+                                sid = int(input("  ID schedule: ").strip())
+                                schedule_commands.cmd_schedule_enable(db, sid)
+                            except ValueError:
+                                print("  [LỖI] ID phải là số.")
+                            print()
+
+                        elif schedule_choice == "4":
+                            # Disable schedule
+                            try:
+                                sid = int(input("  ID schedule: ").strip())
+                                schedule_commands.cmd_schedule_disable(db, sid)
+                            except ValueError:
+                                print("  [LỖI] ID phải là số.")
+                            print()
+
+                        elif schedule_choice == "5":
+                            # Remove schedule
+                            try:
+                                sid = int(input("  ID schedule: ").strip())
+                                schedule_commands.cmd_schedule_remove(db, sid)
+                            except ValueError:
+                                print("  [LỖI] ID phải là số.")
+                            print()
+
+                        elif schedule_choice == "6":
+                            # View job runs
+                            try:
+                                sid = int(input("  ID schedule: ").strip())
+                                schedule_commands.cmd_schedule_runs(db, sid)
+                            except ValueError:
+                                print("  [LỖI] ID phải là số.")
+                            print()
+
+                        elif schedule_choice == "7":
+                            # Run schedule immediately
+                            try:
+                                sid = int(input("  ID schedule: ").strip())
+                                schedule_commands.cmd_schedule_run_now(db, sid)
+                            except ValueError:
+                                print("  [LỖI] ID phải là số.")
+                            print()
+
+                        else:
+                            print("Lựa chọn không hợp lệ.\n")
 
                 elif admin_choice == "2":
                     # View audit log
