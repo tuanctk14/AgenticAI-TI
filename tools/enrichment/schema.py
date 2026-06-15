@@ -109,6 +109,13 @@ class UnifiedCVE(BaseModel):
     capec_ids: Optional[List[Dict]] = None  # [{"id": "126", "name": "...", "likelihood": "High", "abstraction": "Standard"}]
     attack_techniques: Optional[List[Dict]] = None  # [{"t_number": "T1083", "name": "...", "tactics": [...], "capec_id": "3", ...}]
 
+    # PHASE 3: Ranked attack paths + controls (G8-G10)
+    cve_priority_score: Optional[float] = None  # 0-1 (Layer 1)
+    cve_priority_tier: Optional[str] = None  # "CRITICAL" | "STANDARD" | "LOW"
+    attack_paths: Optional[List[Dict]] = None  # [{"rank": 1, "relevance_score": 0.88, "cwe": "...", "capec": {...}, "attack_technique": {...}}]
+    recommended_controls: Optional[List[Dict]] = None  # [{"rank": 1, "control": "SI-10", "weight": 1.69, "techniques": [...]}]
+    attack_paths_filtered_count: int = 0  # How many paths were filtered (noise)
+
     # Computed risk
     unified_risk_score: float = 0.0
     enrichment_summary: str = ""
