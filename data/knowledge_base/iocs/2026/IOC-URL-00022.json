@@ -1,0 +1,27 @@
+{
+  "ioc": {
+    "id": "IOC-URL-00022",
+    "type": "url",
+    "value": "https://attack.mitre.org/software/S1056)",
+    "description": "",
+    "confidence": 75,
+    "first_seen": "2026-05-17",
+    "relationships": [
+      {
+        "source": "malware",
+        "malware_name": "TianySpy",
+        "campaign_name": null,
+        "cve_id": "CVE-2021-44228",
+        "confidence": 75,
+        "discovered_at": "2026-05-17T21:06:50.686468"
+      }
+    ],
+    "created_at": "2026-05-17T21:06:50.686468",
+    "updated_at": "2026-05-17T21:58:53.839691"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.619562",
+    "user": "migration",
+    "year": "2026"
+  }
+}

@@ -66,9 +66,11 @@ class KnowledgeBaseManager:
         """Initialize metadata structure."""
         return {
             "imports": {},  # {year: {count, date, source}}
-            "uploads": {},  # {cve_id: {user, date, changes}}
+            "uploads": {},  # {cve_id: [{user, date, changes, source}]}
             "auto_cached": {},  # {cve_id: {date, source}} - từ API lấy
             "total_cves": 0,
+            "total_iocs": 0,
+            "total_malwares": 0,
             "last_updated": None
         }
 
@@ -162,6 +164,9 @@ class KnowledgeBaseManager:
                 json.dump(cve_obj, f, indent=2)
 
             # Update metadata
+            if "uploads" not in self.metadata:
+                self.metadata["uploads"] = {}
+
             if cve_id not in self.metadata["uploads"]:
                 self.metadata["uploads"][cve_id] = []
 

@@ -1,0 +1,27 @@
+{
+  "ioc": {
+    "id": "IOC-URL-00115",
+    "type": "url",
+    "value": "https://attack.mitre.org/software/S9012)",
+    "description": "",
+    "confidence": 75,
+    "first_seen": "2026-05-17",
+    "relationships": [
+      {
+        "source": "malware",
+        "malware_name": "TRAILBLAZE",
+        "campaign_name": null,
+        "cve_id": "CVE-2026-8719",
+        "confidence": 75,
+        "discovered_at": "2026-05-17T21:33:50.292590"
+      }
+    ],
+    "created_at": "2026-05-17T21:33:50.292590",
+    "updated_at": "2026-05-17T22:00:14.938490"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.633419",
+    "user": "migration",
+    "year": "2026"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "ioc": {
+    "id": "IOC-APT41-002",
+    "description": "APT41 typosquatting domain impersonating Microsoft Update used as command and control server",
+    "cvss_score": 9.0,
+    "type": "domain",
+    "value": "update-service.microsofft.com",
+    "threat_actor": "APT41",
+    "tags": [
+      "C2",
+      "typosquat",
+      "APT41"
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.616562",
+    "user": "migration",
+    "year": "2026"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "ioc": {
+    "id": "IOC-EMOTET-002",
+    "description": "Emotet phishing campaign in Vietnam impersonating VietinBank invoice with malicious macro-enabled Excel attachment",
+    "cvss_score": 8.8,
+    "type": "email_subject",
+    "value": "Th\u00f4ng b\u00e1o ho\u00e1 \u0111\u01a1n VietinBank th\u00e1ng 10/2024",
+    "malware_family": "Emotet",
+    "tags": [
+      "phishing",
+      "vietnam",
+      "banking",
+      "macro"
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.618561",
+    "user": "migration",
+    "year": "2026"
+  }
+}

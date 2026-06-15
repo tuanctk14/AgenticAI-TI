@@ -1,0 +1,15 @@
+{
+  "ioc": {
+    "id": "IOC-TEST-001",
+    "type": "hash",
+    "value": "abc123def456",
+    "description": "Test IOC from CLI",
+    "threat_actor": "APT-TEST",
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.618561",
+    "user": "migration",
+    "year": "2026"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "ioc": {
+    "id": "IOC-LOCKBIT-002",
+    "description": "LockBit 3.0 C2 negotiation site on Tor network used for ransom payment and victim communication",
+    "cvss_score": 9.0,
+    "type": "url",
+    "value": "lockbit-support.onion",
+    "malware_family": "LockBit",
+    "tags": [
+      "C2",
+      "ransomware",
+      "tor"
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.617561",
+    "user": "migration",
+    "year": "2026"
+  }
+}

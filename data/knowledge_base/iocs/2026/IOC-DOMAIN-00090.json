@@ -1,0 +1,27 @@
+{
+  "ioc": {
+    "id": "IOC-DOMAIN-00090",
+    "type": "domain",
+    "value": "Trojan.Maljava",
+    "description": "",
+    "confidence": 75,
+    "first_seen": "2026-05-17",
+    "relationships": [
+      {
+        "source": "malware",
+        "malware_name": "Trojan.Maljava",
+        "campaign_name": null,
+        "cve_id": "CVE-2018-25326",
+        "confidence": 75,
+        "discovered_at": "2026-05-17T21:30:08.542079"
+      }
+    ],
+    "created_at": "2026-05-17T21:30:08.542079",
+    "updated_at": "2026-05-17T21:46:44.310450"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.629665",
+    "user": "migration",
+    "year": "2026"
+  }
+}

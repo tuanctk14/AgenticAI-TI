@@ -1,0 +1,21 @@
+{
+  "ioc": {
+    "id": "IOC-EMOTET-001",
+    "description": "Emotet v5 loader DLL executed via rundll32 stealing Outlook credentials and hijacking email threads for spam",
+    "cvss_score": 9.2,
+    "type": "sha256",
+    "value": "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+    "malware_family": "Emotet",
+    "tags": [
+      "loader",
+      "banking-trojan",
+      "email-theft"
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.618561",
+    "user": "migration",
+    "year": "2026"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "ioc": {
+    "id": "IOC-DOMAIN-00016",
+    "type": "domain",
+    "value": "c2.attacker.com",
+    "description": "",
+    "confidence": 95,
+    "first_seen": "2026-05-17",
+    "relationships": [
+      {
+        "source": "malware",
+        "malware_name": "TestMalware",
+        "campaign_name": null,
+        "cve_id": "CVE-TEST-00001",
+        "confidence": 95,
+        "discovered_at": "2026-05-17T21:04:11.497586"
+      }
+    ],
+    "created_at": "2026-05-17T21:04:11.497586",
+    "updated_at": "2026-05-17T23:36:58.027942"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.619562",
+    "user": "migration",
+    "year": "2026"
+  }
+}

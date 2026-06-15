@@ -1,0 +1,21 @@
+{
+  "ioc": {
+    "id": "IOC-BLACKCAT-002",
+    "description": "BlackCat ALPHV ransomware leak site on Tor publishing stolen victim data for triple extortion",
+    "cvss_score": 9.0,
+    "type": "url",
+    "value": "alphvuzxyxv6ylumd2ngp46xo3hiwizbmkjjjn5bfyjwpkrikx26tad.onion",
+    "malware_family": "BlackCat",
+    "tags": [
+      "leak-site",
+      "ransomware",
+      "extortion"
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.618561",
+    "user": "migration",
+    "year": "2026"
+  }
+}

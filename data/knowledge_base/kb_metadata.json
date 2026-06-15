@@ -177,6 +177,176 @@
     }
   },
   "user_uploads": {},
-  "last_updated": "2026-06-15T02:59:27.145629",
-  "total_cves": 0
+  "last_updated": "2026-06-15T03:44:22.615560",
+  "total_cves": 0,
+  "uploads": {
+    "CVE-2021-44228": [
+      {
+        "date": "2026-06-15T03:44:22.456323",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.448381"
+      }
+    ],
+    "CVE-2021-41773": [
+      {
+        "date": "2026-06-15T03:44:22.464211",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.456323"
+      }
+    ],
+    "CVE-2022-22965": [
+      {
+        "date": "2026-06-15T03:44:22.472218",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.465194"
+      }
+    ],
+    "CVE-2024-21762": [
+      {
+        "date": "2026-06-15T03:44:22.481306",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.472218"
+      }
+    ],
+    "CVE-2024-3400": [
+      {
+        "date": "2026-06-15T03:44:22.487307",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.481306"
+      }
+    ],
+    "CVE-2023-20198": [
+      {
+        "date": "2026-06-15T03:44:22.495328",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.488305"
+      }
+    ],
+    "CVE-2023-4966": [
+      {
+        "date": "2026-06-15T03:44:22.505844",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.496307"
+      }
+    ],
+    "CVE-2024-21893": [
+      {
+        "date": "2026-06-15T03:44:22.513842",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.505844"
+      }
+    ],
+    "CVE-2024-1708": [
+      {
+        "date": "2026-06-15T03:44:22.521843",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.513842"
+      }
+    ],
+    "CVE-2024-99999": [
+      {
+        "date": "2026-06-15T03:44:22.528858",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.522843"
+      }
+    ],
+    "CVE-2023-46604": [
+      {
+        "date": "2026-06-15T03:44:22.536857",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.529844"
+      }
+    ],
+    "CVE-2024-23897": [
+      {
+        "date": "2026-06-15T03:44:22.545845",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.537845"
+      }
+    ],
+    "CVE-2023-22515": [
+      {
+        "date": "2026-06-15T03:44:22.554067",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.545845"
+      }
+    ],
+    "CVE-2024-27198": [
+      {
+        "date": "2026-06-15T03:44:22.562142",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.555054"
+      }
+    ],
+    "CVE-2017-0144": [
+      {
+        "date": "2026-06-15T03:44:22.571342",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.563340"
+      }
+    ],
+    "CVE-2021-26855": [
+      {
+        "date": "2026-06-15T03:44:22.580779",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.573343"
+      }
+    ],
+    "CVE-2021-34527": [
+      {
+        "date": "2026-06-15T03:44:22.588916",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.581742"
+      }
+    ],
+    "CVE-2024-38094": [
+      {
+        "date": "2026-06-15T03:44:22.597902",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.589904"
+      }
+    ],
+    "CVE-2023-23397": [
+      {
+        "date": "2026-06-15T03:44:22.604393",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.597902"
+      }
+    ],
+    "CVE-2014-0160": [
+      {
+        "date": "2026-06-15T03:44:22.607437",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.604393"
+      }
+    ],
+    "CVE-2022-26134": [
+      {
+        "date": "2026-06-15T03:44:22.615560",
+        "user": "migration",
+        "source": "user_upload",
+        "changes": "Migrated from data/docs/cves.json on 2026-06-15T10:44:22.607437"
+      }
+    ]
+  }
 }

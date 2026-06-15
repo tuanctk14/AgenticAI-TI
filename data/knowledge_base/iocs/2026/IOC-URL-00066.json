@@ -1,0 +1,27 @@
+{
+  "ioc": {
+    "id": "IOC-URL-00066",
+    "type": "url",
+    "value": "https://attack.mitre.org/campaigns/C0015)",
+    "description": "",
+    "confidence": 80,
+    "first_seen": "2026-05-17",
+    "relationships": [
+      {
+        "source": "campaign",
+        "malware_name": null,
+        "campaign_name": "C0015",
+        "cve_id": "CVE-2021-44228",
+        "confidence": 80,
+        "discovered_at": "2026-05-17T21:06:51.125779"
+      }
+    ],
+    "created_at": "2026-05-17T21:06:51.125779",
+    "updated_at": "2026-05-17T21:58:54.267339"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.626561",
+    "user": "migration",
+    "year": "2026"
+  }
+}

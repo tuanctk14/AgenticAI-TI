@@ -1,0 +1,21 @@
+{
+  "ioc": {
+    "id": "IOC-APT41-004",
+    "description": "APT41 spear phishing email sender targeting Vietnamese bank employees with malicious Excel attachment",
+    "cvss_score": 8.5,
+    "type": "email",
+    "value": "hr-payroll@hanoi-corp-internal.net",
+    "threat_actor": "APT41",
+    "tags": [
+      "phishing",
+      "spear-phishing",
+      "financial"
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.617561",
+    "user": "migration",
+    "year": "2026"
+  }
+}

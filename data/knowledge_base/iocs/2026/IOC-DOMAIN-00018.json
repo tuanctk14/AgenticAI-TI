@@ -1,0 +1,43 @@
+{
+  "ioc": {
+    "id": "IOC-DOMAIN-00018",
+    "type": "domain",
+    "value": "attack.mitre.org",
+    "description": "",
+    "confidence": 80,
+    "first_seen": "2026-05-17",
+    "relationships": [
+      {
+        "source": "campaign",
+        "malware_name": null,
+        "campaign_name": "Oldsmar Treatment Plant Intrusion",
+        "cve_id": "CVE-2021-44228",
+        "confidence": 80,
+        "discovered_at": "2026-05-17T21:06:50.653904"
+      },
+      {
+        "source": "campaign",
+        "malware_name": null,
+        "campaign_name": "Triton Safety Instrumented System Attack",
+        "cve_id": "CVE-2018-25326",
+        "confidence": 80,
+        "discovered_at": "2026-05-17T21:30:08.328742"
+      },
+      {
+        "source": "campaign",
+        "malware_name": null,
+        "campaign_name": "2025 Poland Wiper Attacks",
+        "cve_id": "CVE-2026-8719",
+        "confidence": 80,
+        "discovered_at": "2026-05-17T21:33:50.231038"
+      }
+    ],
+    "created_at": "2026-05-17T21:06:50.653904",
+    "updated_at": "2026-05-17T22:00:14.888962"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.619562",
+    "user": "migration",
+    "year": "2026"
+  }
+}

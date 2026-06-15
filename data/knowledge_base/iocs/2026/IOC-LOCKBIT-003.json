@@ -1,0 +1,21 @@
+{
+  "ioc": {
+    "id": "IOC-LOCKBIT-003",
+    "description": "LockBit mutex name created on infected systems to prevent double encryption",
+    "cvss_score": 8.5,
+    "type": "mutex",
+    "value": "Global\\LockBit_Mutex_2023",
+    "malware_family": "LockBit",
+    "tags": [
+      "mutex",
+      "ransomware",
+      "indicator"
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.617561",
+    "user": "migration",
+    "year": "2026"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "ioc": {
+    "id": "IOC-URL-00099",
+    "type": "url",
+    "value": "https://attack.mitre.org/software/S0604)",
+    "description": "",
+    "confidence": 80,
+    "first_seen": "2026-05-17",
+    "relationships": [
+      {
+        "source": "campaign",
+        "malware_name": null,
+        "campaign_name": "2016 Ukraine Electric Power Attack",
+        "cve_id": "CVE-2018-25326",
+        "confidence": 80,
+        "discovered_at": "2026-05-17T21:30:08.629005"
+      }
+    ],
+    "created_at": "2026-05-17T21:30:08.629005",
+    "updated_at": "2026-05-17T21:46:44.407457"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.631419",
+    "user": "migration",
+    "year": "2026"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "ioc": {
+    "id": "IOC-URL-00053",
+    "type": "url",
+    "value": "https://attack.mitre.org/groups/G1042)",
+    "description": "",
+    "confidence": 80,
+    "first_seen": "2026-05-17",
+    "relationships": [
+      {
+        "source": "campaign",
+        "malware_name": null,
+        "campaign_name": "Indian Critical Infrastructure Intrusions",
+        "cve_id": "CVE-2021-44228",
+        "confidence": 80,
+        "discovered_at": "2026-05-17T21:06:51.003428"
+      }
+    ],
+    "created_at": "2026-05-17T21:06:51.003428",
+    "updated_at": "2026-05-17T21:58:54.179407"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.624561",
+    "user": "migration",
+    "year": "2026"
+  }
+}

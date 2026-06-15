@@ -1,0 +1,22 @@
+{
+  "ioc": {
+    "id": "IOC-BLACKCAT-001",
+    "description": "BlackCat ALPHV ransomware Rust binary targeting Windows and Linux including VMware ESXi with ChaCha20 encryption",
+    "cvss_score": 9.9,
+    "type": "sha256",
+    "value": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+    "malware_family": "BlackCat",
+    "tags": [
+      "ransomware",
+      "ALPHV",
+      "cross-platform",
+      "ESXi"
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.618561",
+    "user": "migration",
+    "year": "2026"
+  }
+}

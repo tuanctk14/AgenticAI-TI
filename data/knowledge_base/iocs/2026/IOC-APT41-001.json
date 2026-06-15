@@ -1,0 +1,21 @@
+{
+  "ioc": {
+    "id": "IOC-APT41-001",
+    "description": "APT41 C2 server IP used in APAC financial sector campaign Q4 2024 via HTTPS port 443",
+    "cvss_score": 9.5,
+    "type": "ip",
+    "value": "203.0.113.45",
+    "threat_actor": "APT41",
+    "tags": [
+      "C2",
+      "APT41",
+      "financial"
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.616562",
+    "user": "migration",
+    "year": "2026"
+  }
+}

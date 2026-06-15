@@ -1,0 +1,21 @@
+{
+  "ioc": {
+    "id": "IOC-LOCKBIT-001",
+    "description": "LockBit 3.0 ransomware executable encrypts files with AES-256 and appends .lockbit extension to victims",
+    "cvss_score": 9.8,
+    "type": "sha256",
+    "value": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+    "malware_family": "LockBit",
+    "tags": [
+      "ransomware",
+      "LockBit3",
+      "encryption"
+    ],
+    "uploaded_date": "2026-05-08T07:45:43.218244+00:00"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.617561",
+    "user": "migration",
+    "year": "2026"
+  }
+}

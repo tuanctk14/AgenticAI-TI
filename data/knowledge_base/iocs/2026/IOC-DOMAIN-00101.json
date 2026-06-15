@@ -1,0 +1,27 @@
+{
+  "ioc": {
+    "id": "IOC-DOMAIN-00101",
+    "type": "domain",
+    "value": "TEMP.Veles",
+    "description": "",
+    "confidence": 80,
+    "first_seen": "2026-05-17",
+    "relationships": [
+      {
+        "source": "campaign",
+        "malware_name": null,
+        "campaign_name": "Triton Safety Instrumented System Attack",
+        "cve_id": "CVE-2018-25326",
+        "confidence": 80,
+        "discovered_at": "2026-05-17T21:30:08.647523"
+      }
+    ],
+    "created_at": "2026-05-17T21:30:08.647523",
+    "updated_at": "2026-05-17T21:46:44.417457"
+  },
+  "_metadata": {
+    "date": "2026-06-15T03:44:22.631419",
+    "user": "migration",
+    "year": "2026"
+  }
+}
