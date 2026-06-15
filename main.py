@@ -953,10 +953,29 @@ def interactive_mode(db):
         menu_text = MENU
 
     while True:
+        # Check session status and update activity
+        auth_service = get_auth_service()
+        current_session = auth_service.get_current_session()
+
+        if not current_session:
+            print("\n[THÔNG BÁO] Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.")
+            print("Chạy: python main.py login\n")
+            break
+
+        # Update last activity timestamp
+        auth_service.update_activity_timestamp()
+
+        # Get time remaining and show warning if < 3 minutes
+        time_info = auth_service.get_session_time_remaining()
+        if time_info and time_info["time_remaining_minutes"] < 3:
+            print(f"\n⚠️  [CẢNH BÁO] Phiên sắp hết hạn: {time_info['time_remaining_minutes']} phút còn lại")
+            print("   (Session TTL: 15 phút, Activity timeout: 15 phút)\n")
+
         print(menu_text)
         choice = input("Chọn (0-5): " if session.role == Role.ADMIN else "Chọn (0-4): ").strip()
 
         if choice == "0":
+            auth_service.logout()
             print("\nTạm biệt!\n")
             break
 
@@ -968,6 +987,16 @@ def interactive_mode(db):
             print("╚════════════════════════════════════════════════════════╝\n")
 
             while True:
+                # Check session before each query
+                auth_service = get_auth_service()
+                current_session = auth_service.get_current_session()
+
+                if not current_session:
+                    print("\n[THÔNG BÁO] Phiên đăng nhập đã hết hạn. Quay lại menu chính.\n")
+                    break
+
+                auth_service.update_activity_timestamp()
+
                 keyword = input("Nhập từ khóa CVE (ví dụ: log4j): ").strip()
 
                 if keyword.lower() in ["exit", "quit", "thoát"]:
@@ -990,6 +1019,16 @@ def interactive_mode(db):
             print("╚════════════════════════════════════════════════════════╝\n")
 
             while True:
+                # Check session before each report
+                auth_service = get_auth_service()
+                current_session = auth_service.get_current_session()
+
+                if not current_session:
+                    print("\n[THÔNG BÁO] Phiên đăng nhập đã hết hạn. Quay lại menu chính.\n")
+                    break
+
+                auth_service.update_activity_timestamp()
+
                 print("Chọn khoảng thời gian (gõ 'exit' hoặc 'quit' để quay lại menu chính):")
                 time_input = input("Nhập (VD: 01-04-2026 to 07-05-2026 hoặc số ngày): ").strip()
 
@@ -1028,6 +1067,16 @@ def interactive_mode(db):
             from tools.doc_store import upload_document, get_knowledge_base_stats
 
             while True:
+                # Check session before each upload
+                auth_service = get_auth_service()
+                current_session = auth_service.get_current_session()
+
+                if not current_session:
+                    print("\n[THÔNG BÁO] Phiên đăng nhập đã hết hạn. Quay lại menu chính.\n")
+                    break
+
+                auth_service.update_activity_timestamp()
+
                 print("Hỗ trợ: .json, .txt (chứa CVE IDs), .csv")
                 file_path = input("Nhập đường dẫn file (hoặc 'exit'): ").strip().strip('"')
 
@@ -1073,6 +1122,16 @@ def interactive_mode(db):
             conversation_history = []
 
             while True:
+                # Check session before each chat message
+                auth_service = get_auth_service()
+                current_session = auth_service.get_current_session()
+
+                if not current_session:
+                    print("\n[THÔNG BÁO] Phiên đăng nhập đã hết hạn. Quay lại menu chính.\n")
+                    break
+
+                auth_service.update_activity_timestamp()
+
                 query = input("Bạn: ").strip()
 
                 if query.lower() in ["exit", "quit", "thoát"]:
@@ -1109,6 +1168,16 @@ def interactive_mode(db):
             print("╚════════════════════════════════════════════════════════╝\n")
 
             while True:
+                # Check session before admin operations
+                auth_service = get_auth_service()
+                current_session = auth_service.get_current_session()
+
+                if not current_session:
+                    print("\n[THÔNG BÁO] Phiên đăng nhập đã hết hạn. Quay lại menu chính.\n")
+                    break
+
+                auth_service.update_activity_timestamp()
+
                 admin_menu = """
 Lựa chọn:
   1. Quản lý schedule

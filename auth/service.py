@@ -19,15 +19,17 @@ from .db import AuthDB
 class AuthService:
     """Dịch vụ xác thực."""
 
-    def __init__(self, db: AuthDB, session_ttl_hours: int = 8):
+    def __init__(self, db: AuthDB, session_ttl_minutes: int = 15, activity_timeout_minutes: int = 15):
         """Khởi tạo auth service.
 
         Args:
             db: Kết nối AuthDB
-            session_ttl_hours: Thời hạn session (giờ)
+            session_ttl_minutes: Thời hạn session (phút, mặc định 15)
+            activity_timeout_minutes: Timeout không hoạt động (phút, mặc định 15)
         """
         self.db = db
-        self.session_ttl = timedelta(hours=session_ttl_hours)
+        self.session_ttl = timedelta(minutes=session_ttl_minutes)
+        self.activity_timeout = timedelta(minutes=activity_timeout_minutes)
         self.session_secret = os.getenv("SESSION_SECRET", "").encode()
 
         if not self.session_secret or len(self.session_secret) < 32:
@@ -71,7 +73,7 @@ class AuthService:
         return True, token, "Đăng nhập thành công"
 
     def get_current_session(self) -> Optional[SessionToken]:
-        """Đọc session từ file, verify, check expiry."""
+        """Đọc session từ file, verify, check expiry và activity timeout."""
         session_file = self._get_session_file_path()
 
         if not session_file.exists():
@@ -89,9 +91,18 @@ class AuthService:
             if not token:
                 return None
 
+            # Check token expiry
             if datetime.fromisoformat(token.expires_at.isoformat()) < datetime.utcnow():
-                # Token hết hạn
+                self.logout()
                 return None
+
+            # Check activity timeout (from session file timestamp)
+            last_activity_str = data.get("last_activity")
+            if last_activity_str:
+                last_activity = datetime.fromisoformat(last_activity_str)
+                if datetime.utcnow() - last_activity > self.activity_timeout:
+                    self.logout()
+                    return None
 
             return token
 
@@ -104,12 +115,76 @@ class AuthService:
         if session_file.exists():
             session_file.unlink()
 
+    def update_activity_timestamp(self):
+        """Cập nhật thời gian hoạt động cuối cùng."""
+        session_file = self._get_session_file_path()
+
+        if not session_file.exists():
+            return
+
+        try:
+            with open(session_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            data["last_activity"] = datetime.utcnow().isoformat()
+
+            with open(session_file, "w", encoding="utf-8") as f:
+                json.dump(data, f)
+
+        except Exception:
+            pass
+
+    def get_session_time_remaining(self) -> Optional[dict]:
+        """Lấy thời gian còn lại của session.
+
+        Returns: {
+            "total_ttl_minutes": 15,
+            "time_remaining_minutes": 10,
+            "expires_at": "2026-06-15T12:25:00",
+            "last_activity": "2026-06-15T12:10:00"
+        }
+        """
+        session_file = self._get_session_file_path()
+
+        if not session_file.exists():
+            return None
+
+        try:
+            with open(session_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            token_str = data.get("token")
+            if not token_str:
+                return None
+
+            token = self._verify_token(token_str)
+            if not token:
+                return None
+
+            expires_at = datetime.fromisoformat(token.expires_at.isoformat())
+            last_activity_str = data.get("last_activity")
+            last_activity = datetime.fromisoformat(last_activity_str) if last_activity_str else None
+
+            now = datetime.utcnow()
+            time_remaining = expires_at - now
+
+            return {
+                "total_ttl_minutes": int(self.session_ttl.total_seconds() / 60),
+                "time_remaining_minutes": max(0, int(time_remaining.total_seconds() / 60)),
+                "expires_at": expires_at.isoformat(),
+                "last_activity": last_activity.isoformat() if last_activity else None
+            }
+
+        except Exception:
+            return None
+
     def _create_token(self, user_id: int, role: Role, expires_at: datetime) -> SessionToken:
         """Tạo token với HMAC signature."""
         payload = {
             "user_id": user_id,
             "role": role.value,
-            "expires_at": expires_at.isoformat()
+            "expires_at": expires_at.isoformat(),
+            "last_activity": datetime.utcnow().isoformat()
         }
         payload_json = json.dumps(payload, separators=(",", ":"), sort_keys=True)
         payload_b64 = base64.b64encode(payload_json.encode()).decode()
@@ -193,10 +268,10 @@ class AuthService:
 _auth_service: Optional[AuthService] = None
 
 
-def init_auth_service(db: AuthDB, session_ttl_hours: int = 8) -> AuthService:
+def init_auth_service(db: AuthDB, session_ttl_minutes: int = 15, activity_timeout_minutes: int = 15) -> AuthService:
     """Khởi tạo global auth service."""
     global _auth_service
-    _auth_service = AuthService(db, session_ttl_hours)
+    _auth_service = AuthService(db, session_ttl_minutes, activity_timeout_minutes)
     return _auth_service
 
 
