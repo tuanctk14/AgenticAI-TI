@@ -51,7 +51,7 @@ class NVDProvider(BaseProvider):
             return ProviderResult(
                 success=True,
                 data=self._fetch_sync(cve_id),
-                fetched_at=datetime.utcnow(),
+                fetched_at=datetime.now(),
                 source="nvd"
             )
         except Exception as e:

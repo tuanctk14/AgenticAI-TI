@@ -127,7 +127,7 @@ class KnowledgeBaseManager:
             cve_obj = {
                 "cve": cve_data,
                 "_metadata": {
-                    "last_updated": datetime.utcnow().isoformat(),
+                    "last_updated": datetime.now().isoformat(),
                     "user": user,
                     "source": source,
                     "changes": changes,
@@ -140,7 +140,7 @@ class KnowledgeBaseManager:
                 cve_obj["_import"] = existing["_import"]
             elif "_import" not in cve_obj and source == "api":
                 cve_obj["_import"] = {
-                    "date": datetime.utcnow().isoformat(),
+                    "date": datetime.now().isoformat(),
                     "source": source,
                     "year": year
                 }
@@ -153,7 +153,7 @@ class KnowledgeBaseManager:
 
             # Add this edit to history
             cve_obj["_edits"].append({
-                "date": datetime.utcnow().isoformat(),
+                "date": datetime.now().isoformat(),
                 "user": user,
                 "source": source,
                 "changes": changes
@@ -171,13 +171,13 @@ class KnowledgeBaseManager:
                 self.metadata["uploads"][cve_id] = []
 
             self.metadata["uploads"][cve_id].append({
-                "date": datetime.utcnow().isoformat(),
+                "date": datetime.now().isoformat(),
                 "user": user,
                 "source": source,
                 "changes": changes
             })
 
-            self.metadata["last_updated"] = datetime.utcnow().isoformat()
+            self.metadata["last_updated"] = datetime.now().isoformat()
             self._save_metadata()
 
             logger.info(f"Saved {cve_id} by {user} (source: {source})")
@@ -261,7 +261,7 @@ class KnowledgeBaseManager:
             ioc_obj = {
                 "ioc": ioc_data,
                 "_metadata": {
-                    "date": datetime.utcnow().isoformat(),
+                    "date": datetime.now().isoformat(),
                     "user": user,
                     "year": str(year)
                 }
@@ -293,7 +293,7 @@ class KnowledgeBaseManager:
             mal_obj = {
                 "malware": malware_data,
                 "_metadata": {
-                    "date": datetime.utcnow().isoformat(),
+                    "date": datetime.now().isoformat(),
                     "user": user,
                     "year": str(year)
                 }

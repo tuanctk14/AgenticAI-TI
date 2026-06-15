@@ -58,7 +58,7 @@ class AuthService:
             return False, None, "Mật khẩu sai"
 
         # Sinh token
-        expires_at = datetime.utcnow() + self.session_ttl
+        expires_at = datetime.now() + self.session_ttl
         token = self._create_token(user.id, user.role, expires_at)
 
         # Lưu session file
@@ -92,7 +92,7 @@ class AuthService:
                 return None
 
             # Check token expiry
-            if datetime.fromisoformat(token.expires_at.isoformat()) < datetime.utcnow():
+            if datetime.fromisoformat(token.expires_at.isoformat()) < datetime.now():
                 self.logout()
                 return None
 
@@ -100,7 +100,7 @@ class AuthService:
             last_activity_str = data.get("last_activity")
             if last_activity_str:
                 last_activity = datetime.fromisoformat(last_activity_str)
-                if datetime.utcnow() - last_activity > self.activity_timeout:
+                if datetime.now() - last_activity > self.activity_timeout:
                     self.logout()
                     return None
 
@@ -126,7 +126,7 @@ class AuthService:
             with open(session_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            data["last_activity"] = datetime.utcnow().isoformat()
+            data["last_activity"] = datetime.now().isoformat()
 
             with open(session_file, "w", encoding="utf-8") as f:
                 json.dump(data, f)
@@ -165,7 +165,7 @@ class AuthService:
             last_activity_str = data.get("last_activity")
             last_activity = datetime.fromisoformat(last_activity_str) if last_activity_str else None
 
-            now = datetime.utcnow()
+            now = datetime.now()
             time_remaining = expires_at - now
 
             return {
@@ -184,7 +184,7 @@ class AuthService:
             "user_id": user_id,
             "role": role.value,
             "expires_at": expires_at.isoformat(),
-            "last_activity": datetime.utcnow().isoformat()
+            "last_activity": datetime.now().isoformat()
         }
         payload_json = json.dumps(payload, separators=(",", ":"), sort_keys=True)
         payload_b64 = base64.b64encode(payload_json.encode()).decode()

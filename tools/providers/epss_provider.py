@@ -63,7 +63,7 @@ class EPSSProvider(BaseProvider):
                                     "score": float(epss_data.get("epss", 0)),
                                     "percentile": float(epss_data.get("percentile", 0))
                                 },
-                                fetched_at=datetime.utcnow(),
+                                fetched_at=datetime.now(),
                                 source="epss"
                             )
                         else:

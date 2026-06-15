@@ -439,7 +439,7 @@ def save_cve_to_kb(
         "user": user,
         "source": source,
         "changes": changes,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now().isoformat()
     }
 
 

@@ -105,7 +105,7 @@ class AuthDB:
         """Tạo user mới. Trả về user_id."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        now = datetime.utcnow().isoformat()
+        now = datetime.now().isoformat()
 
         cursor.execute(
             "INSERT INTO users (username, password_hash, role, created_at) VALUES (?, ?, ?, ?)",
@@ -139,7 +139,7 @@ class AuthDB:
         """Cập nhật lần login cuối."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        now = datetime.utcnow().isoformat()
+        now = datetime.now().isoformat()
         cursor.execute("UPDATE users SET last_login = ? WHERE id = ?", (now, user_id))
         conn.commit()
         conn.close()
@@ -171,7 +171,7 @@ class AuthDB:
         """Tạo schedule mới."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        now = datetime.utcnow().isoformat()
+        now = datetime.now().isoformat()
 
         cursor.execute(
             "INSERT INTO schedules (name, time_of_day, severity_filter, created_by, created_at) VALUES (?, ?, ?, ?, ?)",
@@ -274,7 +274,7 @@ class AuthDB:
         """Tạo mục ghi schedule run, trả về run_id."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        now = datetime.utcnow().isoformat()
+        now = datetime.now().isoformat()
 
         cursor.execute(
             "INSERT INTO schedule_runs (schedule_id, started_at, status) VALUES (?, ?, ?)",
@@ -290,7 +290,7 @@ class AuthDB:
         """Cập nhật kết quả schedule run."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        now = datetime.utcnow().isoformat()
+        now = datetime.now().isoformat()
 
         cursor.execute(
             "UPDATE schedule_runs SET status = ?, cve_count = ?, report_path = ?, error_message = ?, finished_at = ? WHERE id = ?",
@@ -329,7 +329,7 @@ class AuthDB:
         """Thêm mục audit log."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        now = datetime.utcnow().isoformat()
+        now = datetime.now().isoformat()
 
         cursor.execute(
             "INSERT INTO audit_log (user_id, action, resource, timestamp) VALUES (?, ?, ?, ?)",

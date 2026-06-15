@@ -92,7 +92,7 @@ class SQLiteCacheProvider(CacheProvider):
 
             # Check expiration
             expires_at = datetime.fromisoformat(row["expires_at"])
-            if datetime.utcnow() > expires_at:
+            if datetime.now() > expires_at:
                 # Cache expired, delete it
                 asyncio.create_task(self.clear(cve_id))
                 return None
@@ -120,7 +120,7 @@ class SQLiteCacheProvider(CacheProvider):
             data_json = json.dumps(data_dict, default=str)
 
             # Calculate expiration
-            expires_at = datetime.utcnow() + timedelta(seconds=ttl)
+            expires_at = datetime.now() + timedelta(seconds=ttl)
 
             cursor.execute(
                 """INSERT OR REPLACE INTO cve_cache (cve_id, data, expires_at)
@@ -155,7 +155,7 @@ class SQLiteCacheProvider(CacheProvider):
                 return False
 
             expires_at = datetime.fromisoformat(row["expires_at"])
-            return datetime.utcnow() < expires_at
+            return datetime.now() < expires_at
         except Exception:
             return False
 
@@ -186,7 +186,7 @@ class SQLiteCacheProvider(CacheProvider):
             cursor = conn.cursor()
             cursor.execute(
                 "DELETE FROM cve_cache WHERE expires_at < ?",
-                (datetime.utcnow().isoformat(),)
+                (datetime.now().isoformat(),)
             )
             conn.commit()
             deleted = cursor.rowcount
@@ -211,7 +211,7 @@ class SQLiteCacheProvider(CacheProvider):
 
             cursor.execute(
                 "SELECT COUNT(*) as expired FROM cve_cache WHERE expires_at < ?",
-                (datetime.utcnow().isoformat(),)
+                (datetime.now().isoformat(),)
             )
             expired = cursor.fetchone()["expired"]
 

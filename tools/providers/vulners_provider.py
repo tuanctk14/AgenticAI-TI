@@ -110,7 +110,7 @@ class VulnersProvider(BaseProvider):
                             return ProviderResult(
                                 success=True,
                                 data=result,
-                                fetched_at=datetime.utcnow(),
+                                fetched_at=datetime.now(),
                                 source="vulners"
                             )
                         else:
@@ -127,7 +127,7 @@ class VulnersProvider(BaseProvider):
                             return ProviderResult(
                                 success=True,
                                 data=result,
-                                fetched_at=datetime.utcnow(),
+                                fetched_at=datetime.now(),
                                 source="vulners"
                             )
 

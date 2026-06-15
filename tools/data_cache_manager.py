@@ -129,7 +129,7 @@ class DataCacheManager:
         # Check age
         try:
             last_refresh = datetime.fromisoformat(source_meta["last_refresh"])
-            age = datetime.utcnow() - last_refresh
+            age = datetime.now() - last_refresh
             should_refresh = age > timedelta(days=ttl_days)
 
             if should_refresh:
@@ -167,7 +167,7 @@ class DataCacheManager:
         if source not in self._metadata:
             self._metadata[source] = {}
 
-        self._metadata[source]["last_refresh"] = datetime.utcnow().isoformat()
+        self._metadata[source]["last_refresh"] = datetime.now().isoformat()
         self._metadata[source]["ttl_days"] = self.SOURCES[source]["ttl_days"]
         self._save_metadata()
 

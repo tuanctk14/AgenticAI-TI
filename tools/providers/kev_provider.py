@@ -55,7 +55,7 @@ class KEVProvider(BaseProvider):
                         data = await resp.json()
                         # Cache the full JSON
                         self._kev_cache = {item["cveID"]: item for item in data.get("vulnerabilities", [])}
-                        self._cache_time = datetime.utcnow()
+                        self._cache_time = datetime.now()
                         return self._kev_cache
                     else:
                         return None
@@ -84,7 +84,7 @@ class KEVProvider(BaseProvider):
                     "known_ransomware_campaign_use": item.get("knownRansomwareCampaignUse", False),
                     "source": "cisa"
                 },
-                fetched_at=datetime.utcnow(),
+                fetched_at=datetime.now(),
                 source="kev"
             )
         else:
