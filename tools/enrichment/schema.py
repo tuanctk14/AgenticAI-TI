@@ -85,6 +85,10 @@ class UnifiedCVE(BaseModel):
 
     Tracks all data with source attribution.
     Supports fallback chains automatically.
+
+    PHASE 1 EXTENSION (G1-G2):
+    - capec_ids: CAPEC attack patterns from CWE
+    - attack_techniques: ATT&CK techniques from CAPEC chain
     """
     cve_id: str
 
@@ -100,6 +104,10 @@ class UnifiedCVE(BaseModel):
     epss: Optional[EPSSData] = None
     kev: Optional[KEVData] = None
     vulncheck: Optional[VulnersData] = None  # Now contains Vulners exploit intelligence
+
+    # PHASE 1: Attack chain (G1-G2)
+    capec_ids: Optional[List[Dict]] = None  # [{"id": "126", "name": "...", "likelihood": "High", "abstraction": "Standard"}]
+    attack_techniques: Optional[List[Dict]] = None  # [{"t_number": "T1083", "name": "...", "tactics": [...], "capec_id": "3", ...}]
 
     # Computed risk
     unified_risk_score: float = 0.0

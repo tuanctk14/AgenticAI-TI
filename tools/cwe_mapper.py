@@ -2,10 +2,17 @@
 tools/cwe_mapper.py - Map CWE to MITRE ATT&CK techniques and NIST controls
 CONSOLIDATED VERSION: Unified CWE mapper with external JSON data storage
 Uses 802 CWEs with complete MITRE and NIST coverage
+
+EXTENDED (Phase 1):
+- G1: cwe_to_capec_ids() — CWE to CAPEC attack patterns
+- G2: cwe_to_attack_techniques_via_capec() — Full CWE→CAPEC→ATT&CK chain
 """
 import json
 import os
 from typing import Dict, List, Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Load CWE mappings from JSON (data externalized for easier updates)
@@ -142,6 +149,85 @@ class CWEMapper:
             "mitre_techniques": list(all_techniques.values()),
             "nist_controls": list(all_controls.values()),
         }
+
+    # ── PHASE 1 EXTENSION: CAPEC CHAIN (G1 + G2) ──
+
+    def cwe_to_capec_ids(self, cwe_id: str) -> List[str]:
+        """
+        Map CWE to CAPEC attack patterns via XML.
+        G1: CWE → CAPEC mapping
+
+        Args:
+            cwe_id: "CWE-22" or "22"
+
+        Returns:
+            ["126", "3"] or []
+        """
+        from tools.capec_loader import cwe_to_capec_ids as _cwe_to_capec_ids
+        return _cwe_to_capec_ids(cwe_id)
+
+    def cwe_to_capec_details(self, cwe_id: str) -> List[Dict]:
+        """
+        Get full CAPEC details for a CWE.
+
+        Returns: [
+            {
+                "id": "126",
+                "name": "Forceful Browsing",
+                "likelihood": "High",
+                "abstraction": "Standard",
+                "attack_techniques": ["T1083"]
+            }
+        ]
+        """
+        from tools.capec_loader import cwe_to_capec_details as _cwe_to_capec_details
+        return _cwe_to_capec_details(cwe_id)
+
+    def cwe_to_attack_techniques_via_capec(self, cwe_id: str) -> List[Dict]:
+        """
+        Full chain: CWE → CAPEC → ATT&CK
+        G2: CAPEC → ATT&CK mapping
+
+        Args:
+            cwe_id: "CWE-22" or "22"
+
+        Returns: [
+            {
+                "t_number": "T1083",
+                "name": "File and Directory Discovery",
+                "tactics": ["Reconnaissance"],
+                "capec_id": "3",
+                "capec_name": "Footprinting",
+                "source": "cwe_capec_chain"
+            }
+        ]
+        """
+        from tools.capec_loader import capec_to_attack_techniques, get_capec_details
+
+        capec_ids = self.cwe_to_capec_ids(cwe_id)
+        results = []
+
+        for capec_id in capec_ids:
+            capec_data = get_capec_details(capec_id)
+            t_numbers = capec_to_attack_techniques(capec_id)
+
+            for t_num in t_numbers:
+                # Lookup T-number in MITRE data
+                mitre_techniques = self.mitre_data.get("techniques", {})
+                tech_data = mitre_techniques.get(t_num, {})
+
+                results.append({
+                    "t_number": t_num,
+                    "name": tech_data.get("name", f"Technique {t_num}"),
+                    "tactics": tech_data.get("tactics", []),
+                    "description": tech_data.get("description", ""),
+                    "capec_id": capec_id,
+                    "capec_name": capec_data.get("name", f"CAPEC-{capec_id}"),
+                    "capec_likelihood": capec_data.get("likelihood", "Unknown"),
+                    "source": "cwe_capec_chain"
+                })
+
+        return results
 
 
 def get_cwe_analysis(cve_dict: Dict) -> Dict:
