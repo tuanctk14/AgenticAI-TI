@@ -15,54 +15,6 @@ from tools.doc_store        import (
 )
 from tools.cwe_mapper       import get_mitre_attack_info, get_nist_controls
 from tools.cve_relationship_tool import enrich_cve_relationships, enrich_cve_batch
-from tools.mcp_graph_wrappers import (
-    graph_add_node, graph_add_edge,
-    graph_query_attack_paths, graph_query_campaign_impact,
-    graph_find_threat_communities, graph_profile_threat_actor
-)
-from tools.mcp_threat_memory_wrappers import (
-    memory_record_ioc_occurrence,
-    memory_record_campaign_activity,
-    memory_record_asset_exposure,
-    memory_record_infrastructure_use,
-    memory_record_exploitation_pattern,
-    memory_get_analysis
-)
-from tools.mcp_asset_wrappers import (
-    asset_register,
-    asset_get_details,
-    asset_list_exposures,
-    asset_update_remediation,
-    asset_get_risk_score
-)
-from tools.mcp_opencti_wrappers import (
-    opencti_query_indicators,
-    opencti_get_malware_info,
-    opencti_get_threat_actor_profile,
-    opencti_get_campaign_info,
-    opencti_get_attack_patterns
-)
-from tools.mcp_vulnerability_wrappers import (
-    vuln_get_cve_details,
-    vuln_search_vulnerabilities,
-    vuln_get_exploit_intelligence,
-    vuln_get_remediation_guidance,
-    vuln_calculate_vulnerability_risk
-)
-from tools.mcp_ioc_wrappers import (
-    ioc_lookup_ioc,
-    ioc_classify_ioc,
-    ioc_correlate_iocs,
-    ioc_get_ioc_context,
-    ioc_record_ioc_sighting
-)
-from tools.mcp_log_wrappers import (
-    log_collect_logs,
-    log_detect_security_events,
-    log_generate_alert,
-    log_analyze_log_patterns,
-    log_correlate_log_events
-)
 
 # ── Tool registry ──────────────────────────────────────────────────────────
 TOOLS_MAPPING = {
@@ -86,57 +38,6 @@ TOOLS_MAPPING = {
     "get_nist_controls":           get_nist_controls,
     "enrich_cve_relationships":    enrich_cve_relationships,
     "enrich_cve_batch":            enrich_cve_batch,
-
-    # Graph MCP tools (PHASE 2)
-    "graph_add_node":              graph_add_node,
-    "graph_add_edge":              graph_add_edge,
-    "graph_query_attack_paths":    graph_query_attack_paths,
-    "graph_query_campaign_impact": graph_query_campaign_impact,
-    "graph_find_threat_communities": graph_find_threat_communities,
-    "graph_profile_threat_actor":  graph_profile_threat_actor,
-
-    # Threat Memory MCP tools (PHASE 3)
-    "memory_record_ioc_occurrence": memory_record_ioc_occurrence,
-    "memory_record_campaign_activity": memory_record_campaign_activity,
-    "memory_record_asset_exposure": memory_record_asset_exposure,
-    "memory_record_infrastructure_use": memory_record_infrastructure_use,
-    "memory_record_exploitation_pattern": memory_record_exploitation_pattern,
-    "memory_get_analysis": memory_get_analysis,
-
-    # Asset MCP tools (PHASE 4)
-    "asset_register": asset_register,
-    "asset_get_details": asset_get_details,
-    "asset_list_exposures": asset_list_exposures,
-    "asset_update_remediation": asset_update_remediation,
-    "asset_get_risk_score": asset_get_risk_score,
-
-    # OpenCTI MCP tools (PHASE 5)
-    "opencti_query_indicators": opencti_query_indicators,
-    "opencti_get_malware_info": opencti_get_malware_info,
-    "opencti_get_threat_actor_profile": opencti_get_threat_actor_profile,
-    "opencti_get_campaign_info": opencti_get_campaign_info,
-    "opencti_get_attack_patterns": opencti_get_attack_patterns,
-
-    # Vulnerability MCP tools (PHASE 6)
-    "vuln_get_cve_details": vuln_get_cve_details,
-    "vuln_search_vulnerabilities": vuln_search_vulnerabilities,
-    "vuln_get_exploit_intelligence": vuln_get_exploit_intelligence,
-    "vuln_get_remediation_guidance": vuln_get_remediation_guidance,
-    "vuln_calculate_vulnerability_risk": vuln_calculate_vulnerability_risk,
-
-    # IOC MCP tools (PHASE 7)
-    "ioc_lookup_ioc": ioc_lookup_ioc,
-    "ioc_classify_ioc": ioc_classify_ioc,
-    "ioc_correlate_iocs": ioc_correlate_iocs,
-    "ioc_get_ioc_context": ioc_get_ioc_context,
-    "ioc_record_ioc_sighting": ioc_record_ioc_sighting,
-
-    # Log MCP tools (PHASE 8)
-    "log_collect_logs": log_collect_logs,
-    "log_detect_security_events": log_detect_security_events,
-    "log_generate_alert": log_generate_alert,
-    "log_analyze_log_patterns": log_analyze_log_patterns,
-    "log_correlate_log_events": log_correlate_log_events,
 }
 
 # ── Tool Permission Matrix (Guardrails) ───────────────────────────────────
@@ -146,80 +47,22 @@ TOOLS_MAPPING = {
 TOOL_PERMISSIONS = {
     "agent_ti": [
         "fetch_cve_by_id", "fetch_nvd_cves", "fetch_kb_cves",
-        # Graph MCP (PHASE 2)
-        "graph_add_node", "graph_add_edge",
-        "graph_query_attack_paths", "graph_query_campaign_impact",
-        # Threat Memory MCP (PHASE 3)
-        "memory_record_ioc_occurrence", "memory_record_campaign_activity",
-        # Vulnerability MCP (PHASE 6)
-        "vuln_get_cve_details", "vuln_search_vulnerabilities",
-        "vuln_get_exploit_intelligence",
     ],
     "agent_ti_extended": [
         "fetch_kb_indicators", "fetch_opencti_indicators",
-        # Graph MCP (PHASE 2)
-        "graph_add_edge", "graph_find_threat_communities",
-        # Threat Memory MCP (PHASE 3)
-        "memory_record_ioc_occurrence", "memory_get_analysis",
-        # OpenCTI MCP (PHASE 5)
-        "opencti_query_indicators", "opencti_get_malware_info",
-        "opencti_get_threat_actor_profile",
-        # IOC MCP (PHASE 7)
-        "ioc_lookup_ioc", "ioc_classify_ioc", "ioc_correlate_iocs",
-        "ioc_get_ioc_context", "ioc_record_ioc_sighting",
     ],
     "agent_device": [
         "list_all_devices",
-        # Graph MCP (PHASE 2)
-        "graph_add_node", "graph_query_attack_paths",
-        # Threat Memory MCP (PHASE 3)
-        "memory_record_asset_exposure", "memory_record_infrastructure_use",
-        # Asset MCP (PHASE 4)
-        "asset_register", "asset_get_details", "asset_list_exposures",
-        "asset_update_remediation", "asset_get_risk_score",
     ],
     "agent_matcher": [
         "match_cves_with_cmdb",
-        # Graph MCP (PHASE 2)
-        "graph_add_edge", "graph_query_attack_paths",
-        # Threat Memory MCP (PHASE 3)
-        "memory_record_asset_exposure", "memory_record_campaign_activity",
     ],
     "agent_analyst": [
         "get_mitre_attack_info", "get_nist_controls",
         "enrich_cve_relationships", "enrich_cve_batch",
-        # Graph MCP (PHASE 2)
-        "graph_add_node", "graph_add_edge",
-        "graph_query_attack_paths", "graph_query_campaign_impact",
-        "graph_find_threat_communities", "graph_profile_threat_actor",
-        # Threat Memory MCP (PHASE 3)
-        "memory_record_ioc_occurrence", "memory_record_campaign_activity",
-        "memory_record_asset_exposure", "memory_record_infrastructure_use",
-        "memory_record_exploitation_pattern", "memory_get_analysis",
-        # Asset MCP (PHASE 4)
-        "asset_register", "asset_get_details", "asset_list_exposures",
-        "asset_update_remediation", "asset_get_risk_score",
-        # OpenCTI MCP (PHASE 5)
-        "opencti_query_indicators", "opencti_get_malware_info",
-        "opencti_get_threat_actor_profile", "opencti_get_campaign_info",
-        "opencti_get_attack_patterns",
-        # Vulnerability MCP (PHASE 6)
-        "vuln_get_cve_details", "vuln_search_vulnerabilities",
-        "vuln_get_exploit_intelligence", "vuln_get_remediation_guidance",
-        "vuln_calculate_vulnerability_risk",
-        # IOC MCP (PHASE 7)
-        "ioc_lookup_ioc", "ioc_classify_ioc", "ioc_correlate_iocs",
-        "ioc_get_ioc_context", "ioc_record_ioc_sighting",
-        # Log MCP (PHASE 8)
-        "log_collect_logs", "log_detect_security_events", "log_generate_alert",
-        "log_analyze_log_patterns", "log_correlate_log_events",
     ],
     "agent_reporter": [
         "generate_report", "list_reports",
-        # Graph MCP (PHASE 2)
-        "graph_query_attack_paths", "graph_query_campaign_impact",
-        # Threat Memory MCP (PHASE 3)
-        "memory_get_analysis",
     ],
     "agent_doc": [
         "upload_document", "load_knowledge_base", "get_knowledge_base_stats",
