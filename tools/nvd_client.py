@@ -1,9 +1,13 @@
 """
 tools/nvd_client.py - Fetch CVE from NVD API using real data only
+Auto-caches fetched CVEs to internal knowledge base
 """
 import requests
 import asyncio
+import logging
 from config import NVD_API_KEY
+
+logger = logging.getLogger(__name__)
 
 # Enrichment orchestrator (lazy-loaded)
 _enrichment_orchestrator = None
@@ -15,6 +19,17 @@ def _get_orchestrator():
         from tools.enrichment.orchestrator import EnrichmentOrchestrator
         _enrichment_orchestrator = EnrichmentOrchestrator()
     return _enrichment_orchestrator
+
+# KB Manager (lazy-loaded)
+_kb_manager = None
+
+def _get_kb_manager():
+    """Lazy-load KB manager"""
+    global _kb_manager
+    if _kb_manager is None:
+        from tools.knowledge_base_manager import get_kb_manager
+        _kb_manager = get_kb_manager()
+    return _kb_manager
 
 
 def fetch_cve_by_id(cve_id: str, enrich: bool = True) -> dict:
@@ -110,6 +125,14 @@ def fetch_cve_by_id(cve_id: str, enrich: bool = True) -> dict:
                     result[0]["enrichment"] = None
 
             print(f"  [NVD]  Found {cve_id}")
+
+            # Auto-save to internal KB for future queries
+            try:
+                kb = _get_kb_manager()
+                kb.save_cve(cve_id, cve, user="system", source="api", changes="Auto-cached from NVD API")
+            except Exception as e:
+                logger.debug(f"Could not save {cve_id} to KB: {e}")
+
             return {"context": result, "source": "NVD-LIVE", "total": 1}
 
     except Exception as e:

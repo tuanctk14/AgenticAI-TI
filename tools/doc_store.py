@@ -1,14 +1,14 @@
 """
 tools/doc_store.py - Quản lý tài liệu và cơ sở tri thức
 Hỗ trợ định dạng .json, .txt (trích xuất CVE ID), .csv
-Tích hợp NVD KB loader để import CVE data từ D:\nvdcve
+Tích hợp unified KB manager (data/knowledge_base) cho tất cả data
 """
 import json
 import csv
 import re
 from pathlib import Path
 from datetime import datetime, timezone
-from .nvd_knowledge_base_loader import get_kb_loader
+from .knowledge_base_manager import get_kb_manager
 
 KB_DIR = Path("data/docs")
 KB_FILES = {
@@ -18,8 +18,18 @@ KB_FILES = {
 }
 
 
-def upload_document(file_path: str) -> dict:
-    """Phân tích file và lưu vào KB. Hỗ trợ .json, .txt, .csv"""
+def upload_document(file_path: str, user: str = "system") -> dict:
+    """
+    Phân tích file và lưu vào KB.
+    Hỗ trợ .json, .txt (trích CVE ID), .csv
+
+    Args:
+        file_path: Path to file
+        user: Username uploading
+
+    Returns:
+        {"context": {cves, iocs, malwares}, "source": "KB", "total": N}
+    """
     path = Path(file_path)
     if not path.exists():
         return {"error": f"File không tồn tại: {file_path}"}
@@ -42,12 +52,29 @@ def upload_document(file_path: str) -> dict:
     if not records:
         return {"error": "Không tìm thấy bản ghi hợp lệ trong file"}
 
-    # Phân loại và lưu
+    # Phân loại và lưu vào unified KB
+    kb = get_kb_manager()
     saved = {"cves": 0, "iocs": 0, "malwares": 0}
+
     for r in records:
         category = _classify(r)
-        _merge_and_save(category, r)
-        saved[category] += 1
+
+        # Save to unified KB
+        if category == "cves":
+            cve_id = r.get("id", "")
+            if cve_id:
+                kb.save_cve(cve_id, r, user=user, source="user_upload", changes=f"Uploaded from {path.name}")
+                saved["cves"] += 1
+        elif category == "iocs":
+            ioc_id = r.get("id", "")
+            if ioc_id:
+                kb.save_ioc(ioc_id, r, user=user)
+                saved["iocs"] += 1
+        elif category == "malwares":
+            mal_id = r.get("id", "")
+            if mal_id:
+                kb.save_malware(mal_id, r, user=user)
+                saved["malwares"] += 1
 
     return {"context": saved, "source": "KB", "total": sum(saved.values())}
 
@@ -323,61 +350,38 @@ def enrich_cmdb_keywords() -> dict:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# NVD Knowledge Base Functions (Tích hợp với nvd_knowledge_base_loader)
+# Unified Knowledge Base Functions (data/knowledge_base for all data)
 # ═══════════════════════════════════════════════════════════════════════════════
-
-def import_nvd_knowledge_base(user: str = "system") -> dict:
-    """
-    Import NVD CVE data từ D:\nvdcve vào KB nội bộ.
-    Giữ structure theo năm, track metadata (import date, user, changes)
-
-    Args:
-        user: Username thực hiện import
-
-    Returns:
-        {
-            "status": "success|error",
-            "imported": 1500,
-            "years": ["2021", "2020", ...],
-            "details": {...}
-        }
-    """
-    loader = get_kb_loader()
-    result = loader.import_nvd_data(user=user)
-
-    return {
-        "context": result,
-        "source": "NVD",
-        "status": result.get("status", "unknown")
-    }
-
 
 def get_cve_from_kb(cve_id: str) -> dict:
     """
-    Lấy CVE từ KB nội bộ (từ NVD data được import).
+    Lấy CVE từ KB nội bộ (NVD data hoặc auto-cached từ API).
 
     Args:
         cve_id: "CVE-2021-39904"
 
     Returns:
         {
-            "cve": {...},
-            "_import": {metadata}
-        } hoặc {"error": "..."}
+            "cve": {...full NVD data...},
+            "_metadata": {user, date, source},
+            "_import": {...},
+            "_edits": [...]
+        }
     """
-    loader = get_kb_loader()
-    cve = loader.get_cve(cve_id)
+    kb = get_kb_manager()
+    cve = kb.get_cve(cve_id)
 
     if cve:
         return {
             "context": cve,
-            "source": "KB-NVD",
-            "found": True
+            "source": "KB",
+            "found": True,
+            "metadata": cve.get("_metadata", {})
         }
     else:
         return {
             "context": None,
-            "source": "KB-NVD",
+            "source": "KB",
             "found": False,
             "error": f"CVE {cve_id} not found in KB"
         }
@@ -392,61 +396,96 @@ def search_kb_cves(keyword: str, year: str = None) -> dict:
         year: Lọc theo năm (None = tất cả)
 
     Returns:
-        {"context": [cves], "source": "KB-NVD", "count": N}
+        {"context": [cves], "source": "KB", "count": N}
     """
-    loader = get_kb_loader()
-    results = loader.search_cves(keyword, year)
+    kb = get_kb_manager()
+    results = kb.search_cves(keyword, year)
 
     return {
         "context": results,
-        "source": "KB-NVD",
+        "source": "KB",
         "count": len(results),
         "keyword": keyword,
         "year_filter": year
     }
 
 
+def save_cve_to_kb(
+    cve_id: str,
+    cve_data: dict,
+    user: str = "system",
+    source: str = "user_upload",
+    changes: str = ""
+) -> dict:
+    """
+    Lưu CVE vào KB (từ user upload hoặc API cache).
+
+    Args:
+        cve_id: CVE ID
+        cve_data: Full CVE object
+        user: Username
+        source: "user_upload"|"api"|"nvd"
+        changes: Change description
+
+    Returns:
+        {"status": "saved|error", "cve_id": "...", "user": "..."}
+    """
+    kb = get_kb_manager()
+    success = kb.save_cve(cve_id, cve_data, user=user, source=source, changes=changes)
+
+    return {
+        "status": "saved" if success else "error",
+        "cve_id": cve_id,
+        "user": user,
+        "source": source,
+        "changes": changes,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
 def get_kb_status() -> dict:
     """
-    Lấy trạng thái KB (tổng CVE, theo năm, import info, user uploads).
+    Lấy trạng thái KB (tổng CVE/IOC/Malware, theo năm, user uploads).
 
     Returns:
         {
             "total_cves": 1500,
-            "years": {"2021": 100, ...},
-            "imports": {"2021": {date, file, count}},
+            "cves_by_year": {"2021": 100, ...},
+            "total_iocs": 50,
+            "user_uploads": 10,
+            "auto_cached": 5,
             "last_updated": "ISO"
         }
     """
-    loader = get_kb_loader()
-    stats = loader.get_kb_stats()
+    kb = get_kb_manager()
+    stats = kb.get_kb_stats()
 
     return {
         "context": stats,
-        "source": "KB-NVD",
+        "source": "KB",
         "ready": stats.get("total_cves", 0) > 0
     }
 
 
-def record_cve_upload(cve_id: str, user: str, changes: str = "") -> dict:
-    """
-    Ghi nhận user upload/chỉnh sửa CVE.
-
-    Args:
-        cve_id: CVE ID
-        user: Username
-        changes: Nội dung thay đổi
-
-    Returns:
-        {"status": "recorded", "cve_id": "...", "user": "..."}
-    """
-    loader = get_kb_loader()
-    loader.record_user_upload(cve_id, user, changes)
+def save_ioc_to_kb(ioc_id: str, ioc_data: dict, user: str = "system") -> dict:
+    """Lưu IOC vào KB."""
+    kb = get_kb_manager()
+    success = kb.save_ioc(ioc_id, ioc_data, user=user)
 
     return {
-        "status": "recorded",
-        "cve_id": cve_id,
-        "user": user,
-        "changes": changes,
-        "timestamp": datetime.utcnow().isoformat()
+        "status": "saved" if success else "error",
+        "ioc_id": ioc_id,
+        "user": user
+    }
+
+
+def save_malware_to_kb(malware_id: str, malware_data: dict, user: str = "system") -> dict:
+    """Lưu Malware vào KB."""
+    kb = get_kb_manager()
+    success = kb.save_malware(malware_id, malware_data, user=user)
+
+    return {
+        "status": "saved" if success else "error",
+        "malware_id": malware_id,
+        "user": user
     }
